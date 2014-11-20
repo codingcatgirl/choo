@@ -2,8 +2,29 @@
 from datetime import datetime, timedelta
 
 
-class Location():
+class ModelBase():
+    def __init__(self):
+        self.ids = {}
+        self.raws = {}
+
+
+class SearchResults():
+    def __init__(self, results, subject=None, api=None, method=None):
+        self.subject = subject
+        self.api = api
+        self.method = method
+        self.results = tuple(results)
+
+    def __iter__(self):
+        return self.results
+
+    def __getitem__(self, key):
+        return self.results[key]
+
+
+class Location(ModelBase):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+        super().__init__()
         self.country = country
         self.city = city
         self.name = name
@@ -12,22 +33,26 @@ class Location():
 
 class Stop(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+        super().__init__()
         Location.__init__(self, country, city, name, coords)
         self.rides = []
 
 
 class POI(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+        super().__init__()
         Location.__init__(self, country, city, name, coords)
 
 
 class Address(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+        super().__init__()
         Location.__init__(self, country, city, name, coords)
 
 
-class RealtimeTime():
+class RealtimeTime(ModelBase):
     def __init__(self, time: datetime, delay: timedelta=None, livetime: datetime=None):
+        super().__init__()
         if livetime is not None:
             if delay is not None:
                 assert livetime-time == delay
@@ -46,8 +71,9 @@ class RealtimeTime():
         return self.time+self.delay
 
 
-class TimeAndPlace():
+class TimeAndPlace(ModelBase):
     def __init__(self, stop: Stop, platform: str=None, arrival: RealtimeTime=None, departure: RealtimeTime=None):
+        super().__init__()
         self.stop = stop
         self.platform = platform
         self.arrival = arrival
@@ -59,7 +85,7 @@ class TimeAndPlace():
                 self.departure == other.departure)
 
 
-class LineTypes():
+class LineTypes(ModelBase):
     _known = ('localtrain', 'longdistance_other', 'ice', 'urban', 'metro', 'tram',
               'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialbus',
               'dialtaxi', 'others')
@@ -70,6 +96,7 @@ class LineTypes():
     }
 
     def __init__(self, none: bool=False):
+        super().__init__()
         self._included = set() if none else set(self._known)
 
     def add(self, *args: str):
@@ -113,8 +140,9 @@ class LineTypes():
         return (isinstance(other, LineTypes) and self._invluced == other._included)
 
 
-class LineType():
+class LineType(ModelBase):
     def __init__(self, name: str):
+        super().__init__()
         if name in LineTypes._known:
             self.name = name
         else:
@@ -129,13 +157,15 @@ class LineType():
             raise AttributeError('unsupported linetype')
 
 
-class Line():
+class Line(ModelBase):
     def __init__(self, linetype: LineType):
+        super().__init__()
         self.linetype = linetype
 
 
-class Ride():
+class Ride(ModelBase):
     def __init__(self, line: Line=None):
+        super().__init__()
         self._stops = [(RideStopPointer(0), None)]
         self.line = line
 
@@ -253,8 +283,9 @@ class RideSegment():
                 self.origin == other.origin and self.destination == other.destination)
 
 
-class Way():
+class Way(ModelBase):
     def __init__(self, origin: Location, destination: Location, distance: int=None):
+        super().__init__()
         self.origin = origin
         self.destination = destination
         self.distance = None
@@ -263,6 +294,7 @@ class Way():
         return (isinstance(other, Way) and self.origin == other.origin and self.destination == other.destination)
 
 
-class Trip():
+class Trip(ModelBase):
     def __init__(self):
+        super().__init__()
         self.parts = []
