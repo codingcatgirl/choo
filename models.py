@@ -68,7 +68,18 @@ class RealtimeTime(ModelBase):
 
     @property
     def livetime(self):
-        return self.time+self.delay
+        if self.delay is not None:
+            return self.time+self.delay
+        else:
+            return self.time
+
+    def __add__(self, other):
+        assert isinstance(other, timedelta)
+        self.time += other
+
+    def __sub__(self, other):
+        assert isinstance(other, timedelta)
+        self.time -= other
 
 
 class TimeAndPlace(ModelBase):
@@ -88,16 +99,16 @@ class TimeAndPlace(ModelBase):
 class LineTypes(ModelBase):
     _known = ('localtrain', 'longdistance_other', 'ice', 'urban', 'metro', 'tram',
               'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialbus',
-              'dialtaxi', 'others')
+              'dialtaxi', 'others', 'walk')
     _shortcuts = {
         'longdistance': ('longdistance_other', 'ice'),
         'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
         'dial': ('dialbus', 'dialtaxi')
     }
 
-    def __init__(self, none: bool=False):
+    def __init__(self, all_types: bool=True):
         super().__init__()
-        self._included = set() if none else set(self._known)
+        self._included = set(self._known) if all_types else set()
 
     def add(self, *args: str):
         for name in args:
@@ -168,6 +179,7 @@ class Ride(ModelBase):
         super().__init__()
         self._stops = [(RideStopPointer(0), None)]
         self.line = line
+        self.bike_friendly = None
 
     def is_complete(self):
         return None not in self._stops
@@ -202,7 +214,7 @@ class Ride(ModelBase):
         for stop in self._stops:
             yield stop
 
-    def _alter_pointers_after(pos: int, diff: int):
+    def _alter_pointers_after(self, pos: int, diff: int):
         for stop in self._stops[pos+1:]:
             stop[0]._i += diff
 
@@ -242,11 +254,11 @@ class RideStopPointer():
 class RideSegment():
     def __init__(self, ride: Ride, origin: RideStopPointer=None, destination: RideStopPointer=None):
         self.ride = ride
-        self.origin = origin
-        self.destination = destination
+        self._pointer_origin = origin
+        self._pointer_destination = destination
 
     def _stops(self):
-        return self.ride.stops[self.origin:self.destination]
+        return self.ride.stops[self._pointer_origin:self._pointer_destination]
 
     def is_complete(self):
         return None not in self._stops()
@@ -258,9 +270,19 @@ class RideSegment():
         if isinstance(key, slice):
             if key.step is not None:
                 raise NotImplementedError('slicing a RideSegment with steps is not supported')
-            if self.origin is not None:
-                start = key.start if type(key.start) != int else RideStopPointer(int(self.origin)+key.start)
-                stop = key.stop if type(key.stop) != int else RideStopPointer(int(self.origin)+key.stop)
+            if self._pointer_origin is not None:
+                if type(key.start) != int:
+                    start = key.start
+                elif key.start >= 0:
+                    start = int(self._pointer_origin)+key.start
+                else:
+                    start = int(self._pointer_destination)+1-key.start
+                if type(key.stop) != int:
+                    stop = key.stop
+                elif key.start >= 0:
+                    stop = int(self._pointer_origin)+key.stop
+                else:
+                    stop = int(self._pointer_destination)+1-key.stop
             else:
                 start, stop = key.start, key.stop
             return RideSegment(self.ride, start, stop)
@@ -268,7 +290,7 @@ class RideSegment():
             if type(key) != int:
                 return self.ride[key]
             else:
-                return self._stops[key][1]
+                return self._stops()[key][1]
 
     def __iter__(self, key):
         for stop in self._stops():
@@ -278,9 +300,29 @@ class RideSegment():
         for stop in self._stops():
             yield stop
 
+    @property
+    def origin(self):
+        return self.ride[0].stop
+
+    @property
+    def destination(self):
+        return self.ride[-1].stop
+
+    @property
+    def departure(self):
+        return self.ride[0].departure
+
+    @property
+    def arrival(self):
+        return self.ride[-1].arrival
+
+    def __getattr__(self, name):
+        return getattr(self.ride, name)
+
     def __eq__(self, other):
         return (isinstance(other, RideSegment) and self.ride == other.ride and
-                self.origin == other.origin and self.destination == other.destination)
+                self._pointer_origin == other._pointer_origin and
+                self._pointer_destination == other._pointer_destination)
 
 
 class Way(ModelBase):
@@ -289,6 +331,8 @@ class Way(ModelBase):
         self.origin = origin
         self.destination = destination
         self.distance = None
+        self.duration = None
+        # todo: self.stairs = None
 
     def __eq__(self, other):
         return (isinstance(other, Way) and self.origin == other.origin and self.destination == other.destination)
@@ -298,3 +342,50 @@ class Trip(ModelBase):
     def __init__(self):
         super().__init__()
         self.parts = []
+        self.walk_speed = 'normal'
+
+    def __getattr__(self, name):
+        if name == 'origin':
+            return None if not self.parts else self.parts[0].origin
+        elif name == 'destination':
+            return None if not self.parts else self.parts[-1].destination
+        elif name == 'departure':
+            delta = timedelta(0)
+            for part in self.parts:
+                if isinstance(part, RideSegment):
+                    return None if part.departure is None else part.departure - delta
+                elif part.duration is None:
+                    return None
+                else:
+                    delta += part.duration
+        elif name == 'arrival':
+            delta = timedelta(0)
+            for part in reversed(self.parts):
+                if isinstance(part, RideSegment):
+                    return None if part.arrival is None else part.arrival + delta
+                elif part.duration is None:
+                    return None
+                else:
+                    delta += part.duration
+        elif name == 'linetypes':
+            if not self.parts:
+                return None
+            types = LineTypes(False)
+            for part in self.parts:
+                linetype = part.line.linetype
+                if linetype is not None:
+                    types.add(linetype)
+            return types
+        elif name == 'changes':
+            if not self.parts:
+                return None
+            return max(0, len([part for part in self.parts if isinstance(part, RideSegment)])-1)
+        elif name == 'bike_friendly':
+            if not self.parts:
+                return None
+            tmp = [part.bike_friendly for part in self.parts if isinstance(part, RideSegment)]
+            if False in tmp:
+                return False
+            if None in tmp:
+                return None
+            return True
