@@ -37,6 +37,9 @@ class Stop(Location):
         Location.__init__(self, country, city, name, coords)
         self.rides = []
 
+    def __repr__(self):
+        return '<%s %s, %s>' % (self.__class__.__name__, self.city, self.name)
+
 
 class POI(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
@@ -62,6 +65,9 @@ class RealtimeTime(ModelBase):
         self.time = time
         self.delay = delay
 
+    def __repr__(self):
+        return '<RealtimeTime %s%s>' % (str(self.time)[:-3], (' +%d' % (self.delay.total_seconds()/60)) if self.delay is not None else '')
+
     @property
     def islive(self):
         return self.delay is not None
@@ -81,12 +87,16 @@ class RealtimeTime(ModelBase):
         assert isinstance(other, timedelta)
         self.time -= other
 
+    def __eq__(self, other):
+        return self.time == other.time
+
 
 class TimeAndPlace(ModelBase):
-    def __init__(self, stop: Stop, platform: str=None, arrival: RealtimeTime=None, departure: RealtimeTime=None):
+    def __init__(self, stop: Stop, platform: str=None, arrival: RealtimeTime=None, departure: RealtimeTime=None, coords: tuple=None):
         super().__init__()
         self.stop = stop
         self.platform = platform
+        self.coords = coords
         self.arrival = arrival
         self.departure = departure
 
@@ -95,11 +105,14 @@ class TimeAndPlace(ModelBase):
                 self.platform == other.platform and self.arrival == other.arrival and
                 self.departure == other.departure)
 
+    def __repr__(self):
+        return '<TimeAndPlace %s %s %s %s>' % (repr(self.arrival), repr(self.departure), repr(self.stop), repr(self.platform))
+
 
 class LineTypes(ModelBase):
-    _known = ('localtrain', 'longdistance_other', 'ice', 'urban', 'metro', 'tram',
-              'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialbus',
-              'dialtaxi', 'others', 'walk')
+    _known = ('localtrain', 'longdistance', 'highspeed', 'urban', 'metro', 'tram',
+              'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialable',
+              'others', 'walk')
     _shortcuts = {
         'longdistance': ('longdistance_other', 'ice'),
         'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
@@ -169,15 +182,25 @@ class LineType(ModelBase):
 
 
 class Line(ModelBase):
-    def __init__(self, linetype: LineType):
+    def __init__(self, linetype: LineType=None):
         super().__init__()
         self.linetype = linetype
+        self.product = None
+        self.number = None
+        self.name = None
+        self.shortname = None
+        self.route = None
+
+        self.network = None
+        self.line = None
+        self.direction = None
+        self.operator = None
 
 
 class Ride(ModelBase):
     def __init__(self, line: Line=None):
         super().__init__()
-        self._stops = [(RideStopPointer(0), None)]
+        self._stops = []
         self.line = line
         self.bike_friendly = None
 
@@ -220,18 +243,24 @@ class Ride(ModelBase):
 
     def append(self, item):
         assert isinstance(item, TimeAndPlace) or item is None
-        self._stops.append((RideStopPointer(len(self._stops)), item))
+        pointer = RideStopPointer(len(self._stops))
+        self._stops.append((pointer, item))
+        return pointer
 
     def prepend(self, item):
         assert isinstance(item, TimeAndPlace) or item is None
-        self._stops.prepend((RideStopPointer(0), item))
+        pointer = RideStopPointer(0)
+        self._stops.prepend((pointer, item))
         self._alter_pointers_after(0, 1)
+        return pointer
 
     def insert(self, position, item):
         assert isinstance(item, TimeAndPlace) or item is None
         position = max(0, min(position, len(self._stops)))
-        self._stops.insert(position, (RideStopPointer(len(self._stops)), item))
+        pointer = RideStopPointer(position)
+        self._stops.insert(position, (pointer, item))
         self._alter_pointers_after(position, 1)
+        return pointer
 
     def extend(self, item):
         pass  # todo
@@ -249,6 +278,9 @@ class RideStopPointer():
 
     def __index__(self):
         return self._i
+
+    def __repr__(self):
+        return 'p:%d' % self._i
 
 
 class RideSegment():
