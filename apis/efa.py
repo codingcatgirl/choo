@@ -18,7 +18,24 @@ class EFA(API):
     def get_stop(self, stop: Stop):
         assert isinstance(stop, Stop)
 
-    def get_stop_rides(self, stop: Stop, time: datetime=None):
+    def _post(self, endpoint, data):
+        text = requests.post(self.base_url+endpoint, data=data).text
+        open('dump.xml', 'w').write(text)
+        return ET.fromstring(text)
+        
+    def _convert_location(self, location: Location):
+        """ Convert a Location into POST parameters for the EFA Requests """
+        myid, raw = self._my_data(location)
+        if isinstance(location, Stop):
+            if myid is not None:
+                return {'type': 'stop', 'place': None, 'name': str(myid)}
+            else:
+                return {'type': 'stop', 'place': location.city, 'name': location.name}
+        else:
+            raise NotImplementedError
+        
+    def _departure_monitor_request(self, stop: Stop, time: datetime=None):
+        """ Fills in Stop.rides; Can Return A SearchResult(Stop) without rides. """
         if time is None:
             time = datetime.now()
         stop = self._convert_location(stop)
@@ -45,26 +62,6 @@ class EFA(API):
         post.update({'%s_dm' % name: value for name, value in stop.items()})
 
         xml = self._post('XSLT_DM_REQUEST', post)
-        result = self._parse_stop_finder_request(xml)
-
-        return result
-
-    def _convert_location(self, location: Location):
-        myid, raw = self._my_data(location)
-        if isinstance(location, Stop):
-            if myid is not None:
-                return {'type': 'stop', 'place': None, 'name': str(myid)}
-            else:
-                return {'type': 'stop', 'place': location.city, 'name': location.name}
-        else:
-            raise NotImplementedError
-
-    def _post(self, endpoint, data):
-        text = requests.post(self.base_url+endpoint, data=data).text
-        open('dump.xml', 'w').write(text)
-        return ET.fromstring(text)
-
-    def _parse_stop_finder_request(self, xml):
         data = xml.find('./itdDepartureMonitorRequest')
 
         stop = self._parse_odv(data.find('./itdOdv'))
@@ -83,13 +80,13 @@ class EFA(API):
         stop.rides = self._parse_departures(departureslist)
 
         return stop
-        #return result
 
     def _parse_odv(self, data):
+        """ Parse an ODV (OriginDestinationVia) XML node """
         odvtype = data.attrib['type']
         results = []
 
-        # Place
+        # Place.city
         p = data.find('./itdOdvPlace')
         if p.attrib['state'] == 'empty':
             city = None
@@ -105,7 +102,7 @@ class EFA(API):
             pe = p.find('./odvPlaceElem')
             city = pe.text
 
-        # Location
+        # Location.name
         n = data.find('./itdOdvName')
         if n.attrib['state'] == 'empty':
             if city is not None:
@@ -124,13 +121,17 @@ class EFA(API):
             return self._name_elem(ne, city, odvtype)[0]
 
     def _name_elem(self, data, city, odvtype):
+        """ Parses the odvNameElem of an ODV """
+        # AnyTypes are used in some EFA instances instead of ODV types
         if 'anyType' in data.attrib and data.attrib['anyType'] != '':
             odvtype = data.attrib['anyType']
 
+        # Even though we got the city, some APIs deliver it only in the odvNameElem…
         mycity = city
         if mycity is None and 'locality' in data.attrib and data.attrib['locality'] != '':
             mycity = data.attrib['locality']
 
+        # What kind of location is it? Fill in attributes.
         location = None
         name = data.attrib['objectName'] if 'objectName' in data.attrib else data.text
         if odvtype == 'stop':
@@ -148,19 +149,24 @@ class EFA(API):
         else:
             raise NotImplementedError('Unknown odvtype: %s' % odvtype)
 
+        # IDs can come in different ways… Sometimes this is the only way to determine the Location type…
         if 'stopID' in data.attrib and data.attrib['stopID'] != '':
             if location is None:
                 location = Stop(self.country, mycity, name)
-            location.ids[self.name] = int(data.attrib['stopID'])
+            if isinstance(location, Stop):
+                location.ids[self.name] = int(data.attrib['stopID'])
         elif 'id' in data.attrib and data.attrib['id'] != '':
             if location is None:
                 location = POI(self.country, mycity, name)
             location.ids[self.name] = int(data.attrib['id'])
         elif location is None:
+            # Still no clue about the Type? Well, it's an Address then.
             location = Address(self.country, mycity, name)
 
+        # This is used when we got more than one Location
         score = int(data.attrib['matchQuality']) if 'matchQuality' in data.attrib else 0
 
+        # Coordinates
         if 'x' in data.attrib:
             location.coords = (float(data.attrib['x']) / 1000000, float(data.attrib['y']) / 1000000)
 
