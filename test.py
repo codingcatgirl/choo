@@ -5,9 +5,8 @@ from datetime import datetime
 
 vrr = VRR()
 du = Stop(city='Duisburg', name='hbf')
-now = datetime.now()
 
-result = vrr.get_stop_rides(du, now)
+result = vrr.get_stop_rides(du)
 if type(result) == list:
     for a in result:
         print(a[0].__class__.__name__)

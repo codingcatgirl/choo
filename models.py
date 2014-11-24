@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 class ModelBase():
     def __init__(self):
-        self.ids = {}
-        self.raws = {}
+        self._ids = {}
+        self._raws = {}
 
 
 class SearchResults():
@@ -186,22 +186,20 @@ class Line(ModelBase):
         super().__init__()
         self.linetype = linetype
         self.product = None
-        self.number = None
         self.name = None
         self.shortname = None
         self.route = None
 
         self.network = None
-        self.line = None
-        self.direction = None
         self.operator = None
 
 
 class Ride(ModelBase):
-    def __init__(self, line: Line=None):
+    def __init__(self, line: Line=None, number: str=None):
         super().__init__()
         self._stops = []
         self.line = line
+        self.number = number
         self.bike_friendly = None
 
     def is_complete(self):
