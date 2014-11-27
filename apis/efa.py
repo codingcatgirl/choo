@@ -17,10 +17,10 @@ class EFA(API):
 
     def get_stop(self, stop: Stop):
         assert isinstance(stop, Stop)
-        
+
     def get_stop_rides(self, stop: Stop):
         return self._departure_monitor_request(stop)
-        
+
     # Internal methods start here
 
     def _post(self, endpoint, data):
