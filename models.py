@@ -52,14 +52,17 @@ class SearchResults():
 
     def serialize(self):
         data = {}
-        self._add_not_none_obj(data, 'subject')
-        self._add_not_none(data, 'api')
-        self._add_not_none(data, 'method')
+        if self.subject is not None:
+            data['subject'] = self.subject.serialize()
+        if self.api is not None:
+            data['api'] = self.api
+        if self.method is not None:
+            data['method'] = self.method
         if self.results:
             if type(self.results[0]) == tuple:
-                data['results'] = [(item[0].__class__.__name__.lower(), item) for item in self.results]
+                data['results'] = [(item[0].__class__.__name__.lower(), (item[0].serialize(), item[1])) for item in self.results]
             else:
-                data['results'] = [(item.__class__.__name__.lower(), item) for item in self.results]
+                data['results'] = [(item.__class__.__name__.lower(), item.serialize()) for item in self.results]
         return data
 
 
@@ -92,7 +95,7 @@ class Location(ModelBase):
             'name': self.name,
         })
         self._add_not_none(data, 'coords')
-        if data.coords:
+        if self.coords:
             data['coords'] = self.coords
         return data
 
@@ -249,8 +252,10 @@ class TimeAndPlace(ModelBase):
         data = super().serialize()
         data['stop'] = self.stop.serialize()
         self._add_not_none(data, 'platform')
-        self._add_not_none(data, 'arrival')
-        self._add_not_none(data, 'departure')
+        if self.arrival is not None:
+            data['arrival'] = self.arrival.serialize()
+        if self.departure is not None:
+            data['departure'] = self.departure.serialize()
         self._add_not_none(data, 'coords')
         return data
 
@@ -580,8 +585,9 @@ class RideSegment():
                 self._pointer_destination == other._pointer_destination)
 
     def serialize(self):
-        data = super().serialize()
-        self._add_not_none_obj(data, 'ride')
+        data = {
+            'ride': self.ride.serialize()
+        }
         if self._pointer_origin is not None:
             data['origin'] = int(self._pointer_origin)
         if self._pointer_destination is not None:

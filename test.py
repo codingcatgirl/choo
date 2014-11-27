@@ -2,10 +2,10 @@
 from networks import VRR
 from models import Stop
 from datetime import datetime
+import json
 
 vrr = VRR()
-du = Stop(city='essen', name='berlin')
+du = Stop(city='essen', name='berliner platz')
 
-result = vrr._stop_finder_request(du)
-for stop in result:
-    print(stop)
+result = vrr.get_stop_rides(du)
+print(json.dumps(result.serialize(), indent=2))
