@@ -7,6 +7,25 @@ class ModelBase():
         self._ids = {}
         self._raws = {}
 
+    def _load(self, data):
+        self._ids = data.get('ids', {})
+
+    def serialize(self):
+        data = {}
+        if self._ids:
+            data['ids'] = self._ids
+        return data
+
+    def _add_not_none(self, data, name):
+        val = getattr(self, name)
+        if val:
+            data[name] = val
+
+    def _add_not_none_obj(self, data, name):
+        val = getattr(self, name)
+        if val:
+            data[name] = val.serialize()
+
 
 class SearchResults():
     def __init__(self, results, subject=None, api=None, method=None):
@@ -15,11 +34,33 @@ class SearchResults():
         self.method = method
         self.results = tuple(results)
 
+    @classmethod
+    def load(cls, data):
+        obj = cls(data.get('results', []))
+        obj.subject = data.get('subject', None)
+        obj.api = data.get('api', None)
+        obj.method = data.get('method', None)
+        # todo – load subject
+        return obj
+
     def __iter__(self):
-        return self.results
+        for result in self.results:
+            yield result
 
     def __getitem__(self, key):
         return self.results[key]
+
+    def serialize(self):
+        data = {}
+        self._add_not_none_obj(data, 'subject')
+        self._add_not_none(data, 'api')
+        self._add_not_none(data, 'method')
+        if self.results:
+            if type(self.results[0]) == tuple:
+                data['results'] = [(item[0].__class__.__name__.lower(), item) for item in self.results]
+            else:
+                data['results'] = [(item.__class__.__name__.lower(), item) for item in self.results]
+        return data
 
 
 class Location(ModelBase):
@@ -30,6 +71,31 @@ class Location(ModelBase):
         self.name = name
         self.coords = coords
 
+    def _load(self, data):
+        self.country = data.get('country', None)
+        self.city = data.get('city', None)
+        self.name = data.get('name', None)
+        self.coords = data.get('coords', None)
+        super()._load(data)
+
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        obj._load(data)
+        return obj
+
+    def serialize(self):
+        data = super().serialize()
+        data.update({
+            'country': self.country,
+            'city': self.city,
+            'name': self.name,
+        })
+        self._add_not_none(data, 'coords')
+        if data.coords:
+            data['coords'] = self.coords
+        return data
+
 
 class Stop(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
@@ -37,8 +103,23 @@ class Stop(Location):
         Location.__init__(self, country, city, name, coords)
         self.rides = []
 
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        obj.rides = data.get('rides', None)
+        if obj.rides:
+            obj.rides = [RideSegment.load(ride) for ride in obj.rides]
+        obj._load(data)
+        return obj
+
     def __repr__(self):
         return '<%s %s, %s>' % (self.__class__.__name__, self.city, self.name)
+
+    def serialize(self):
+        data = super().serialize()
+        if self.rides:
+            data['rides'] = [ride.serialize() for ride in self.rides]
+        return data
 
 
 class POI(Location):
@@ -46,11 +127,29 @@ class POI(Location):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
 
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        obj._load(data)
+        return obj
+
+    def serialize(self):
+        return super().serialize()
+
 
 class Address(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
+
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        obj._load(data)
+        return obj
+
+    def serialize(self):
+        return super().serialize()
 
 
 class RealtimeTime(ModelBase):
@@ -64,6 +163,21 @@ class RealtimeTime(ModelBase):
 
         self.time = time
         self.delay = delay
+
+    @classmethod
+    def load(cls, data):
+        time = data.get('time', None)
+        delay = data.get('delay', None)
+        livetime = data.get('livetime', None)
+        if time:
+            time = datetime.strptime(time, '%Y-%m-%d %H:%M')
+        if livetime:
+            livetime = datetime.strptime(livetime, '%Y-%m-%d %H:%M')
+        if delay:
+            delay = timedelta(minutes=delay)
+        obj = cls(time, delay, livetime)
+        obj._load(data)
+        return obj
 
     def __repr__(self):
         return '<RealtimeTime %s%s>' % (str(self.time)[:-3], (' +%d' % (self.delay.total_seconds()/60)) if self.delay is not None else '')
@@ -90,6 +204,13 @@ class RealtimeTime(ModelBase):
     def __eq__(self, other):
         return self.time == other.time
 
+    def serialize(self):
+        data = super().serialize()
+        data['time'] = self.time.strftime('%Y-%m-%d %H:%M')
+        if self.delay is not None:
+            data['delay'] = int(self.delay.total_seconds()/60)
+        return data
+
 
 class TimeAndPlace(ModelBase):
     def __init__(self, stop: Stop, platform: str=None, arrival: RealtimeTime=None, departure: RealtimeTime=None, coords: tuple=None):
@@ -100,6 +221,22 @@ class TimeAndPlace(ModelBase):
         self.arrival = arrival
         self.departure = departure
 
+    @classmethod
+    def load(cls, data):
+        arrival = data.get('arrival', None)
+        departure = data.get('departure', None)
+        coords = data.get('coords', None)
+        if arrival:
+            arrival = RealtimeTime.load(arrival)
+        if departure:
+            arrival = RealtimeTime.load(arrival)
+        if coords:
+            coords = tuple(coords)
+
+        obj = cls(data['stop'], data.get('platform', None), arrival, departure, coords)
+        obj._load(data)
+        return obj
+
     def __eq__(self, other):
         return (isinstance(other, TimeAndPlace) and self.stop == other.stop and
                 self.platform == other.platform and self.arrival == other.arrival and
@@ -107,6 +244,15 @@ class TimeAndPlace(ModelBase):
 
     def __repr__(self):
         return '<TimeAndPlace %s %s %s %s>' % (repr(self.arrival), repr(self.departure), repr(self.stop), repr(self.platform))
+
+    def serialize(self):
+        data = super().serialize()
+        data['stop'] = self.stop.serialize()
+        self._add_not_none(data, 'platform')
+        self._add_not_none(data, 'arrival')
+        self._add_not_none(data, 'departure')
+        self._add_not_none(data, 'coords')
+        return data
 
 
 class LineTypes(ModelBase):
@@ -122,6 +268,12 @@ class LineTypes(ModelBase):
     def __init__(self, all_types: bool=True):
         super().__init__()
         self._included = set(self._known) if all_types else set()
+
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        obj._included = data
+        return obj
 
     def add(self, *args: str):
         for name in args:
@@ -163,6 +315,9 @@ class LineTypes(ModelBase):
     def __eq__(self, other):
         return (isinstance(other, LineTypes) and self._invluced == other._included)
 
+    def serialize(self):
+        return self._included
+
 
 class LineType(ModelBase):
     def __init__(self, name: str):
@@ -172,6 +327,11 @@ class LineType(ModelBase):
         else:
             raise AttributeError('unsupported linetype')
 
+    @classmethod
+    def load(cls, data):
+        obj = cls(data)
+        return obj
+
     def __eq__(self, name: str):
         if self.name == name or (name in LineTypes._shortcuts and self.name in LineTypes._shortcuts[name]):
             return True
@@ -179,6 +339,9 @@ class LineType(ModelBase):
             return False
         else:
             raise AttributeError('unsupported linetype')
+
+    def serialize(self):
+        return self.name
 
 
 class Line(ModelBase):
@@ -193,6 +356,33 @@ class Line(ModelBase):
         self.network = None
         self.operator = None
 
+    @classmethod
+    def load(cls, data):
+        linetype = data.get('linetype', None)
+        if linetype:
+            linetype = LineType.load(linetype)
+
+        obj = cls(linetype)
+        obj.product = data.get('product', None)
+        obj.name = data.get('name', None)
+        obj.shortname = data.get('shortname', None)
+        obj.route = data.get('route', None)
+        obj.network = data.get('network', None)
+        obj.operator = data.get('operator', None)
+        obj._load(data)
+        return obj
+
+    def serialize(self):
+        data = super().serialize()
+        self._add_not_none_obj(data, 'linetype')
+        self._add_not_none(data, 'product')
+        self._add_not_none(data, 'name')
+        self._add_not_none(data, 'shortname')
+        self._add_not_none(data, 'route')
+        self._add_not_none(data, 'network')
+        self._add_not_none(data, 'route')
+        return data
+
 
 class Ride(ModelBase):
     def __init__(self, line: Line=None, number: str=None):
@@ -201,6 +391,23 @@ class Ride(ModelBase):
         self.line = line
         self.number = number
         self.bike_friendly = None
+
+    @classmethod
+    def load(cls, data):
+        line = data.get('line', None)
+        stops = data.get('stops', [])
+        number = data.get('number', None)
+        if line:
+            line = Line.load(line)
+        if stops:
+            stops = [(TimeAndPlace.load(stop) if stop is not None else None) for stop in stops]
+
+        obj = cls(line, number)
+        obj.bike_friendly = data.get('bike_friendly', None)
+        for stop in stops:
+            obj.append(stop)
+        obj._load(data)
+        return obj
 
     def is_complete(self):
         return None not in self._stops
@@ -266,6 +473,15 @@ class Ride(ModelBase):
     def __eq__(self, other):
         pass  # todo
 
+    def serialize(self):
+        data = super().serialize()
+        self._add_not_none_obj(data, 'line')
+        self._add_not_none(data, 'number')
+        self._add_not_none(data, 'bike_friendly')
+        if self._stops:
+            data['stops'] = [(stop[1].serialize() if stop[1] is not None else None) for stop in self._stops]
+        return data
+
 
 class RideStopPointer():
     def __init__(self, i: int):
@@ -286,6 +502,15 @@ class RideSegment():
         self.ride = ride
         self._pointer_origin = origin
         self._pointer_destination = destination
+
+    @classmethod
+    def load(cls, data):
+        ride = Ride.load(data['ride'])
+        origin = data.get('origin', None)
+        destination = data.get('destination', None)
+        me = ride[origin:destination]
+        obj = cls(ride, me._pointer_origin, me._pointer_destination)
+        return obj
 
     def _stops(self):
         return self.ride.stops[self._pointer_origin:self._pointer_destination]
@@ -354,6 +579,15 @@ class RideSegment():
                 self._pointer_origin == other._pointer_origin and
                 self._pointer_destination == other._pointer_destination)
 
+    def serialize(self):
+        data = super().serialize()
+        self._add_not_none_obj(data, 'ride')
+        if self._pointer_origin is not None:
+            data['origin'] = int(self._pointer_origin)
+        if self._pointer_destination is not None:
+            data['destination'] = int(self._pointer_destination)
+        return data
+
 
 class Way(ModelBase):
     def __init__(self, origin: Location, destination: Location, distance: int=None):
@@ -364,8 +598,25 @@ class Way(ModelBase):
         self.duration = None
         # todo: self.stairs = None
 
+    @classmethod
+    def load(cls, data):
+        origin = globals()[data['origin'][0]].load(data['origin'][1])
+        destination = globals()[data['destination'][0]].load(data['destination'][1])
+        obj = cls(origin, destination)
+        obj.distance = data.get('distance', None)
+        obj.duration = data.get('duration', None)
+        return obj
+
     def __eq__(self, other):
         return (isinstance(other, Way) and self.origin == other.origin and self.destination == other.destination)
+
+    def serialize(self):
+        data = super().serialize()
+        data['origin'] = (self.origin.__class__.__name__, self.origin)
+        data['destination'] = (self.destination.__class__.__name__, self.destination)
+        self._add_not_none(data, 'distance')
+        self._add_not_none(data, 'duration')
+        return data
 
 
 class Trip(ModelBase):
@@ -373,6 +624,15 @@ class Trip(ModelBase):
         super().__init__()
         self.parts = []
         self.walk_speed = 'normal'
+
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        parts = data.get('parts', [])
+        obj.parts = [(RideSegment.load(part[1]) if part[0] == 'ride' else Way.load(part[1])) for part in parts]
+        obj.walk_speed = data.get('walk_speed', None)
+        # todo: optional properties
+        return obj
 
     def __getattr__(self, name):
         if name == 'origin':
@@ -419,3 +679,10 @@ class Trip(ModelBase):
             if None in tmp:
                 return None
             return True
+
+    def serialize(self):
+        data = super().serialize()
+        data['parts'] = [('ride' if isinstance(part, RideSegment) else 'way', part.serialize()) for part in self.parts]
+        self._add_not_none(data, 'walk_speed')
+        # todo: optional properties
+        return data

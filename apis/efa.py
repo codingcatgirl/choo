@@ -60,7 +60,28 @@ class EFA(API):
             del r['place']
 
         return r
-        
+
+    def _stop_finder_request(self, stop: Stop):
+        """ Searches a Stop; Returns a SearchResult(Stop) """
+        mystop = self._convert_location(stop)
+
+        post = {
+            'language': 'de',
+            'outputFormat': 'XML',
+            'odvSugMacro': 'true'
+        }
+        post.update({'%s_sf' % name: value for name, value in mystop.items()})
+
+        xml = self._post('XSLT_STOPFINDER_REQUEST', post)
+        data = xml.find('./itdStopFinderRequest')
+
+        results = self._parse_odv(data.find('./itdOdv'))
+        if type(results) != list:
+            results = [results]
+        results = [result for result in results if isinstance(stop, result[0].__class__)]
+
+        return SearchResults(results, api=self.name)
+
     def _departure_monitor_request(self, stop: Stop, time: datetime=None):
         """ Fills in Stop.rides; Can Return A SearchResult(Stop) without rides. """
         if time is None:
@@ -94,7 +115,7 @@ class EFA(API):
         stop = self._parse_odv(data.find('./itdOdv'))
 
         if type(stop) == list:
-            return SearchResults(stop, api=self)
+            return SearchResults(stop, api=self.name)
 
         #lineslist = data.find('./itdServingLines')
         #if lineslist is not None:
