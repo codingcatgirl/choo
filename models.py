@@ -105,6 +105,7 @@ class Stop(Location):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
         self.rides = []
+        self.lines = []
 
     @classmethod
     def load(cls, data):
@@ -122,6 +123,8 @@ class Stop(Location):
         data = super().serialize()
         if self.rides:
             data['rides'] = [ride.serialize() for ride in self.rides]
+        if self.lines:
+            data['lines'] = [line.serialize() for line in self.lines]
         return data
 
 
@@ -357,6 +360,8 @@ class Line(ModelBase):
         self.name = None
         self.shortname = None
         self.route = None
+        self.first_stop = None
+        self.last_stop = None
 
         self.network = None
         self.operator = None
@@ -372,6 +377,14 @@ class Line(ModelBase):
         obj.name = data.get('name', None)
         obj.shortname = data.get('shortname', None)
         obj.route = data.get('route', None)
+
+        obj.first_stop = data.get('first_stop', None)
+        obj.last_stop = data.get('last_stop', None)
+        if obj.first_stop:
+            obj.first_stop = Stop.load(obj.first_stop)
+        if obj.last_stop:
+            obj.last_stop = Stop.load(obj.last_stop)
+
         obj.network = data.get('network', None)
         obj.operator = data.get('operator', None)
         obj._load(data)
@@ -384,8 +397,10 @@ class Line(ModelBase):
         self._add_not_none(data, 'name')
         self._add_not_none(data, 'shortname')
         self._add_not_none(data, 'route')
+        self._add_not_none_obj(data, 'first_stop')
+        self._add_not_none_obj(data, 'last_stop')
         self._add_not_none(data, 'network')
-        self._add_not_none(data, 'route')
+        self._add_not_none(data, 'operator')
         return data
 
 

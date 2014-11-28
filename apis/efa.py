@@ -117,12 +117,16 @@ class EFA(API):
         if type(stop) == list:
             return SearchResults(stop, api=self.name)
 
-        #lineslist = data.find('./itdServingLines')
-        #if lineslist is not None:
-        #	result.lines = []
-        #	lines = lineslist.findall('./itdServingLine')
-        #	for line in lines:
-        #		result.lines.append(self.MOT(line))
+        lineslist = data.find('./itdServingLines')
+        if lineslist is not None:
+            print('a')
+            stop.lines = []
+            lines = lineslist.findall('./itdServingLine')
+            for line in lines:
+                origin, destination, line, rideid, ridenum = self._parse_mot(line)
+                line.first_stop = origin
+                line.last_stop = destination
+                stop.lines.append(line)
 
         departureslist = data.find('./itdDepartureList')
         stop.rides = self._parse_departures(departureslist)
