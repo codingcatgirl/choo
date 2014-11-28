@@ -49,6 +49,7 @@ class SearchResults():
         obj.api = data.get('api', None)
         obj.method = data.get('method', None)
         # todo – load subject
+        # todo - load results
         return obj
 
     def __iter__(self):
@@ -95,12 +96,24 @@ class Location(ModelBase):
         obj._load(data)
         return obj
 
+    @classmethod
+    def load_tuple(cls, data):
+        return {
+            'location': Location,
+            'stop': Stop,
+            'poi': POI,
+            'address': Address
+        }[data[0]].load(data[1])
+
+    def _serialize_tuple(self, ids):
+        return (self.__class__.__name__.lower(), self._serialize(ids))
+
     def _serialize(self, ids):
         data = super()._serialize(ids)
         data.update({
             'country': self.country,
             'city': self.city,
-            'name': self.name,
+            'name': self.name
         })
         self._add_not_none(data, 'coords')
         if self.coords:
@@ -125,7 +138,7 @@ class Stop(Location):
         return obj
 
     def __repr__(self):
-        return '<%s %s, %s>' % (self.__class__.__name__, self.city, self.name)
+        return '<%s %s, %s>' % ('Stop', self.city, self.name)
 
     def _serialize(self, ids):
         data = super()._serialize(ids)
@@ -646,8 +659,8 @@ class Way(ModelBase):
 
     def _serialize(self, ids):
         data = super()._serialize(ids)
-        data['origin'] = (self.origin.__class__.__name__, self.origin)
-        data['destination'] = (self.destination.__class__.__name__, self.destination)
+        data['origin'] = self.origin._serialize_tuple(ids)
+        data['destination'] = self.destination._serialize_tuple(ids)
         self._add_not_none(data, 'distance')
         self._add_not_none(data, 'duration')
         return data
