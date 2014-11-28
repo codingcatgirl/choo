@@ -9,6 +9,7 @@ class ModelBase():
 
     def _load(self, data):
         self._ids = data.get('ids', {})
+        self._raws = data.get('raws', {})
 
     def serialize(self, ids=None):
         if ids is None:
@@ -22,6 +23,8 @@ class ModelBase():
         data = {}
         if self._ids:
             data['ids'] = self._ids
+        if self._raws:
+            data['raws'] = self._raws
         return data
 
     def _add_not_none(self, data, name):

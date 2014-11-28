@@ -119,7 +119,6 @@ class EFA(API):
 
         lineslist = data.find('./itdServingLines')
         if lineslist is not None:
-            print('a')
             stop.lines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
@@ -147,7 +146,7 @@ class EFA(API):
                 pe = p.findall('./odvPlaceElem')
                 for item in pe:
                     location = Location(self.country, city=item.text)
-                    location._raws[self.name] = pe
+                    location._raws[self.name] = ET.tostring(pe, 'utf-8').decode()
                     results.append(location)
             return results
         else:
@@ -159,7 +158,7 @@ class EFA(API):
         if n.attrib['state'] == 'empty':
             if city is not None:
                 location = Location(self.country, city)
-                location._raws[self.name] = pe
+                location._raws[self.name] = ET.tostring(pe, 'utf-8').decode()
                 results.append(location)
             return results
         elif n.attrib['state'] != 'identified':
@@ -170,7 +169,9 @@ class EFA(API):
             return results
         else:
             ne = n.find('./odvNameElem')
-            return self._name_elem(ne, city, odvtype)[0]
+            result = self._name_elem(ne, city, odvtype)[0]
+            result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
+            return result
 
     def _name_elem(self, data, city, odvtype):
         """ Parses the odvNameElem of an ODV """
@@ -280,7 +281,7 @@ class EFA(API):
                                   'ship', 'dialable', 'others')[mottype])
 
         # general Line and Ride attributes
-        line._raws[self.name] = data
+        line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
         rideid = data.attrib['stateless']
         diva = data.find('./motDivaParams')
         if diva is not None:
@@ -346,6 +347,7 @@ class EFA(API):
             location._ids[self.name] = int(data.attrib['stopID'])
 
         result = TimeAndPlace(location)
+        result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
 
         if 'x' in data.attrib:
             result.coords = (float(data.attrib['x']) / 1000000, float(data.attrib['y']) / 1000000)
