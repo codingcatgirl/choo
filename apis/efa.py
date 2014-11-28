@@ -129,7 +129,7 @@ class EFA(API):
                 stop.lines.append(line)
 
         departureslist = data.find('./itdDepartureList')
-        stop.rides = self._parse_departures(departureslist)
+        stop.rides = self._parse_departures(departureslist, stop)
 
         return stop
 
@@ -239,7 +239,9 @@ class EFA(API):
             if origin is not None:
                 ride.append(TimeAndPlace(origin))
             ride.append(None)
-            pointer = ride.append(self._parse_trip_point(departure))
+            mypoint = self._parse_trip_point(departure)
+            mypoint.stop = stop
+            pointer = ride.append(mypoint)
             ride.append(None)
             if destination is not None:
                 ride.append(TimeAndPlace(destination))
