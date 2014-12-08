@@ -670,10 +670,14 @@ class Way(ModelBase):
 
 
 class Trip(ModelBase):
+    overwritable = ('origin', 'destination', 'departure', 'arrival',
+                    'changes', 'linetypes', 'changes', 'bike_friendly')
+
     def __init__(self):
         super().__init__()
         self.parts = []
         self.walk_speed = 'normal'
+        self.overwritten = {}
 
     @classmethod
     def load(cls, data):
@@ -681,10 +685,40 @@ class Trip(ModelBase):
         parts = data.get('parts', [])
         obj.parts = [(RideSegment.load(part[1]) if part[0] == 'ride' else Way.load(part[1])) for part in parts]
         obj.walk_speed = data.get('walk_speed', None)
-        # todo: optional properties
+        for name in cls.overwritable:
+            if name not in data:
+                continue
+            value = data[name]
+            if name in ('changes', 'bike_friendly'):
+                setattr(obj, name, value)
+            elif name in ('origin', 'destination'):
+                data[name] = Location.load_tuple(value)
+            elif name in ('departure', 'arrival'):
+                data[name] = RealtimeTime.load(value)
+            elif name in ('linetypes'):
+                data[name] = LineTypes.load(value)
         return obj
 
+    def __setattr__(self, name, value):
+        if name not in self.overwritable:
+            setattr(self, name, value)
+        else:
+            self.overwritten[name] = value
+
+    def __delattr__(self, name):
+        if name not in self.overwritten:
+            raise AttributeError
+        else:
+            del self.overwritten[name]
+
+    def is_overwritten(self, name):
+        return name in self.overwritten
+
     def __getattr__(self, name):
+        if name not in self.overwritable:
+            raise AttributeError
+        if name in self.overwritten:
+            return self.overwritten[name]
         if name == 'origin':
             return None if not self.parts else self.parts[0].origin
         elif name == 'destination':
@@ -734,5 +768,11 @@ class Trip(ModelBase):
         data = super()._serialize(ids)
         data['parts'] = [('ride' if isinstance(part, RideSegment) else 'way', part.serialize(ids)) for part in self.parts]
         self._add_not_none(data, 'walk_speed')
-        # todo: optional properties
+        for name, value in self.overwritten.items():
+            if name in ('changes', 'bike_friendly'):
+                data[name] = value
+            elif name in ('origin', 'destination'):
+                data[name] = value._serialize_tuple(id)
+            else:
+                data[name] = value.serialize(ids)
         return data
