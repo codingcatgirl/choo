@@ -1,7 +1,9 @@
 Models
 ======
 
-transit is composed using a lot of models. Please note that nearly all attributes can also be ``None`` when the information they should describe is not available.
+transit is composed using a lot of models.
+
+Please note that nearly all attributes can also be ``None`` when the information they should describe is not available.
 
 .. py:class:: ModelBase()
 
@@ -115,7 +117,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
         The (expected) delay as a `datetime.timedelta` object or None.
         Please note that a zero delay is not the same as None. None stands for absence of real time information.
         
-    The following attributes are dynamic and cannot be set:
+    **The following attributes are dynamic and cannot be set:**
     
     .. attribute:: is_live
     
@@ -270,7 +272,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
         Insert a :py:class:`TimeAndPlace` as the new position ``position``.
         
-    The following attributes are dynamic and cannot be set:
+    **The following attributes are dynamic and cannot be set:**
     
     .. attribute:: is_complete
     
@@ -300,7 +302,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
         
     All attributes of the :py:class:`Ride` are also directly accessible through a :py:class:`RideSegment`.
     
-    This following attributes are dynamic and cannot be set:
+    **This following attributes are dynamic and cannot be set:**
     
     .. attribute:: is_complete
     
@@ -356,7 +358,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
         Walk speed assumed for this trip as a string. (``slow``, ``normal`` or ``fast``)
         
-    The following attributes are dynamic but *can* also be overwritten.
+    **The following attributes are dynamic** but **can** also be overwritten.
     
     Overwriting them does not overwrite the original and only affects this object. This can be used to describe a unknown trip to use as an argument for trip searching.
     
