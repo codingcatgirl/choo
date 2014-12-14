@@ -428,6 +428,7 @@ class Ride(ModelBase):
         self._serial_get(data, 'bike_friendly')
         self.stops = [TimeAndPlace.unserialize(stop) for stop in data.get('stops', [])]
 
+    @property
     def is_complete(self):
         return None not in self._stops
 
@@ -534,6 +535,7 @@ class RideSegment():
     def _stops(self):
         return self.ride._stops[self._pointer_origin:self._pointer_destination]
 
+    @property
     def is_complete(self):
         return None not in self._stops()
 
