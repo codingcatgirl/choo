@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
 
+
 class ModelBase():
     def __init__(self):
         self._ids = {}
         self._raws = {}
-        
+
     @classmethod
     def load(cls, data):
         obj = cls()
@@ -15,7 +16,7 @@ class ModelBase():
     def _load(self, data):
         self._serial_get(data, '_ids')
         self._serial_get(data, '_raws')
-        
+
     @classmethod
     def unserialize(cls, data):
         if data is None:
@@ -65,7 +66,7 @@ class ModelBase():
         self._serial_add(data, '_ids', ids)
         self._serial_add(data, '_raws', ids)
         return data
-        
+
     def _serial_add(self, data, name, ids, notnone=True):
         val = getattr(self, name)
         if val is None:
@@ -84,7 +85,7 @@ class ModelBase():
             data[name] = ('tuple', val)
         else:
             data[name] = val
-            
+
     def _serial_get(self, data, name):
         if name in data:
             setattr(self, name, ModelBase.unserialize(data[name]))
@@ -102,9 +103,9 @@ class SearchResults():
         self.results = []
         for result in data.get('results', []):
             if type(result[0]) in (tuple, list):
-                self.results.append((BaseModel.unserialize(result[0]), result[1]))
+                self.results.append((ModelBase.unserialize(result[0]), result[1]))
             else:
-                self.results.append(BaseModel.unserialize(result))
+                self.results.append(ModelBase.unserialize(result))
         self._serial_get(data, 'subject')
         self._serial_get(data, 'api')
         self._serial_get(data, 'method')
