@@ -641,7 +641,7 @@ class Way(ModelBase):
 
 class Trip(ModelBase):
     overwritable = ('origin', 'destination', 'departure', 'arrival',
-                    'changes', 'linetypes', 'changes', 'bike_friendly')
+                    'changes', 'linetypes', 'bike_friendly')
 
     def __init__(self):
         super().__init__()
