@@ -222,7 +222,7 @@ class RealtimeTime(ModelBase):
         return '<RealtimeTime %s%s>' % (str(self.time)[:-3], (' +%d' % (self.delay.total_seconds()/60)) if self.delay is not None else '')
 
     @property
-    def islive(self):
+    def is_live(self):
         return self.delay is not None
 
     @property

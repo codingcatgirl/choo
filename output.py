@@ -43,9 +43,9 @@ class PrettyPrint():
             return indent+'%s%s (by %s in %s)' % (obj.name, direction, obj.operator, obj.network)
         elif isinstance(obj, RealtimeTime):
             if self.showDelayedTime:
-                return obj.livetime.strftime('%H:%M')+('' if not obj.islive else (' (+%d)' % int(obj.delay.total_seconds()/60)))
+                return obj.livetime.strftime('%H:%M')+('' if not obj.is_live else (' (+%d)' % int(obj.delay.total_seconds()/60)))
             else:
-                return obj.time.strftime('%H:%M')+('' if not obj.islive else (' +%d' % int(obj.delay.total_seconds()/60)))
+                return obj.time.strftime('%H:%M')+('' if not obj.is_live else (' +%d' % int(obj.delay.total_seconds()/60)))
         elif isinstance(obj, RideSegment) and oneline:
             direction = (' → '+self.formatted(obj.ride[-1].stop, 0, True, True)) if obj.ride[-1] is not None else ''
             line = indent+self.formatted(obj[0].departure).ljust(10)+' '+obj[0].platform.ljust(5)+' '+self.formatted(obj.ride.line, short=True)+direction

@@ -27,17 +27,17 @@ transit is composed using a lot of models. Please note that nearly all attribute
         :rtype: the unserialized object
         
         
-.. py:class:: SearchResults(results=[], subject=None, api=None, method=None)
+.. py:class:: SearchResults(results=None, subject=None, api=None, method=None)
 
     When you try to retrieve an object and the multiple matches occur, you get :py:class:`SearchResults`.
     
-    To get the results, just iterate over a :py:class:`SearchResults`-object.
+    To get the results, just iterate over a :py:class:`SearchResults` object.
     
     For some search methods each result is a ``(object, matchscore)`` tuple.
     
     .. attribute:: results
     
-        The search results as an iterable.
+        The search results as a list.
         
     .. attribute:: subject
     
@@ -79,11 +79,11 @@ transit is composed using a lot of models. Please note that nearly all attribute
 
     .. attribute:: lines
     
-        lines that are available at this stop as an iterable as a list of :py:class:`Line` objects.
+        lines that are available at this stop as an list of :py:class:`Line` objects.
         
     .. attribute:: rides
     
-        The next rides departing from this stop as an iterable of :py:class:`RideSegment` starting at this stop.
+        The next rides departing from this stop as an list of :py:class:`RideSegment` starting at this stop.
         
         
 .. py:class:: Address(country=None, city=None, name=None, coords=None)
@@ -102,7 +102,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
     :param time: The originally planned time as a `datetime.datetime` object.
     :param delay: The (expected) delay as a `datetime.timedelta` object.
-    :param time: The (expected) actual time as a `datetime.datetime` object.
+    :param livetime: The (expected) actual time as a `datetime.datetime` object.
     
     You will get an `AssertionError` if you specify both delay and time and they are contradicting each other.
     
@@ -117,7 +117,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
         
     The following attributes are dynamic and cannot be set:
     
-    .. attribute:: islive
+    .. attribute:: is_live
     
         True if there is real time data available. Shortcut for ``delay is not None``
         
@@ -169,13 +169,13 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
         Add types to the selection.
         
-        :param *args: one or more of the supported types
+        :param args: one or more of the supported types
         
     .. method:: remove(*args)
     
         Remove types from the selection.
         
-        :param *args: one or more of the supported types
+        :param args: one or more of the supported types
         
         
 .. py:class:: LineType(name: str)
@@ -234,13 +234,13 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
     Although a :py:class:`Ride` is iterable, most of the time not all stops of the rides are known and the list of known stations can change. This makes the use of integer indices impossible. To avoid this problem, dynamic indices are used for a :py:class:`Ride`.
     
-    If you iterate over a :py:class:`Ride` each item you get is ``None`` or a :py:class:`TimeAndPlace` object. Each item that is ``None`` stands for n missing stations. It can also mean that there the :py:class:`TimeAndPlace` before and after the item are in fact the same. To get rid of all ``None``, ask a network API to complete the list of stations of this :py:class:`Ride`.
+    If you iterate over a :py:class:`Ride` each item you get is ``None`` or a :py:class:`TimeAndPlace` object. Each item that is ``None`` stands for n missing stations. It can also mean that the :py:class:`TimeAndPlace` before and after the item are in fact the same. To get rid of all ``None`` items, ask a network API to complete the list of stations of this :py:class:`Ride`.
     
     You can use integer indices to get, set or delete single :py:class:`TimeAndPlace` objects which is usefull if you want the first (0) or last (-1). But, as explained above, these integer indices may point to another item when the :py:class:`Ride` changes or becomes more complete.
     
-    If you iterate over ``ride.items()`` you get ``(RideStopPointer, TimeAndPlace)`` tuples. The :py:class:`RideStopPointer` used as an indice will always point to the same :py:class:`TimeAndPlace` object.
+    If you iterate over ``ride.items()`` you get ``(RideStopPointer, TimeAndPlace)`` tuples. When used as an indice, a :py:class:`RideStopPointer` used as an indice will always point to the same :py:class:`TimeAndPlace` object.
     
-    You can slice a :py:class:`Ride` (using integer indices or RideStopPointer) which will get you a :py:class:`RideSegment` that will always have the correct boundaries. Slicing with no start or no end point is also supported.
+    You can slice a :py:class:`Ride` (using integer indices or :py:class RideStopPointer`) which will get you a :py:class:`RideSegment` that will always have the correct boundaries. Slicing with no start or no end point is also supported.
     
     .. attribute:: line
     
@@ -248,7 +248,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
         
     .. attribute:: number
     
-        The number of this :py:class:`Ride` as a string.
+        The number (train number or similar) of this :py:class:`Ride` as a string.
         
     .. attribute:: bike_friendly
     
@@ -266,7 +266,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
         Append a :py:class:`TimeAndPlace` object.
         
-    .. method:: append(item)
+    .. method:: prepend(item)
     
         Prepend a :py:class:`TimeAndPlace` object.
         
@@ -354,11 +354,11 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
         Walk speed assumed for this trip as a string. (``slow``, ``normal`` or ``fast``)
         
-    The following attributes are dynamic but *can* be overwritten.
+    The following attributes are dynamic but *can* also be overwritten.
     
     Overwriting them does not overwrite the original and only affects this object. This can be used to describe a unknown trip to use as an argument for trip searching.
     
-    To unoverwrite an attribute, just delete it.
+    To reset an overwritten value, just delete it.
     
     .. attribute:: origin
 
@@ -366,15 +366,15 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
     .. attribute:: destination
 
-        The emd :py:class:`Location` of this trip.
+        The end :py:class:`Location` of this trip.
         
     .. attribute:: departure
 
-        The departure at the first :py:class:`Location` of this trip. (If there are leading :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
+        The departure at the first :py:class:`Location` of this trip as :py:class:`RealtimeTime`. (If there are leading :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
     
     .. attribute:: arrival
 
-        The arrival at the last :py:class:`Location` of this trip. (If there are trailing :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
+        The arrival at the last :py:class:`Location` of this trip as :py:class:`RealtimeTime`. (If there are trailing :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
     
     .. attribute:: linetypes
 
