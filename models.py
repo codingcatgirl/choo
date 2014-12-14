@@ -533,7 +533,7 @@ class RideSegment():
         return obj
 
     def _stops(self):
-        return self.ride.stops[self._pointer_origin:self._pointer_destination]
+        return self.ride._stops[self._pointer_origin:self._pointer_destination]
 
     def is_complete(self):
         return None not in self._stops()
