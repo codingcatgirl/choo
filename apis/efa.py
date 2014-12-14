@@ -25,7 +25,7 @@ class EFA(API):
 
     def _post(self, endpoint, data):
         text = requests.post(self.base_url+endpoint, data=data).text
-        open('dump.xml', 'w').write(text)
+        # open('dump.xml', 'w').write(text)
         return ET.fromstring(text)
 
     def _convert_location(self, location: Location):
