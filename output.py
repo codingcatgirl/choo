@@ -11,7 +11,7 @@ class PrettyPrint():
     def __init__(self, showDelayedTime=False, width=80):
         self.showDelayedTime = showDelayedTime
         self.width = 80
-        
+
     def formatted(self, obj, indented=0, oneline=False, short=False):
         indent = ' '*indented*2
         output = ''
@@ -50,11 +50,10 @@ class PrettyPrint():
             direction = (' → '+self.formatted(obj.ride[-1].stop, 0, True, True)) if obj.ride[-1] is not None else ''
             line = indent+self.formatted(obj[0].departure).ljust(10)+' '+obj[0].platform.ljust(5)+' '+self.formatted(obj.ride.line, short=True)+direction
             return line
-        
         else:
             header = obj.__class__.__name__
             fields = obj.__dict__.keys()
-                
+
         output = indent+header+'\n'
         for field in fields:
             val = getattr(obj, field)
