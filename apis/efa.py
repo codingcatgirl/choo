@@ -36,7 +36,7 @@ class EFA(API):
 
         if location.name is None:
             if location.coords is not None:
-                r = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % (location.coords)}
+                r = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % (reversed(location.coords))}
             else:
                 r = {'type': 'stop', 'place': city, 'name': ''}
         elif isinstance(location, Stop):
@@ -222,7 +222,7 @@ class EFA(API):
 
         # Coordinates
         if 'x' in data.attrib:
-            location.coords = (float(data.attrib['x']) / 1000000, float(data.attrib['y']) / 1000000)
+            location.coords = (float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         return location, score
 
@@ -349,7 +349,7 @@ class EFA(API):
         result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
 
         if 'x' in data.attrib:
-            result.coords = (float(data.attrib['x']) / 1000000, float(data.attrib['y']) / 1000000)
+            result.coords = (float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # get and clean the platform
         platform = data.attrib['platform']
