@@ -1,15 +1,15 @@
-.. transit documentation master file, created by
-   sphinx-quickstart on Mon Nov 24 13:18:28 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+transit
+=======
 
-Welcome to transit's documentation!
-===================================
+transit is a python3 library providing a uniform interface for public transit APIs.
 
 Contents:
+---------
 
 .. toctree::
    :maxdepth: 2
+   
+   transit/models
 
 
 
