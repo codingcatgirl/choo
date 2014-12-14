@@ -253,11 +253,7 @@ transit is composed using a lot of models. Please note that nearly all attribute
     .. attribute:: bike_friendly
     
         ``True`` if this is a bike-friendly vehicle, otherwise ``False``.
-    
-    .. method:: is_complete()
-    
-        ``True`` if the :py:class:`TimeAndPlace` list is complete and there are no Nones in the list, otherwise ``False``.
-        
+            
     .. method:: items()
     
         A ``(RideStopPointer, TimeAndPlace)`` iterator as explained above.
@@ -273,6 +269,12 @@ transit is composed using a lot of models. Please note that nearly all attribute
     .. method:: insert(position, item)
     
         Insert a :py:class:`TimeAndPlace` as the new position ``position``.
+        
+    The following attributes are dynamic and cannot be set:
+    
+    .. attribute:: is_complete
+    
+        ``True`` if the :py:class:`TimeAndPlace` list is complete and there are no Nones in the list, otherwise ``False``.
         
         
 .. py:class:: RideStopPointer(i: int)
@@ -292,10 +294,6 @@ transit is composed using a lot of models. Please note that nearly all attribute
     
         The :py:class:`Ride` that this object is a segment of.
         
-    .. method:: is_complete()
-    
-        ``True`` if the :py:class:`TimeAndPlace` list of this Segment is complete.
-    
     .. method:: items()
 
         A ``(RideStopPointer, TimeAndPlace)`` iterator over this segment.
@@ -303,6 +301,10 @@ transit is composed using a lot of models. Please note that nearly all attribute
     All attributes of the :py:class:`Ride` are also directly accessible through a :py:class:`RideSegment`.
     
     This following attributes are dynamic and cannot be set:
+    
+    .. attribute:: is_complete
+    
+        ``True`` if the :py:class:`TimeAndPlace` list of this Segment is complete.
     
     .. attribute:: origin
 
