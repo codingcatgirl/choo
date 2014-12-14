@@ -294,7 +294,6 @@ class EFA(API):
 
         # We behave different for trains and non-trains
         if mottype == 0:
-            print(data.attrib)
             line.name = data.attrib['symbol']
             line.product = data.attrib.get('trainName', '')
             if not line.product:

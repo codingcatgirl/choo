@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
 
-
 class ModelBase():
     def __init__(self):
         self._ids = {}
@@ -50,7 +49,6 @@ class ModelBase():
             if hasattr(oneclass, '_serialize'):
                 olddata = data
                 newdata = oneclass._serialize(self, newids)
-                print(newdata)
                 if type(newdata) != dict and not data:
                     data = newdata
                     break
