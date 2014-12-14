@@ -342,7 +342,7 @@ class LineTypes(ModelBase):
         return bool(self._included)
 
     def __eq__(self, other):
-        return (isinstance(other, LineTypes) and self._invluced == other._included)
+        return (isinstance(other, LineTypes) and self._incluced == other._included)
 
     def _serialize(self, ids):
         return self._included
