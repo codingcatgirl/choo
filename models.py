@@ -66,14 +66,12 @@ class ModelBase():
             self._serial_add(data, '_raws', ids)
         return data
 
-    def _serial_add(self, data, name, ids, notnone=True, **kwargs):
+    def _serial_add(self, data, name, ids, **kwargs):
         if 'val' in kwargs:
             val = kwargs['val']
         else:
             val = getattr(self, name)
             if val is None:
-                if not notnone:
-                    data[name] = None
                 return
         if isinstance(val, ModelBase):
             data[name] = val.serialize(ids)
@@ -151,9 +149,9 @@ class Location(ModelBase):
 
     def _serialize(self, ids):
         data = {}
-        self._serial_add(data, 'country', ids, False)
-        self._serial_add(data, 'city', ids, False)
-        self._serial_add(data, 'name', ids, False)
+        self._serial_add(data, 'country', ids,)
+        self._serial_add(data, 'city', ids)
+        self._serial_add(data, 'name', ids)
         self._serial_add(data, 'coords', ids)
         return data
 
@@ -257,7 +255,7 @@ class RealtimeTime(ModelBase):
 
     def _serialize(self, ids):
         data = {}
-        self._serial_add(data, 'time', ids, False)
+        self._serial_add(data, 'time', ids)
         self._serial_add(data, 'delay', ids)
         return data
 
@@ -289,7 +287,7 @@ class TimeAndPlace(ModelBase):
 
     def _serialize(self, ids):
         data = super()._serialize(ids)
-        self._serial_add(data, 'stop', ids, False)
+        self._serial_add(data, 'stop', ids)
         self._serial_add(data, 'platform', ids)
         self._serial_add(data, 'coords', ids)
         self._serial_add(data, 'arrival', ids)
