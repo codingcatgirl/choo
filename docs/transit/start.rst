@@ -41,7 +41,13 @@ The API method ``get_stop`` tries to get as much information as possible about a
         13:13      3     U18 → Essen Berliner Platz
         […]
 
-As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not guaranteed by the ``get_stop`` method (but is guaranteed by ``get_stop_rides``). The result should be self explanatory.
+As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not guaranteed by the ``get_stop`` method (for more information, see `Network API`_).
+
+For more information about the command line Syntax and the JSON input format, see `Command Line Usage`_ and `Model Serialization`_.
+
+.. _`Command Line Usage`: cli
+.. _`Network API`: api
+.. _`Model Serialization`: serializing
 
 JSON Interface
 --------------
@@ -52,7 +58,7 @@ If you want to process the data you want it in a easily parsable format and you 
     
     transit VRR get_stop --json-noraw essen.json
     
-The ``--json-noraw`` argument suppresses the raw data (XML or whatever the backend sends) in the JSON as it would make the output even larger. If you want to pass the json output back to the Interface, you should (but do not have to) use ``--json``.
+The ``--json-noraw`` argument suppresses the raw data (XML or whatever the backend sends) in the JSON as it would make the output even larger. If you want to pass the json output back to the Interface, you should (but do not have to) use ``--json``. For more information, see `Command Line Usage`_.
 
 If you set the filename to ``-`` you can pass the data via STDIN.
 
@@ -74,7 +80,6 @@ If you set the filename to ``-`` you can pass the data via STDIN.
                 "last_stop": ["Stop", {
                     "_ids": {"vrr": 20002007},
                     "country": "de",
-                    "city": null,
                     "name": "Hagen Hauptbahnhof"
                 }],
                 "route": "Essen - Bochum - Witten - Hagen",
@@ -94,7 +99,6 @@ If you set the filename to ``-`` you can pass the data via STDIN.
                             "stop": ["Stop", {
                                 "_ids": {},
                                 "country": "de",
-                                "city": null,
                                 "name": "Essen Helenenstr. Schleife"
                             }]
                         }],
@@ -125,7 +129,6 @@ If you set the filename to ``-`` you can pass the data via STDIN.
                             "stop": ["Stop", {
                                 "_ids": {"vrr": 20009832},
                                 "country": "de",
-                                "city": null,
                                 "name": "Essen Altenessen Bf Schleife"
                             }]
                         }]
@@ -155,8 +158,8 @@ First, we can see that the API returns a stop – the stop we gave as input – 
 
 **Line**
     In the ``lines`` attribute all lines that can be reached from this stop are listed. In this excerpt, only one line is listed.
-    Note that in its ``last_stop`` attribute the stop is not fully described: The ``city`` attribute is null.
-    **Every attribute that has no data available will be missing or null.**
+    Note that in its ``last_stop`` attribute the stop is not fully described: The ``city`` attribute is missing.
+    **Every attribute that has no data available will be missing.**
     To get the full information about this Stop, you would also pass it to the ``get_stop`` method.
 
 In the ``rides`` attribute the next rides that pass this station are listed. To understand this, let's talk about how rides work:
@@ -184,6 +187,8 @@ In the ``rides`` attribute the next rides that pass this station are listed. To 
     A real time time object consists of a ``time`` attribute``, which is always a ``datetime`` object in the ``YYYY-MM-DD HH:MM`` format and an optional ``delay`` attribute, which is the currently expected delay as a ``timedelta`` object in seconds.
     
     If the ``delay`` attribute is missing, no real time data is available. If the ride is on time the delay will be 0 seconds.
+    
+For more information about the JSON format, see `Model Serialization`_.
     
 Python Interface
 ----------------
