@@ -62,7 +62,8 @@ class ModelBase():
     def _serialize(self, ids):
         data = {}
         self._serial_add(data, '_ids', ids)
-        self._serial_add(data, '_raws', ids)
+        if 'noraws' not in ids:
+            self._serial_add(data, '_raws', ids)
         return data
 
     def _serial_add(self, data, name, ids, notnone=True):
@@ -599,6 +600,9 @@ class RideSegment():
         return (isinstance(other, RideSegment) and self.ride == other.ride and
                 self._pointer_origin == other._pointer_origin and
                 self._pointer_destination == other._pointer_destination)
+                
+    def serialize(self, ids):
+        return ModelBase.serialize(self, ids)
 
     def _serialize(self, ids):
         data = {

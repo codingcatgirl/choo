@@ -17,6 +17,7 @@ class EFA(API):
 
     def get_stop(self, stop: Stop):
         assert isinstance(stop, Stop)
+        return self.get_stop_rides(stop)
 
     def get_stop_rides(self, stop: Stop):
         return self._departure_monitor_request(stop)

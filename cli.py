@@ -30,9 +30,9 @@ elif argc > 1:
     method = argv[1]
     argv = argv[2:]
 
-    pretty = False
-    if argv[0] in ('--pretty', '--nopretty'):
-        pretty = argv[0] == '--pretty'
+    myformat = 'nojson'
+    if argv[0] in ('--nojson', '--json', '--json-noraws'):
+        myformat = argv[0][2:]
         argv = argv[1:]
 
     maxc = len(methods[method])
@@ -65,9 +65,11 @@ elif argc > 1:
         print('This method is not supported by this network.')
         sys.exit(4)
 
-    if pretty:
+    if myformat == 'nojson':
         p = PrettyPrint()
         print(p.formatted(result))
+    elif myformat == 'json-noraws':
+        print(json.dumps(result.serialize(['noraws'])))
     else:
         print(json.dumps(result.serialize()))
 else:
