@@ -1,1 +1,2 @@
-python3 cli.py $@
+#!/usr/bin/env python3
+import cli
