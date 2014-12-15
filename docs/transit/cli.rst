@@ -4,7 +4,7 @@ Command Line Usage
 Syntax
 ------
 
-.. code-block::
+.. code-block:: none
     
     transit networks
     transit methods

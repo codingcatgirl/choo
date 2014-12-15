@@ -18,13 +18,13 @@ The outer list describes the data type (``Stop``) and the data.
 
 Now we pass this data to the API.
 
-.. code-block::
+.. code-block:: none
     
     transit VRR get_stop essen.json
     
 The API method ``get_stop`` tries to get as much information as possible about a given stop with only one request to the server.
 
-.. code-block::
+.. code-block:: none
 
     Stop
       country: de
