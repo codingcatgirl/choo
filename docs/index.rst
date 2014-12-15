@@ -9,7 +9,13 @@ Contents:
 .. toctree::
    :maxdepth: 2
    
+   transit/start
+   transit/api
+   transit/cli
+   transit/cliexamples
+   transit/pyexamples
    transit/models
+   transit/serializing
 
 
 

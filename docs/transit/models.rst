@@ -1,5 +1,5 @@
-Models
-======
+Model Reference
+===============
 
 transit is composed using a lot of models.
 
