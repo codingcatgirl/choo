@@ -21,6 +21,13 @@ Syntax
     Use ``--json`` to get JSON output or ``--json-noraws`` to get JSON output with no raw data (smaller size).
     
     Filenames can also be ``-``, to read the data from STDIN. (every file should end with EOF)
+    
+    For more information about supported networks and methods, see `Network API`_.
+    
+    For more information about the data input format, see `Model Serialization`_.
+    
+.. _`Network API`: api.html
+.. _`Model Serialization`: serializing.html
 
 
 Exit codes

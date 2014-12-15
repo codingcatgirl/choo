@@ -19,14 +19,16 @@ Please note that nearly all attributes can also be ``None`` when the information
         
     .. method:: serialize()
     
-        Serializes the object in a JSON-encodable format. For more information, see the transit serialization docs.
+        Serializes the object in a JSON-encodable format. For more information, see `Model Serialization`_.
         
     .. classmethod:: unserialize(data)
     
-        Unserializes any kind of object from a JSON-encodable format. For more information, see the transit serialization docs.
+        Unserializes any kind of object from a JSON-encodable format. For more information, see the `Model Serialization`_.
         
         :param data: A serialized representation of a transit object
         :rtype: the unserialized object
+        
+.. _`Model Serialization`: serializing.html
         
         
 .. py:class:: SearchResults(results=None, subject=None, api=None, method=None)

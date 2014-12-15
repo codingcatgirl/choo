@@ -1,4 +1,6 @@
 Command Line Examples
 ==========================
 
-TBA
+To be completed. For now, see the `Getting Started`_ page.
+
+.. _`Getting Started`: start.html
