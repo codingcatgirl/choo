@@ -3,6 +3,10 @@ Model Serialization / JSON
 
 All Models can be (un)serialized to/from a JSON-encodable format.
 
+A list of all Models can be found in the `Model Reference`_.
+
+.. _`Model Reference`: models.html
+
 Here is how to construct the serialized representation of anything:
 
 **model**

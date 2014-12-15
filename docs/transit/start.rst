@@ -41,13 +41,16 @@ The API method ``get_stop`` tries to get as much information as possible about a
         13:13      3     U18 → Essen Berliner Platz
         […]
 
-As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not guaranteed by the ``get_stop`` method (for more information, see `Network API`_).
+As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not guaranteed by the ``get_stop`` method.
 
-For more information about the command line Syntax and the JSON input format, see `Command Line Usage`_ and `Model Serialization`_.
+For more information about the command line syntax and available methods, see `Command Line Usage`_ and `Network API`_.
 
-.. _`Command Line Usage`: cli
-.. _`Network API`: api
-.. _`Model Serialization`: serializing
+For more information about the JSON format, see `Model Reference`_ and `Model Serialization`_.
+
+.. _`Command Line Usage`: cli.html
+.. _`Network API`: api.html
+.. _`Model Reference`: models.html
+.. _`Model Serialization`: serializing.html
 
 JSON Interface
 --------------
@@ -58,7 +61,9 @@ If you want to process the data you want it in a easily parsable format and you 
     
     transit VRR get_stop --json-noraw essen.json
     
-The ``--json-noraw`` argument suppresses the raw data (XML or whatever the backend sends) in the JSON as it would make the output even larger. If you want to pass the json output back to the Interface, you should (but do not have to) use ``--json``. For more information, see `Command Line Usage`_.
+The ``--json-noraw`` argument suppresses the raw data (XML or whatever the backend sends) in the JSON as it would make the output even larger. If you want to pass the json output back to the Interface, you should (but do not have to) use ``--json``.
+
+For more information about the command line syntax and available methods, see `Command Line Usage`_ and `Network API`_.
 
 If you set the filename to ``-`` you can pass the data via STDIN.
 
@@ -188,7 +193,7 @@ In the ``rides`` attribute the next rides that pass this station are listed. To 
     
     If the ``delay`` attribute is missing, no real time data is available. If the ride is on time the delay will be 0 seconds.
     
-For more information about the JSON format, see `Model Serialization`_.
+For more information about the JSON format, see `Model Reference`_ and `Model Serialization`_.
     
 Python Interface
 ----------------
@@ -237,12 +242,6 @@ Let's see how you would access this via the Python interface. **Every attribute 
             
         # you can also slice a ride or ride segment to get another ride segment
         newsegment = ridesegment.ride[1:]
-            
-        
-                
-            
-        
-        
-        
-    
+
+For more information, see `Network API`_ and `Model Reference`_.
     
