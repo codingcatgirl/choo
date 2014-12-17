@@ -217,11 +217,11 @@ Please note that nearly all attributes can also be ``None`` when the information
         
     .. attribute:: first_stop
     
-        The first :py:class:`Stop` or this :py:class:`Line`. Rides may start at a later station.
+        The first :py:class:`Stop` of this :py:class:`Line`. Rides may start at a later station.
         
     .. attribute:: last_stop
     
-        The last :py:class:`Stop` or this :py:class:`Line`. Rides may end at a earlier station.
+        The last :py:class:`Stop` of this :py:class:`Line`. Rides may end at a earlier station.
         
     .. attribute:: network
     
