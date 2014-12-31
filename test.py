@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 
 vrr = VRR()
-du = Stop(city='essen', name='germaniaplatz')
+du = Stop(city='essen', name='hbf')
 
 result = vrr.get_stop_rides(du)
 print(json.dumps(result.serialize(), indent=2))
