@@ -1,15 +1,40 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
 
-
 class ModelBase():
     def __init__(self):
         self._ids = {}
         self._raws = {}
 
+    @classmethod
+    def load(cls, data):
+        obj = cls()
+        obj._load(data)
+        return obj
+
     def _load(self, data):
-        self._ids = data.get('ids', {})
-        self._raws = data.get('raws', {})
+        self._serial_get(data, '_ids')
+        self._serial_get(data, '_raws')
+
+    @classmethod
+    def unserialize(cls, data):
+        if data is None:
+            return None
+        if type(data) not in (list, tuple):
+            return data
+        mytype, data = data
+        if mytype is None:
+            return data
+        elif mytype == 'datetime':
+            return datetime.strptime(data, '%Y-%m-%d %H:%M')
+        elif mytype == 'timedelta':
+            return timedelta(seconds=data)
+        elif mytype == 'tuple':
+            return tuple(data)
+        elif mytype == 'list':
+            return data
+        else:
+            return globals()[mytype].load(data)
 
     def serialize(self, ids=None):
         if ids is None:
@@ -17,43 +42,87 @@ class ModelBase():
         myid = id(self)
         if len(ids) != len(set(ids)):
             return {}
-        return self._serialize(ids+[myid])
+        data = {}
+        classes = self.__class__.__mro__
+        newids = ids+[myid]
+        for oneclass in classes:
+            if hasattr(oneclass, '_serialize'):
+                olddata = data
+                newdata = oneclass._serialize(self, newids)
+                if type(newdata) != dict and not data:
+                    data = newdata
+                    break
+                data = newdata
+                data.update(olddata)
+
+        if myid in ids:
+            data['is_truncated'] = True
+        return (self.__class__.__name__, data)
 
     def _serialize(self, ids):
         data = {}
-        if self._ids:
-            data['ids'] = self._ids
-        if self._raws:
-            data['raws'] = self._raws
+        self._serial_add(data, '_ids', ids)
+        if 'noraws' not in ids:
+            self._serial_add(data, '_raws', ids)
         return data
 
-    def _add_not_none(self, data, name):
-        val = getattr(self, name)
-        if val:
+    def _serial_add(self, data, name, ids, **kwargs):
+        if 'val' in kwargs:
+            val = kwargs['val']
+        else:
+            val = getattr(self, name)
+            if val is None:
+                return
+        if isinstance(val, ModelBase):
+            data[name] = val.serialize(ids)
+        elif isinstance(val, datetime):
+            data[name] = ('datetime', val.strftime('%Y-%m-%d %H:%M'))
+        elif isinstance(val, timedelta):
+            data[name] = ('timedelta', val.total_seconds())
+        elif type(val) == list:
+            data[name] = ('list', val)
+        elif type(val) == tuple:
+            data[name] = ('tuple', val)
+        else:
             data[name] = val
 
-    def _add_not_none_obj(self, data, name, ids):
-        val = getattr(self, name)
-        if val:
-            data[name] = val.serialize(ids)
+    def _serial_get(self, data, name):
+        if name in data:
+            setattr(self, name, ModelBase.unserialize(data[name]))
 
 
 class SearchResults():
-    def __init__(self, results, subject=None, api=None, method=None):
+    def __init__(self, results=[], subject=None, api=None, method=None):
         self.subject = subject
         self.api = api
         self.method = method
         self.results = tuple(results)
 
-    @classmethod
-    def load(cls, data):
-        obj = cls(data.get('results', []))
-        obj.subject = data.get('subject', None)
-        obj.api = data.get('api', None)
-        obj.method = data.get('method', None)
-        # todo – load subject
-        # todo - load results
-        return obj
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'results')
+        results = self.results
+        self.results = []
+        for result in results:
+            if type(result) in (tuple, list):
+                self.results.append((ModelBase.unserialize(result[0]), result[1]))
+            else:
+                self.results.append(ModelBase.unserialize(result))
+        self._serial_get(data, 'subject')
+        self._serial_get(data, 'api')
+        self._serial_get(data, 'method')
+
+    def _serialize(self, ids):
+        data = {}
+        self._serial_add(data, 'subject', ids)
+        self._serial_add(data, 'api', ids)
+        self._serial_add(data, 'method', ids)
+        if type(self.results[0]) == tuple:
+            results = [(item[0].serialize(ids), item[1]) for item in self.results]
+        else:
+            results = [item.serialize(ids) for item in self.results]
+        self._serial_add(data, 'results', ids, val=results)
+        return data
 
     def __iter__(self):
         for result in self.results:
@@ -61,21 +130,6 @@ class SearchResults():
 
     def __getitem__(self, key):
         return self.results[key]
-
-    def _serialize(self, ids):
-        data = {}
-        if self.subject is not None:
-            data['subject'] = self.subject.serialize(ids)
-        if self.api is not None:
-            data['api'] = self.api
-        if self.method is not None:
-            data['method'] = self.method
-        if self.results:
-            if type(self.results[0]) == tuple:
-                data['results'] = [(item[0].__class__.__name__.lower(), (item[0].serialize(ids), item[1])) for item in self.results]
-            else:
-                data['results'] = [(item.__class__.__name__.lower(), item.serialize(ids)) for item in self.results]
-        return data
 
 
 class Location(ModelBase):
@@ -87,40 +141,18 @@ class Location(ModelBase):
         self.coords = coords
 
     def _load(self, data):
-        self.country = data.get('country', None)
-        self.city = data.get('city', None)
-        self.name = data.get('name', None)
-        self.coords = data.get('coords', None)
         super()._load(data)
-
-    @classmethod
-    def load(cls, data):
-        obj = cls()
-        obj._load(data)
-        return obj
-
-    @classmethod
-    def load_tuple(cls, data):
-        return {
-            'location': Location,
-            'stop': Stop,
-            'poi': POI,
-            'address': Address
-        }[data[0]].load(data[1])
-
-    def _serialize_tuple(self, ids):
-        return (self.__class__.__name__.lower(), self._serialize(ids))
+        self._serial_get(data, 'country')
+        self._serial_get(data, 'city')
+        self._serial_get(data, 'name')
+        self._serial_get(data, 'coords')
 
     def _serialize(self, ids):
-        data = super()._serialize(ids)
-        data.update({
-            'country': self.country,
-            'city': self.city,
-            'name': self.name
-        })
-        self._add_not_none(data, 'coords')
-        if self.coords:
-            data['coords'] = self.coords
+        data = {}
+        self._serial_add(data, 'country', ids,)
+        self._serial_add(data, 'city', ids)
+        self._serial_add(data, 'name', ids)
+        self._serial_add(data, 'coords', ids)
         return data
 
 
@@ -131,29 +163,29 @@ class Stop(Location):
         self.rides = []
         self.lines = []
 
-    @classmethod
-    def load(cls, data):
-        obj = cls()
-        obj.rides = data.get('rides', None)
-        if obj.rides:
-            obj.rides = [RideSegment.load(ride) for ride in obj.rides]
-        obj._load(data)
-        return obj
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'rides')
+        self._serial_get(data, 'lines')
+        self.rides = [ModelBase.unserialize(ride) for ride in self.rides]
+        self.lines = [ModelBase.unserialize(line) for line in self.lines]
 
     def __repr__(self):
         return '<%s %s, %s>' % ('Stop', self.city, self.name)
 
     def _serialize(self, ids):
-        data = super()._serialize(ids)
+        data = {}
         if self.rides:
-            data['rides'] = [ride.serialize(ids) for ride in self.rides]
-            if data['rides'].count({}) == len(data['rides']):
-                data['rides'] = []
+            rides = [ride.serialize(ids) for ride in self.rides]
+            if rides.count({}) == len(rides):
+                rides = []
+            self._serial_add(data, 'rides', ids, val=rides)
 
         if self.lines:
-            data['lines'] = [line.serialize(ids) for line in self.lines]
-            if data['lines'].count({}) == len(data['lines']):
-                data['lines'] = []
+            lines = [line.serialize(ids) for line in self.lines]
+            if lines.count({}) == len(lines):
+                lines = []
+            self._serial_add(data, 'lines', ids, val=lines)
         return data
 
 
@@ -162,14 +194,8 @@ class POI(Location):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
 
-    @classmethod
-    def load(cls, data):
-        obj = cls()
-        obj._load(data)
-        return obj
-
     def _serialize(self, ids):
-        return super()._serialize(ids)
+        return {}
 
 
 class Address(Location):
@@ -177,14 +203,8 @@ class Address(Location):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
 
-    @classmethod
-    def load(cls, data):
-        obj = cls()
-        obj._load(data)
-        return obj
-
     def _serialize(self, ids):
-        return super()._serialize(ids)
+        return {}
 
 
 class RealtimeTime(ModelBase):
@@ -201,15 +221,9 @@ class RealtimeTime(ModelBase):
 
     @classmethod
     def load(cls, data):
-        time = data.get('time', None)
-        delay = data.get('delay', None)
-        livetime = data.get('livetime', None)
-        if time:
-            time = datetime.strptime(time, '%Y-%m-%d %H:%M')
-        if livetime:
-            livetime = datetime.strptime(livetime, '%Y-%m-%d %H:%M')
-        if delay:
-            delay = timedelta(minutes=delay)
+        time = ModelBase.unserialize(data.get('time', None))
+        delay = ModelBase.unserialize(data.get('delay', None))
+        livetime = ModelBase.unserialize(data.get('livetime', None))
         obj = cls(time, delay, livetime)
         obj._load(data)
         return obj
@@ -218,7 +232,7 @@ class RealtimeTime(ModelBase):
         return '<RealtimeTime %s%s>' % (str(self.time)[:-3], (' +%d' % (self.delay.total_seconds()/60)) if self.delay is not None else '')
 
     @property
-    def islive(self):
+    def is_live(self):
         return self.delay is not None
 
     @property
@@ -240,15 +254,14 @@ class RealtimeTime(ModelBase):
         return self.time == other.time
 
     def _serialize(self, ids):
-        data = super()._serialize(ids)
-        data['time'] = self.time.strftime('%Y-%m-%d %H:%M')
-        if self.delay is not None:
-            data['delay'] = int(self.delay.total_seconds()/60)
+        data = {}
+        self._serial_add(data, 'time', ids)
+        self._serial_add(data, 'delay', ids)
         return data
 
 
 class TimeAndPlace(ModelBase):
-    def __init__(self, stop: Stop, platform: str=None, arrival: RealtimeTime=None, departure: RealtimeTime=None, coords: tuple=None):
+    def __init__(self, stop: Stop=None, platform: str=None, arrival: RealtimeTime=None, departure: RealtimeTime=None, coords: tuple=None):
         super().__init__()
         self.stop = stop
         self.platform = platform
@@ -256,21 +269,13 @@ class TimeAndPlace(ModelBase):
         self.arrival = arrival
         self.departure = departure
 
-    @classmethod
-    def load(cls, data):
-        arrival = data.get('arrival', None)
-        departure = data.get('departure', None)
-        coords = data.get('coords', None)
-        if arrival:
-            arrival = RealtimeTime.load(arrival)
-        if departure:
-            arrival = RealtimeTime.load(arrival)
-        if coords:
-            coords = tuple(coords)
-
-        obj = cls(data['stop'], data.get('platform', None), arrival, departure, coords)
-        obj._load(data)
-        return obj
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'stop')
+        self._serial_get(data, 'platform')
+        self._serial_get(data, 'coords')
+        self._serial_get(data, 'arrival')
+        self._serial_get(data, 'departure')
 
     def __eq__(self, other):
         return (isinstance(other, TimeAndPlace) and self.stop == other.stop and
@@ -282,13 +287,11 @@ class TimeAndPlace(ModelBase):
 
     def _serialize(self, ids):
         data = super()._serialize(ids)
-        data['stop'] = self.stop.serialize(ids)
-        self._add_not_none(data, 'platform')
-        if self.arrival is not None:
-            data['arrival'] = self.arrival.serialize(ids)
-        if self.departure is not None:
-            data['departure'] = self.departure.serialize(ids)
-        self._add_not_none(data, 'coords')
+        self._serial_add(data, 'stop', ids)
+        self._serial_add(data, 'platform', ids)
+        self._serial_add(data, 'coords', ids)
+        self._serial_add(data, 'arrival', ids)
+        self._serial_add(data, 'departure', ids)
         return data
 
 
@@ -297,7 +300,6 @@ class LineTypes(ModelBase):
               'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialable',
               'others', 'walk')
     _shortcuts = {
-        'longdistance': ('longdistance_other', 'ice'),
         'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
         'dial': ('dialbus', 'dialtaxi')
     }
@@ -350,7 +352,7 @@ class LineTypes(ModelBase):
         return bool(self._included)
 
     def __eq__(self, other):
-        return (isinstance(other, LineTypes) and self._invluced == other._included)
+        return (isinstance(other, LineTypes) and self._incluced == other._included)
 
     def _serialize(self, ids):
         return self._included
@@ -395,41 +397,29 @@ class Line(ModelBase):
         self.network = None
         self.operator = None
 
-    @classmethod
-    def load(cls, data):
-        linetype = data.get('linetype', None)
-        if linetype:
-            linetype = LineType.load(linetype)
-
-        obj = cls(linetype)
-        obj.product = data.get('product', None)
-        obj.name = data.get('name', None)
-        obj.shortname = data.get('shortname', None)
-        obj.route = data.get('route', None)
-
-        obj.first_stop = data.get('first_stop', None)
-        obj.last_stop = data.get('last_stop', None)
-        if obj.first_stop:
-            obj.first_stop = Stop.load(obj.first_stop)
-        if obj.last_stop:
-            obj.last_stop = Stop.load(obj.last_stop)
-
-        obj.network = data.get('network', None)
-        obj.operator = data.get('operator', None)
-        obj._load(data)
-        return obj
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'linetype')
+        self._serial_get(data, 'product')
+        self._serial_get(data, 'name')
+        self._serial_get(data, 'shortname')
+        self._serial_get(data, 'route')
+        self._serial_get(data, 'first_stop')
+        self._serial_get(data, 'last_stop')
+        self._serial_get(data, 'network')
+        self._serial_get(data, 'operator')
 
     def _serialize(self, ids):
-        data = super()._serialize(ids)
-        self._add_not_none_obj(data, 'linetype', ids)
-        self._add_not_none(data, 'product')
-        self._add_not_none(data, 'name')
-        self._add_not_none(data, 'shortname')
-        self._add_not_none(data, 'route')
-        self._add_not_none_obj(data, 'first_stop', ids)
-        self._add_not_none_obj(data, 'last_stop', ids)
-        self._add_not_none(data, 'network')
-        self._add_not_none(data, 'operator')
+        data = {}
+        self._serial_add(data, 'linetype', ids)
+        self._serial_add(data, 'product', ids)
+        self._serial_add(data, 'name', ids)
+        self._serial_add(data, 'shortname', ids)
+        self._serial_add(data, 'route', ids)
+        self._serial_add(data, 'first_stop', ids)
+        self._serial_add(data, 'last_stop', ids)
+        self._serial_add(data, 'network', ids)
+        self._serial_add(data, 'operator', ids)
         return data
 
 
@@ -441,23 +431,17 @@ class Ride(ModelBase):
         self.number = number
         self.bike_friendly = None
 
-    @classmethod
-    def load(cls, data):
-        line = data.get('line', None)
-        stops = data.get('stops', [])
-        number = data.get('number', None)
-        if line:
-            line = Line.load(line)
-        if stops:
-            stops = [(TimeAndPlace.load(stop) if stop is not None else None) for stop in stops]
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'line')
+        self._serial_get(data, 'number')
+        self._serial_get(data, 'bike_friendly')
+        self.stops = []
+        self._serial_get(data, 'stops')
+        self._stops = [TimeAndPlace.unserialize(stop) for stop in self.stops]
+        del self.stops
 
-        obj = cls(line, number)
-        obj.bike_friendly = data.get('bike_friendly', None)
-        for stop in stops:
-            obj.append(stop)
-        obj._load(data)
-        return obj
-
+    @property
     def is_complete(self):
         return None not in self._stops
 
@@ -523,12 +507,13 @@ class Ride(ModelBase):
         pass  # todo
 
     def _serialize(self, ids):
-        data = super()._serialize(ids)
-        self._add_not_none_obj(data, 'line', ids)
-        self._add_not_none(data, 'number')
-        self._add_not_none(data, 'bike_friendly')
+        data = {}
+        self._serial_add(data, 'line', ids)
+        self._serial_add(data, 'number', ids)
+        self._serial_add(data, 'bike_friendly', ids)
         if self._stops:
-            data['stops'] = [(stop[1].serialize(ids) if stop[1] is not None else None) for stop in self._stops]
+            stops = [(stop[1].serialize(ids) if stop[1] is not None else None) for stop in self._stops]
+            self._serial_add(data, 'stops', ids, val=stops)
         return data
 
 
@@ -554,7 +539,7 @@ class RideSegment():
 
     @classmethod
     def load(cls, data):
-        ride = Ride.load(data['ride'])
+        ride = Ride.unserialize(data['ride'])
         origin = data.get('origin', None)
         destination = data.get('destination', None)
         me = ride[origin:destination]
@@ -562,8 +547,9 @@ class RideSegment():
         return obj
 
     def _stops(self):
-        return self.ride.stops[self._pointer_origin:self._pointer_destination]
+        return self.ride._stops[self._pointer_origin:self._pointer_destination]
 
+    @property
     def is_complete(self):
         return None not in self._stops()
 
@@ -627,6 +613,9 @@ class RideSegment():
         return (isinstance(other, RideSegment) and self.ride == other.ride and
                 self._pointer_origin == other._pointer_origin and
                 self._pointer_destination == other._pointer_destination)
+                
+    def serialize(self, ids):
+        return ModelBase.serialize(self, ids)
 
     def _serialize(self, ids):
         data = {
@@ -650,8 +639,8 @@ class Way(ModelBase):
 
     @classmethod
     def load(cls, data):
-        origin = globals()[data['origin'][0]].load(data['origin'][1])
-        destination = globals()[data['destination'][0]].load(data['destination'][1])
+        origin = Location.unserialize(data['origin'])
+        destination = Location.unserialize(data['destination'])
         obj = cls(origin, destination)
         obj.distance = data.get('distance', None)
         obj.duration = data.get('duration', None)
@@ -661,30 +650,61 @@ class Way(ModelBase):
         return (isinstance(other, Way) and self.origin == other.origin and self.destination == other.destination)
 
     def _serialize(self, ids):
-        data = super()._serialize(ids)
-        data['origin'] = self.origin._serialize_tuple(ids)
-        data['destination'] = self.destination._serialize_tuple(ids)
-        self._add_not_none(data, 'distance')
-        self._add_not_none(data, 'duration')
+        data = {}
+        self._serial_add(data, 'origin', ids)
+        self._serial_add(data, 'destination', ids)
+        self._serial_add(data, 'distance', ids)
+        self._serial_add(data, 'duration', ids)
         return data
 
 
 class Trip(ModelBase):
+    overwritable = ('origin', 'destination', 'departure', 'arrival',
+                    'changes', 'linetypes', 'bike_friendly')
+
     def __init__(self):
         super().__init__()
         self.parts = []
         self.walk_speed = 'normal'
+        self.overwritten = {}
 
-    @classmethod
-    def load(cls, data):
-        obj = cls()
-        parts = data.get('parts', [])
-        obj.parts = [(RideSegment.load(part[1]) if part[0] == 'ride' else Way.load(part[1])) for part in parts]
-        obj.walk_speed = data.get('walk_speed', None)
-        # todo: optional properties
-        return obj
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'walk_speed')
+        self._serial_get(data, 'parts')
+        self.parts = [ModelBase.unserialize(part) for part in self.parts]
+        for name in self.overwritable:
+            self._serial_get(data, name)
+
+    def _serialize(self, ids):
+        data = {}
+        parts = [part.serialize() for part in self.parts]
+        self._serial_add(data, 'parts', ids, val=parts)
+        self._serial_add(data, 'walk_speed', ids)
+        for name, value in self.overwritten.items():
+            self._serial_add(data, name, ids)
+        return data
+
+    def __setattr__(self, name, value):
+        if name not in self.overwritable:
+            setattr(self, name, value)
+        else:
+            self.overwritten[name] = value
+
+    def __delattr__(self, name):
+        if name not in self.overwritten:
+            raise AttributeError
+        else:
+            del self.overwritten[name]
+
+    def is_overwritten(self, name):
+        return name in self.overwritten
 
     def __getattr__(self, name):
+        if name not in self.overwritable:
+            raise AttributeError
+        if name in self.overwritten:
+            return self.overwritten[name]
         if name == 'origin':
             return None if not self.parts else self.parts[0].origin
         elif name == 'destination':
@@ -729,10 +749,3 @@ class Trip(ModelBase):
             if None in tmp:
                 return None
             return True
-
-    def _serialize(self, ids):
-        data = super()._serialize(ids)
-        data['parts'] = [('ride' if isinstance(part, RideSegment) else 'way', part.serialize(ids)) for part in self.parts]
-        self._add_not_none(data, 'walk_speed')
-        # todo: optional properties
-        return data
