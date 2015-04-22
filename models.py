@@ -685,12 +685,6 @@ class Trip(ModelBase):
             self._serial_add(data, name, ids)
         return data
 
-    def __setattr__(self, name, value):
-        if name not in self.overwritable:
-            setattr(self, name, value)
-        else:
-            self.overwritten[name] = value
-
     def __delattr__(self, name):
         if name not in self.overwritten:
             raise AttributeError

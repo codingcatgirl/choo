@@ -2,7 +2,7 @@
 from models import SearchResults
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, RealtimeTime
-from models import Ride, Line, LineType
+from models import Ride, Line, LineType, LineTypes
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
@@ -15,12 +15,127 @@ class EFA(API):
     base_url = None
     country = None
 
-    def get_stop(self, stop: Stop):
+    def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
         return self.get_stop_rides(stop)
 
     def get_stop_rides(self, stop: Stop):
         return self._departure_monitor_request(stop)
+        
+    def search_trips(self, trip: Stop):
+        now = datetime.datetime.now()
+        
+        assert trip.walk_speed in ('slow', 'normal', 'fast')
+        
+        linetypes = trip.linetypes
+        if linetypes is None:
+            linetypes = LineTypes()
+        assert isinstance(linetypes, LineTypes)
+        
+        departure = trip.departure
+        arrival = trip.arrival
+        assert departure is None or isinstance(departure, RealtimeTime) or isinstance(departure, datetime)
+        assert arrival is None or isinstance(arrival, RealtimeTime) or isinstance(arrival, datetime)
+        
+        if isinstance(departure, datetime):
+            departure = RealtimeTime(departure)
+        if isinstance(arrival, datetime):
+            arrival = RealtimeTime(arrival)
+            
+        if departure is not None:
+            deparr = 'dep'
+            time_ = departure.livetime
+        elif arrival is not None:
+            deparr = 'arr'
+            time_ = arrival.livetime
+        else:
+            deparr = 'dep'
+            time_ = now
+                
+        changes = trip.changes
+        if changes is None:
+            changes = 9
+        
+        post = {
+			'changeSpeed': trip.walk_speed,
+			'command': '',
+			'imparedOptionsActive': 1,
+			
+			'includedMeans': 'checkbox',
+			'itOptionsActive': 1,
+			'itdDateDay': time_.day,
+			'itdDateMonth': time_.month,
+			'itdDateYear': time_.year,
+			'itdTimeHour': time_.hour,
+			'itdTimeMinute': time_.minute,
+			'itdTripDateTimeDepArr': deparr,
+			'language': 'de',
+			'locationServerActive': 1,
+			'maxChanges': changes if type(changes) == int else max(changes),
+			'name_via': '',#.decode('utf-8').encode('iso-8859-1'),
+			'nextDepsPerLeg': 1,
+			'place_via': '',#decode('utf-8').encode('iso-8859-1'),
+			'ptOptionsActive': 1,
+			'requestID': 0,
+			'routeType': {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
+			'sessionID': 0,
+			'text': 1993,
+			'type_via': 'stop'
+		}
+        
+        if ('localtrain', 'longdistance', 'highspeed') in linetypes:
+            post['inclMOT_0'] = 'on'
+            
+        if 'highspeed' in linetypes:
+            post['lineRestriction'] = 400
+        elif 'longdistance' in linetypes:
+            post['lineRestriction'] = 401
+        else:
+            post['lineRestriction'] = 403
+            
+        if 'urban' in linetypes:
+            post['inclMOT_1'] = 'on'
+            
+        if 'metro' in linetypes:
+            post['inclMOT_2'] = 'on'
+            post['inclMOT_3'] = 'on'
+            
+        if 'tram' in linetypes:
+            post['inclMOT_4'] = 'on'
+            
+        if 'citybus' in linetypes:
+            post['inclMOT_5'] = 'on'
+            
+        if 'regionalbus' in linetypes:
+            post['inclMOT_6'] = 'on'
+            
+        if 'expressbus' in linetypes:
+            post['inclMOT_7'] = 'on'
+            
+        if 'suspended' in linetypes:
+            post['inclMOT_8'] = 'on'
+            
+        if 'ship' in linetypes:
+            post['inclMOT_9'] = 'on'
+            
+        if 'dialable' in linetypes:
+            post['inclMOT_10'] = 'on'
+            
+        if 'other' in linetypes:
+            post['inclMOT_11'] = 'on'
+            
+        assert isinstance(trip.origin, Location)
+        assert isinstance(trip.destination, Location)
+        
+        post.update(self._convert_location(self, trip.origin, '%s_origin'))
+        post.update(self._convert_location(self, trip.destination, '%s_destination'))
+        #todo: via
+        
+        print(post)
+        
+    def get_trip(self, trip: Stop):
+        pass
+        
 
     # Internal methods start here
 
@@ -29,7 +144,7 @@ class EFA(API):
         # open('dump.xml', 'w').write(text)
         return ET.fromstring(text)
 
-    def _convert_location(self, location: Location):
+    def _convert_location(self, location: Location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
         myid, raw = self._my_data(location)
 
@@ -59,6 +174,9 @@ class EFA(API):
 
         if r['place'] is None:
             del r['place']
+            
+        if suffix:
+            r = {wrap % n: v for n, v in r.items()}
 
         return r
 
