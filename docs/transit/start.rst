@@ -189,7 +189,7 @@ In the ``rides`` attribute the next rides that pass this station are listed. To 
     
 **RealtimeTime**
     Points in time are always given as a RealtimeTime object.
-    A real time time object consists of a ``time`` attribute``, which is always a ``datetime`` object in the ``YYYY-MM-DD HH:MM`` format and an optional ``delay`` attribute, which is the currently expected delay as a ``timedelta`` object in seconds.
+    A real time time object consists of a ``time`` attribute, which is always a ``datetime`` object in the ``YYYY-MM-DD HH:MM`` format and an optional ``delay`` attribute, which is the currently expected delay as a ``timedelta`` object in seconds.
     
     If the ``delay`` attribute is missing, no real time data is available. If the ride is on time the delay will be 0 seconds.
     
