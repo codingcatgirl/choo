@@ -23,7 +23,7 @@ class EFA(API):
         return self._departure_monitor_request(stop)
         
     def search_trips(self, trip: Stop):
-        now = datetime.datetime.now()
+        now = datetime.now()
         
         assert trip.walk_speed in ('slow', 'normal', 'fast')
         
@@ -52,9 +52,9 @@ class EFA(API):
             deparr = 'dep'
             time_ = now
                 
-        changes = trip.changes
-        if changes is None:
-            changes = 9
+        max_changes = trip.max_changes
+        if max_changes is None:
+            max_changes = 9
         
         post = {
 			'changeSpeed': trip.walk_speed,
@@ -71,13 +71,13 @@ class EFA(API):
 			'itdTripDateTimeDepArr': deparr,
 			'language': 'de',
 			'locationServerActive': 1,
-			'maxChanges': changes if type(changes) == int else max(changes),
+			'maxChanges': max_changes,
 			'name_via': '',#.decode('utf-8').encode('iso-8859-1'),
 			'nextDepsPerLeg': 1,
 			'place_via': '',#decode('utf-8').encode('iso-8859-1'),
 			'ptOptionsActive': 1,
 			'requestID': 0,
-			'routeType': {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
+			'routeType': 'LEASTTIME',#{'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
 			'sessionID': 0,
 			'text': 1993,
 			'type_via': 'stop'
@@ -127,8 +127,8 @@ class EFA(API):
         assert isinstance(trip.origin, Location)
         assert isinstance(trip.destination, Location)
         
-        post.update(self._convert_location(self, trip.origin, '%s_origin'))
-        post.update(self._convert_location(self, trip.destination, '%s_destination'))
+        post.update(self._convert_location(trip.origin, '%s_origin'))
+        post.update(self._convert_location(trip.destination, '%s_destination'))
         #todo: via
         
         print(post)
@@ -141,7 +141,7 @@ class EFA(API):
 
     def _post(self, endpoint, data):
         text = requests.post(self.base_url+endpoint, data=data).text
-        # open('dump.xml', 'w').write(text)
+        #open('dump.xml', 'w').write(text)
         return ET.fromstring(text)
 
     def _convert_location(self, location: Location, wrap=''):
@@ -175,7 +175,7 @@ class EFA(API):
         if r['place'] is None:
             del r['place']
             
-        if suffix:
+        if wrap:
             r = {wrap % n: v for n, v in r.items()}
 
         return r
@@ -397,7 +397,7 @@ class EFA(API):
         mottype = int(data.attrib['motType'])
         line.linetype = LineType(('localtrain', 'urban', 'metro', 'urban', 'tram',
                                   'citybus', 'regionalbus', 'expressbus', 'suspended',
-                                  'ship', 'dialable', 'others')[mottype])
+                                  'ship', 'dialable', 'other')[mottype])
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
