@@ -13,8 +13,8 @@ trip = TripRequest()
 trip.origin = du
 trip.destination = bs
 
-#vrr.search_trips(trip)
-result = vrr.get_stop_rides(bs)
-#p = PrettyPrint()
-#print(p.formatted(result))
-# print(json.dumps(result.serialize(), indent=2))
+result = vrr.search_trips(trip)
+#result = vrr.get_stop_rides(bs)
+p = PrettyPrint()
+print(p.formatted(result))
+#print(json.dumps(result.serialize(), indent=2))

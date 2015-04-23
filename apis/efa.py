@@ -184,8 +184,6 @@ class EFA(API):
         if 'walk' in linetypes:
             post['useProxFootSearch'] = 1
             
-        
-            
         assert isinstance(triprequest.origin, Location)
         assert isinstance(triprequest.destination, Location)
         
@@ -193,9 +191,10 @@ class EFA(API):
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
         
         xml = self._post('XSLT_TRIP_REQUEST2', post)
-        #data = xml.find('./itdStopFinderRequest')
+        data = xml.find('./itdTripRequest')
         
-        print(post)
+        results = self._parse_routes(data.find('./itdItinerary/itdRouteList'))
+        return SearchResults(results, api=self.name)
 
     def _stop_finder_request(self, stop: Stop):
         """ Searches a Stop; Returns a SearchResult(Stop) """
@@ -384,6 +383,59 @@ class EFA(API):
             # Return RideSegment from the Station we depart from on
             results.append(ride[pointer:])
         return results
+        
+    def _parse_routes(self, data):
+        """ Parses itdRoute into a Trip """
+        trips = []
+        routes = data.findall('./itdRoute')
+        for route in routes:
+            trip = Trip()
+            for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
+                trip.parts.append(self._parse_routepart(routepart))
+            trips.append(trip)
+        return trips
+        
+    def _parse_routepart(self, data):
+        """ Parses itdRoutePart into a RideSegment """
+        origin, destination, line, rideid, ridenum, canceled = self._parse_mot(data.find('./itdMeansOfTransport'))
+        
+        # Build Ride Objekt with known stops
+        ride = Ride(line, ridenum)
+        ride._ids[self.name] = rideid
+        ride.canceled = canceled
+        for infotext in data.findall('./infoTextList/infoTextListElem'):
+            ride.infotexts.append(infotext)
+        if origin is not None:
+            ride.append(TimeAndPlace(origin))
+        ride.append(None)
+        
+        #todo: parse path
+        
+        points = [self._parse_trip_point(point) for point in data.findall('./itdPoint')]
+        first = None
+        last = None
+        if data.find('./itdStopSeq'):
+            waypoints = [self._parse_trip_point(point) for point in data.findall('./itdStopSeq/itdPoint')]
+            if not waypoints or waypoints[0].stop != points[0].stop:
+                waypoints.insert(0, points[0])
+            if waypoints[-1].stop != points[1].stop:
+                waypoints.append(points[1])
+            for p in waypoints:
+                pointer = ride.append(p)
+                if first is None:
+                    first = pointer
+            last = ride.append(None) # we have no gaps in between but after
+        else:
+            for p in points:
+                pointer = ride.append(p)
+                if first is None:
+                    first = pointer
+                last = ride.append(None) # there can be gaps in between
+        
+        if destination is not None:
+            ride.append(TimeAndPlace(destination))
+            
+        return ride[first:last]
 
     def _parse_datetime(self, data):
         """ Create a datetime from itdDate and itdTime """
@@ -416,7 +468,7 @@ class EFA(API):
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
-        rideid = data.attrib['stateless']
+        rideid = data.attrib.get('stateless', None) # todo
         diva = data.find('./motDivaParams')
         if diva is not None:
             line.network = diva.attrib['network']
@@ -445,17 +497,23 @@ class EFA(API):
             #    elif result.line[0:2] == '98':
             #        result.linetype.name = 'highspeed'
         else:
-            line.product = data.find('./itdNoTrain').attrib['name']
+            line.product = data.attrib.get('productName', '')
+            if not line.product:
+                line.product = data.find('./itdNoTrain').attrib['name']
             line.shortname = data.attrib['symbol']
             line.name = '%s %s' % (line.product, line.shortname)
             
-        canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
+        if data.find('./itdNoTrain'):
+            canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
+        else:
+            canceled = None
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
         origin = Stop(self.country, None, origin) if origin else None
-
-        destination = Stop(self.country, None, data.attrib['direction'])
+        
+        destination = data.attrib.get('destination', data.attrib.get('direction', None))
+        destination = Stop(self.country, None, destination) if destination else None
         if data.attrib.get('destID', ''):
             destination._ids[self.name] = int(data.attrib['destID'])
 

@@ -172,6 +172,16 @@ class Stop(Location):
 
     def __repr__(self):
         return '<%s %s, %s>' % ('Stop', self.city, self.name)
+        
+    def __eq__(self, other):
+        if not isinstance(other, Stop):
+            return None
+        for k, id_ in self._ids.items():
+            if id_ is not None and other._ids.get(k) == id_:
+                return True
+        if self.coords is not None and self.coords == other.coords:
+            return True
+        return self.name is not None and self.name == other.name and self.city == other.city and self.country == other.country
 
     def _serialize(self, ids):
         data = {}
@@ -431,6 +441,7 @@ class Ride(ModelBase):
         self.number = number
         self.canceled = None
         self.bike_friendly = None
+        self.infotexts = []
 
     def _load(self, data):
         super()._load(data)
@@ -585,7 +596,7 @@ class RideSegment():
             else:
                 return self._stops()[key][1]
 
-    def __iter__(self, key):
+    def __iter__(self, key=None):
         for stop in self._stops():
             yield stop[1]
 
@@ -679,8 +690,6 @@ class Trip(ModelBase):
         self._serial_add(data, 'parts', ids, val=parts)
         self._serial_add(data, 'walk_speed', ids)
         return data
-        
-
 
     @property
     def origin(self):
