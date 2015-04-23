@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from models import ModelBase, SearchResults
 from models import Location, Stop, POI, Address
-from models import TimeAndPlace, RealtimeTime
+from models import Trip, TimeAndPlace, RealtimeTime
 from models import Ride, RideSegment, Line, LineType
 from datetime import datetime, timedelta
 import string
@@ -18,7 +18,16 @@ class PrettyPrint():
         header = None
         fields = []
         richfields = []
-        if isinstance(obj, Stop) or isinstance(obj, POI) or isinstance(obj, Address):
+        if obj is None:
+            return ''
+        elif isinstance(obj, SearchResults):
+            header = 'SearchResults'
+            fields += ['api']
+            richfields.append(('results', '\n'+'\n'.join([self.formatted(result, indented+2, True) for result in obj.results])))
+        elif isinstance(obj, Trip):
+            header = 'Trip'
+            richfields.append(('rides', '\n'+'\n'.join([self.formatted(ride, indented+2) for ride in obj.parts])))
+        elif isinstance(obj, Stop) or isinstance(obj, POI) or isinstance(obj, Address):
             header = 'Location'
             fields += ['country', 'city', 'name', 'coords']
             if isinstance(obj, POI):
@@ -35,7 +44,7 @@ class PrettyPrint():
             return obj.name
         elif isinstance(obj, Line) and short:
             return obj.shortname
-        elif isinstance(obj, Line) and oneline:
+        elif isinstance(obj, Line):
             direction = ''
             if obj.first_stop is not None or obj.last_stop is not None:
                 direction = ' '+(self.formatted(obj.first_stop, 0, True, True)+' ' if obj.first_stop is not None else '')+'→'
@@ -49,6 +58,17 @@ class PrettyPrint():
         elif isinstance(obj, RideSegment) and oneline:
             direction = (' → '+self.formatted(obj.ride[-1].stop, 0, True, True)) if obj.ride[-1] is not None else ''
             line = indent+self.formatted(obj[0].departure).ljust(10)+' '+obj[0].platform.ljust(5)+' '+self.formatted(obj.ride.line, short=True)+direction
+            return line
+        elif isinstance(obj, RideSegment) and not oneline:
+            header = 'RideSegment'
+            fields += ['line', 'infotexts']
+            richfields.append(('points', '\n'+'\n'.join([self.formatted(stop, indented+2, True) for stop in obj])))
+            #direction = (' → '+self.formatted(obj.ride[-1].stop, 0, True, True)) if obj.ride[-1] is not None else ''
+            #line = indent+self.formatted(obj[0].departure).ljust(10)+' '+obj[0].platform.ljust(5)+' '+self.formatted(obj.ride.line, short=True)+direction
+            #return line
+        elif isinstance(obj, TimeAndPlace) and oneline:
+            header = 'RideSegment'
+            line = indent+self.formatted(obj.arrival).ljust(10)+' '+self.formatted(obj.departure).ljust(10)+' '+obj.platform.ljust(5)+' '+self.formatted(obj.stop, short=True)
             return line
         else:
             header = obj.__class__.__name__
