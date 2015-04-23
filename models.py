@@ -429,12 +429,14 @@ class Ride(ModelBase):
         self._stops = []
         self.line = line
         self.number = number
+        self.canceled = None
         self.bike_friendly = None
 
     def _load(self, data):
         super()._load(data)
         self._serial_get(data, 'line')
         self._serial_get(data, 'number')
+        self._serial_get(data, 'canceled')
         self._serial_get(data, 'bike_friendly')
         self.stops = []
         self._serial_get(data, 'stops')
@@ -510,6 +512,7 @@ class Ride(ModelBase):
         data = {}
         self._serial_add(data, 'line', ids)
         self._serial_add(data, 'number', ids)
+        self._serial_add(data, 'canceled', ids)
         self._serial_add(data, 'bike_friendly', ids)
         if self._stops:
             stops = [(stop[1].serialize(ids) if stop[1] is not None else None) for stop in self._stops]
