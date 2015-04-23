@@ -298,7 +298,7 @@ class TimeAndPlace(ModelBase):
 class LineTypes(ModelBase):
     _known = ('localtrain', 'longdistance', 'highspeed', 'urban', 'metro', 'tram',
               'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialable',
-              'others', 'walk')
+              'other', 'walk')
     _shortcuts = {
         'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
         'dial': ('dialbus', 'dialtaxi')
@@ -344,7 +344,7 @@ class LineTypes(ModelBase):
                 raise AttributeError('unsupported linetype')
         else:
             for child in name:
-                if name not in self:
+                if name not in self._included:
                     return False
             return True
 
@@ -659,87 +659,115 @@ class Way(ModelBase):
 
 
 class Trip(ModelBase):
-    overwritable = ('origin', 'destination', 'departure', 'arrival',
-                    'changes', 'linetypes', 'bike_friendly')
-
     def __init__(self):
         super().__init__()
         self.parts = []
         self.walk_speed = 'normal'
-        self.overwritten = {}
 
     def _load(self, data):
         super()._load(data)
         self._serial_get(data, 'walk_speed')
         self._serial_get(data, 'parts')
         self.parts = [ModelBase.unserialize(part) for part in self.parts]
-        for name in self.overwritable:
-            self._serial_get(data, name)
 
     def _serialize(self, ids):
         data = {}
         parts = [part.serialize() for part in self.parts]
         self._serial_add(data, 'parts', ids, val=parts)
         self._serial_add(data, 'walk_speed', ids)
-        for name, value in self.overwritten.items():
-            self._serial_add(data, name, ids)
         return data
+        
 
-    def __delattr__(self, name):
-        if name not in self.overwritten:
-            raise AttributeError
-        else:
-            del self.overwritten[name]
 
-    def is_overwritten(self, name):
-        return name in self.overwritten
+    @property
+    def origin(self):
+        return self.parts[0].origin
+        
+    @property
+    def destination(self):
+        return self.parts[-1].destination
+        
+    @property
+    def departure(self):
+        delta = timedelta(0)
+        for part in self.parts:
+            if isinstance(part, RideSegment):
+                return None if part.departure is None else part.departure - delta
+            elif part.duration is None:
+                return None
+            else:
+                delta += part.duration
+                
+    @property
+    def arrival(self):
+        delta = timedelta(0)
+        for part in reversed(self.parts):
+            if isinstance(part, RideSegment):
+                return None if part.arrival is None else part.arrival + delta
+            elif part.duration is None:
+                return None
+            else:
+                delta += part.duration
+                
+    @property
+    def linetypes(self):
+        types = LineTypes(False)
+        for part in self.parts:
+            linetype = part.line.linetype
+            if linetype is not None:
+                types.add(linetype)
+        return types
+        
+    @property
+    def changes(self):
+        return max(0, len([part for part in self.parts if isinstance(part, RideSegment)])-1)
+        
+    @property
+    def bike_friendly(self):
+        tmp = [part.bike_friendly for part in self.parts if isinstance(part, RideSegment)]
+        if False in tmp:
+            return False
+        if None in tmp:
+            return None
+        return True
+        
+    def to_request(self):
+        r = TripRequest()
+        r.walk_speed = self.walk_speed
+        r.origin = self.origin
+        r.destination = self.destination
+        r.departure = self.departure
+        r.arrival = self.arrival
+        r.linetypes = self.linetypes
+        r.max_changtes = self.max_changes
+        r.bike_friendly = self.bike_friendly
+        return r
+        
+        
+class TripRequest(ModelBase):
+    def __init__(self):
+        super().__init__()
+        self.parts = []
+        self.walk_speed = 'normal'
+        self.origin = None
+        self.destination = None
+        self.departure = None
+        self.arrival = None
+        self.linetypes = LineTypes()
+        self.max_changes = None
+        self.bike_friendly = None
 
-    def __getattr__(self, name):
-        if name not in self.overwritable:
-            raise AttributeError
-        if name in self.overwritten:
-            return self.overwritten[name]
-        if name == 'origin':
-            return None if not self.parts else self.parts[0].origin
-        elif name == 'destination':
-            return None if not self.parts else self.parts[-1].destination
-        elif name == 'departure':
-            delta = timedelta(0)
-            for part in self.parts:
-                if isinstance(part, RideSegment):
-                    return None if part.departure is None else part.departure - delta
-                elif part.duration is None:
-                    return None
-                else:
-                    delta += part.duration
-        elif name == 'arrival':
-            delta = timedelta(0)
-            for part in reversed(self.parts):
-                if isinstance(part, RideSegment):
-                    return None if part.arrival is None else part.arrival + delta
-                elif part.duration is None:
-                    return None
-                else:
-                    delta += part.duration
-        elif name == 'linetypes':
-            if not self.parts:
-                return None
-            types = LineTypes(False)
-            for part in self.parts:
-                linetype = part.line.linetype
-                if linetype is not None:
-                    types.add(linetype)
-            return types
-        elif name == 'changes':
-            if not self.parts:
-                return None
-            return max(0, len([part for part in self.parts if isinstance(part, RideSegment)])-1)
-        elif name == 'bike_friendly':
-            if not self.parts:
-                return None
-            tmp = [part.bike_friendly for part in self.parts if isinstance(part, RideSegment)]
-            if False in tmp:
-                return False
-            if None in tmp:
-                return None
-            return True
+    def _load(self, data):
+        super()._load(data)
+        self._serial_get(data, 'walk_speed')
+        self._serial_get(data, 'parts')
+        self.parts = [ModelBase.unserialize(part) for part in self.parts]
+
+    def _serialize(self, ids):
+        data = {}
+        parts = [part.serialize() for part in self.parts]
+        self._serial_add(data, 'parts', ids, val=parts)
+        self._serial_add(data, 'walk_speed', ids)
+        return data
+        
+
