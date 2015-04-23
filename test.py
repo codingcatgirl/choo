@@ -10,8 +10,8 @@ du = Stop(city='essen', name='hbf')
 bs = Stop(city='essen', name='borbeck süd bf')
 
 trip = TripRequest()
-trip.origin = du
-trip.destination = bs
+trip.origin = bs
+trip.destination = du
 
 result = vrr.search_trips(trip)
 #result = vrr.get_stop_rides(bs)
