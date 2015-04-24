@@ -364,7 +364,7 @@ Please note that nearly all attributes can also be ``None`` when the information
     
         Walk speed assumed for this trip as a string. (``slow``, ``normal`` or ``fast``)
         
-    **The following attributes are dynamic** and can not be overwritten – their values are taken from `parts` when you access them:
+    **The following attributes are dynamic** and can not be overwritten – their values are taken from ``parts`` when you access them:
     
     .. attribute:: origin
 
@@ -427,4 +427,4 @@ Please note that nearly all attributes can also be ``None`` when the information
         
     .. attribute:: bike_friendly
 
-        Set this to ``True`` if the route has to be bike-friendly.
+        Set this to ``True`` if the route has to be bike friendly.
