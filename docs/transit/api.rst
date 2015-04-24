@@ -8,8 +8,7 @@ Available Methods
 
     Get all information about this stop you can get with one request.
     
-    :param stop: Stop
-    :rtype: :py:class:`Stop`
+    :param stop: :py:class:`Stop`
     :rtype: :py:class:`SearchResults` of :py:class:`Stop` with match score
     
     
@@ -17,8 +16,16 @@ Available Methods
 
     Get the next rides from this stop.
     
-    :param stop: Stop
+    :param stop: :py:class:`Stop`
     :rtype: :py:class:`Stop` with ``rides`` attribute or :py:class:`SearchResults` with match score
+    
+
+.. py:method:: search_trips(triprequest)**
+
+    Search for trips between two Locations.
+    
+    :param triprequest: :py:class:`TripRequest`
+    :rtype: :py:class:`SearchResult` with :py:class:`Trip` objects
 
 
 Supported Networks

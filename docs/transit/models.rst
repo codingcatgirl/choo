@@ -347,6 +347,10 @@ Please note that nearly all attributes can also be ``None`` when the information
 
         The expected duration as ``datetime.timedelta``.
         
+    .. attribute:: path
+
+        The path as a list of coordinates as (lat, lon) tuples.
+        
         
 .. py:class:: Trip()
 
@@ -360,11 +364,7 @@ Please note that nearly all attributes can also be ``None`` when the information
     
         Walk speed assumed for this trip as a string. (``slow``, ``normal`` or ``fast``)
         
-    **The following attributes are dynamic** but **can** also be overwritten.
-    
-    Overwriting them does not overwrite the original and only affects this object. This can be used to describe a unknown trip to use as an argument for trip searching.
-    
-    To reset an overwritten value, just delete it.
+    **The following attributes are dynamic** and can not be overwritten – their values are taken from `parts` when you access them:
     
     .. attribute:: origin
 
@@ -384,7 +384,7 @@ Please note that nearly all attributes can also be ``None`` when the information
     
     .. attribute:: linetypes
 
-        The line types that occur (or are allowed in) this trip as :py:class:`LineTypes`.
+        The line types that occur in this trip as :py:class:`LineTypes`.
     
     .. attribute:: changes
 
@@ -393,3 +393,38 @@ Please note that nearly all attributes can also be ``None`` when the information
     .. attribute:: bike_friendly
 
         ``False`` if at least one :py:class:`Ride` that is part of this trip is not bike friendly. ``True`` if all of them are. ``None`` if there is no bike friendly information for all rides but those that have the information are bike friendly.
+        
+        
+.. py:class:: TripRequest()
+
+    A description of a trip used to search for Trips.
+
+    .. attribute:: origin
+
+        The start :py:class:`Location` of the trip.
+    
+    .. attribute:: destination
+
+        The end :py:class:`Location` of the trip.
+        
+    .. attribute:: departure
+
+        The minimum departure time as :py:class:`RealtimeTime` or ``datetime.datetime``.
+        
+        If both times are ``None`` the behaviour is as if you would have set the departure time to the current time right before sending the request.
+    
+    .. attribute:: arrival
+
+        The latest allowed arrival as :py:class:`RealtimeTime` or ``datetime.datetime``.
+    
+    .. attribute:: linetypes
+
+        The line types that are allowed as :py:class:`LineTypes`.
+    
+    .. attribute:: max_changes
+
+        The maximum number of changes allowed.
+        
+    .. attribute:: bike_friendly
+
+        Set this to ``True`` if the route has to be bike-friendly.
