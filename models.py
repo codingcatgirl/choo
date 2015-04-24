@@ -91,8 +91,9 @@ class ModelBase():
             setattr(self, name, ModelBase.unserialize(data[name]))
 
 
-class SearchResults():
+class SearchResults(ModelBase):
     def __init__(self, results=[], subject=None, api=None, method=None):
+        super().__init__()
         self.subject = subject
         self.api = api
         self.method = method
@@ -437,6 +438,7 @@ class Ride(ModelBase):
     def __init__(self, line: Line=None, number: str=None):
         super().__init__()
         self._stops = []
+        self._paths = {}
         self.line = line
         self.number = number
         self.canceled = None
@@ -449,10 +451,14 @@ class Ride(ModelBase):
         self._serial_get(data, 'number')
         self._serial_get(data, 'canceled')
         self._serial_get(data, 'bike_friendly')
-        self.stops = []
+        
         self._serial_get(data, 'stops')
         self._stops = [TimeAndPlace.unserialize(stop) for stop in self.stops]
         del self.stops
+        
+        self._serial_get(data, 'paths')
+        self._paths = {tuple(self._stops[int(i)][0] for i in k.split(',')): [self.unserialize(p) for p in v] for k, v in self.paths}
+        del self.paths
 
     @property
     def is_complete(self):
@@ -528,6 +534,7 @@ class Ride(ModelBase):
         if self._stops:
             stops = [(stop[1].serialize(ids) if stop[1] is not None else None) for stop in self._stops]
             self._serial_add(data, 'stops', ids, val=stops)
+        self._serial_add(data, 'paths', ids, val={('%d,%d' % k): [('tuple', p) for p in v] for k,v in self._paths.items()})
         return data
 
 
@@ -649,6 +656,7 @@ class Way(ModelBase):
         self.destination = destination
         self.distance = None
         self.duration = None
+        self.path = None
         # todo: self.stairs = None
 
     @classmethod
@@ -658,6 +666,9 @@ class Way(ModelBase):
         obj = cls(origin, destination)
         obj.distance = data.get('distance', None)
         obj.duration = data.get('duration', None)
+        obj.path = data.get('path', None)
+        if obj.path:
+            obj.path = [self.unserialize(p) for p in obj.path]
         return obj
 
     def __eq__(self, other):
@@ -669,6 +680,9 @@ class Way(ModelBase):
         self._serial_add(data, 'destination', ids)
         self._serial_add(data, 'distance', ids)
         self._serial_add(data, 'duration', ids)
+        if self.path:
+            path = [('tuple', v) for v in self.path]
+            self._serial_add(data, 'path', ids, val=path)
         return data
 
 
@@ -686,7 +700,7 @@ class Trip(ModelBase):
 
     def _serialize(self, ids):
         data = {}
-        parts = [part.serialize() for part in self.parts]
+        parts = [part.serialize(ids) for part in self.parts]
         self._serial_add(data, 'parts', ids, val=parts)
         self._serial_add(data, 'walk_speed', ids)
         return data

@@ -3,7 +3,7 @@ from models import SearchResults
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, RealtimeTime
 from models import TripRequest, Trip
-from models import Ride, Line, LineType, LineTypes
+from models import Ride, Line, LineType, LineTypes, Way
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
@@ -284,7 +284,7 @@ class EFA(API):
         else:
             pe = p.find('./odvPlaceElem')
             city = pe.text
-
+            
         # Location.name
         n = data.find('./itdOdvName')
         if n.attrib['state'] == 'empty':
@@ -396,46 +396,64 @@ class EFA(API):
         return trips
         
     def _parse_routepart(self, data):
-        """ Parses itdRoutePart into a RideSegment """
-        origin, destination, line, rideid, ridenum, canceled = self._parse_mot(data.find('./itdMeansOfTransport'))
-        
-        # Build Ride Objekt with known stops
-        ride = Ride(line, ridenum)
-        ride._ids[self.name] = rideid
-        ride.canceled = canceled
-        for infotext in data.findall('./infoTextList/infoTextListElem'):
-            ride.infotexts.append(infotext)
-        if origin is not None:
-            ride.append(TimeAndPlace(origin))
-        ride.append(None)
-        
-        #todo: parse path
-        
+        """ Parses itdPartialRoute into a RideSegment or Way """
         points = [self._parse_trip_point(point) for point in data.findall('./itdPoint')]
-        first = None
-        last = None
-        if data.find('./itdStopSeq'):
-            waypoints = [self._parse_trip_point(point) for point in data.findall('./itdStopSeq/itdPoint')]
-            if not waypoints or waypoints[0].stop != points[0].stop:
-                waypoints.insert(0, points[0])
-            if waypoints[-1].stop != points[1].stop:
-                waypoints.append(points[1])
-            for p in waypoints:
-                pointer = ride.append(p)
-                if first is None:
-                    first = pointer
-            last = ride.append(None) # we have no gaps in between but after
-        else:
-            for p in points:
-                pointer = ride.append(p)
-                if first is None:
-                    first = pointer
-                last = ride.append(None) # there can be gaps in between
         
-        if destination is not None:
-            ride.append(TimeAndPlace(destination))
+        path = []
+        for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
+            path.append((int(coords.find('x').text)/1000000, int(coords.find('y').text)/1000000))
+        
+        if data.attrib['type'] == 'IT':
+            way = Way(points[0].stop, points[1].stop)
+            way.distance = data.attrib.get('distance')
+            duration = data.attrib.get('timeMinute', None)
+            if duration is not None:
+                way.duration = timedelta(minutes=int(duration))
+            if path:
+                way.path = path
+            return way
             
-        return ride[first:last]
+        else:
+            origin, destination, line, rideid, ridenum, canceled = self._parse_mot(data.find('./itdMeansOfTransport'))
+            
+            # Build Ride Objekt with known stops
+            ride = Ride(line, ridenum)
+            ride._ids[self.name] = rideid
+            ride.canceled = canceled
+            for infotext in data.findall('./infoTextList/infoTextListElem'):
+                ride.infotexts.append(infotext)
+            if origin is not None:
+                ride.append(TimeAndPlace(origin))
+            ride.append(None)
+                
+            #todo: parse path
+            
+            first = None
+            last = None
+            if data.find('./itdStopSeq'):
+                waypoints = [self._parse_trip_point(point) for point in data.findall('./itdStopSeq/itdPoint')]
+                if not waypoints or waypoints[0].stop != points[0].stop:
+                    waypoints.insert(0, points[0])
+                if waypoints[-1].stop != points[1].stop:
+                    waypoints.append(points[1])
+                for p in waypoints:
+                    pointer = ride.append(p)
+                    if first is None:
+                        first = pointer
+                last = ride.append(None) # we have no gaps in between but after
+            else:
+                for p in points:
+                    pointer = ride.append(p)
+                    if first is None:
+                        first = pointer
+                    last = ride.append(None) # there can be gaps in between
+            
+            if destination is not None:
+                ride.append(TimeAndPlace(destination))
+                
+            ride._paths[(first,last)] = path
+                
+            return ride[first:last]
 
     def _parse_datetime(self, data):
         """ Create a datetime from itdDate and itdTime """
@@ -456,7 +474,6 @@ class EFA(API):
         """ Parse a itdServingLine Node into something nicer """
         line = Line()
 
-        # no motType – that means we are walking or something similar
         if 'motType' not in data.attrib:
             return None
 
@@ -523,7 +540,7 @@ class EFA(API):
             line.route = routedescription.text
 
         return origin, destination, line, rideid, ridenum, canceled
-
+        
     def _parse_trip_point(self, data, walk=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
         city = data.attrib.get('locality', '')
