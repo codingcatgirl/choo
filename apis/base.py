@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from models import ModelBase
+from models.base import ModelBase
 
 
 class API():
