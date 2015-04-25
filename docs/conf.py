@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'transit'
-copyright = '2014, Laura Klünder'
+copyright = '2015, Laura Klünder'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
