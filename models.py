@@ -89,6 +89,14 @@ class ModelBase():
     def _serial_get(self, data, name):
         if name in data:
             setattr(self, name, ModelBase.unserialize(data[name]))
+        
+
+class Serializable():
+    pass        
+            
+            
+class RequestBase():
+    pass
 
 
 class SearchResults(ModelBase):
