@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from networks import VRR
-from models import Stop, Trip, TripRequest
+from models import Stop, Trip
 from datetime import datetime
 from output import PrettyPrint
 import json
@@ -9,7 +9,7 @@ vrr = VRR()
 du = Stop(city='essen', name='borbeck süd bf')
 bs = Stop(city='essen', name='bockmühle')
 
-trip = TripRequest()
+trip = Trip.Request()
 trip.origin = bs
 trip.destination = du
 
