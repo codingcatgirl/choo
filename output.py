@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from models import ModelBase, SearchResults
+from models.base import ModelBase
 from models import Location, Stop, POI, Address
 from models import Trip, TimeAndPlace, RealtimeTime
-from models import Ride, RideSegment, Line, LineType
+from models import Ride, Line, LineType
 from datetime import datetime, timedelta
 import string
 
