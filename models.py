@@ -92,7 +92,7 @@ class ModelBase():
         
 
 class Serializable():
-    pass        
+    pass
             
             
 class RequestBase():
