@@ -2,6 +2,7 @@
 from .base import ModelBase
 from datetime import datetime, timedelta
 
+
 class RealtimeTime(ModelBase):
     def __init__(self, time: datetime, delay: timedelta=None, livetime: datetime=None):
         super().__init__()
@@ -53,3 +54,4 @@ class RealtimeTime(ModelBase):
         self._serial_add(data, 'time', ids)
         self._serial_add(data, 'delay', ids)
         return data
+        

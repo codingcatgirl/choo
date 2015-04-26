@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from .base import ModelBase
+from .base import ModelBase, Serializable
 
 
-class Coordinates(ModelBase):
+class Coordinates(Serializable):
     _validate = {
         'lat': float,
         'lon': float
@@ -12,96 +12,89 @@ class Coordinates(ModelBase):
         self.lat = lat
         self.lon = lon
         
-    
-
+    def _serialize(self, depth):
+        return [self.lat, self.lon]
+        
+    def _unserialize(self, data):
+        self.lat, self.lon = data
+        
 
 class Location(ModelBase):
     _validate = {
         'country': (None, str),
         'city': (None, str),
-        'name': (None, str),
-        'coords': (None, (2, float))
+        'name': str,
+        'coords': (None, Coordinates)
     }
     
-    def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+    def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         self.country = country
         self.city = city
         self.name = name
         self.coords = coords
 
-    def _load(self, data):
-        super()._load(data)
+    def _serialize(self, depth):
+        data = {}
+        self._serial_add(data, 'country')
+        self._serial_add(data, 'city')
+        self._serial_add(data, 'name')
+        if self.coords:
+            data['coords'] = self.coords.serialize()
+        return data
+        
+    def _unserialize(self, data):
         self._serial_get(data, 'country')
         self._serial_get(data, 'city')
         self._serial_get(data, 'name')
-        self._serial_get(data, 'coords')
-
-    def _serialize(self, ids):
-        data = {}
-        self._serial_add(data, 'country', ids,)
-        self._serial_add(data, 'city', ids)
-        self._serial_add(data, 'name', ids)
-        self._serial_add(data, 'coords', ids)
-        return data
-        
-        
-class Stop(Location):
-    def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
-        super().__init__()
-        Location.__init__(self, country, city, name, coords)
-        self.rides = []
-        self.lines = []
-
-    def _load(self, data):
-        super()._load(data)
-        self._serial_get(data, 'rides')
-        self._serial_get(data, 'lines')
-        self.rides = [ModelBase.unserialize(ride) for ride in self.rides]
-        self.lines = [ModelBase.unserialize(line) for line in self.lines]
-
-    def __repr__(self):
-        return '<%s %s, %s>' % ('Stop', self.city, self.name)
-
-    def __eq__(self, other):
-        if not isinstance(other, Stop):
-            return None
-        for k, id_ in self._ids.items():
-            if id_ is not None and other._ids.get(k) == id_:
-                return True
-        if self.coords is not None and self.coords == other.coords:
-            return True
-        return self.name is not None and self.name == other.name and self.city == other.city and self.country == other.country
-
-    def _serialize(self, ids):
-        data = {}
-        if self.rides:
-            rides = [ride.serialize(ids) for ride in self.rides]
-            if rides.count({}) == len(rides):
-                rides = []
-            self._serial_add(data, 'rides', ids, val=rides)
-
-        if self.lines:
-            lines = [line.serialize(ids) for line in self.lines]
-            if lines.count({}) == len(lines):
-                lines = []
-            self._serial_add(data, 'lines', ids, val=lines)
-        return data
-
-
+        if 'coords' in data:
+            self.coords = Coordinates.unserialize(data['coords'])
+            
+            
 class POI(Location):
-    def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+    def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
-
-    def _serialize(self, ids):
-        return {}
 
 
 class Address(Location):
-    def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
+    def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
+            
+        
+class Way(ModelBase):
+    def __init__(self, origin: Location, destination: Location, distance: int=None):
+        super().__init__()
+        self.origin = origin
+        self.destination = destination
+        self.distance = None
+        self.duration = None
+        self.path = None
+        # todo: self.stairs = None
+
+    @classmethod
+    def load(cls, data):
+        origin = Location.unserialize(data['origin'])
+        destination = Location.unserialize(data['destination'])
+        obj = cls(origin, destination)
+        obj.distance = data.get('distance', None)
+        obj.duration = data.get('duration', None)
+        obj.path = data.get('path', None)
+        if obj.path:
+            obj.path = [self.unserialize(p) for p in obj.path]
+        return obj
+
+    def __eq__(self, other):
+        return (isinstance(other, Way) and self.origin == other.origin and self.destination == other.destination)
 
     def _serialize(self, ids):
-        return {}
+        data = {}
+        self._serial_add(data, 'origin', ids)
+        self._serial_add(data, 'destination', ids)
+        self._serial_add(data, 'distance', ids)
+        self._serial_add(data, 'duration', ids)
+        if self.path:
+            path = [('tuple', v) for v in self.path]
+            self._serial_add(data, 'path', ids, val=path)
+        return data
