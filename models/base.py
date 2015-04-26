@@ -7,7 +7,7 @@ class Serializable():
     
     def validate(self):
         for c in self.__class__.__mro__:
-            if not hasattr(c, '_validate')
+            if not hasattr(c, '_validate'):
                 continue
                 
             for name, allowed in c._validate.items():
@@ -57,9 +57,9 @@ class Serializable():
         serialized = {}
         if depth:
             for c in self.__class__.__mro__:
-                if not hasattr(c, '_serialize')
+                if not hasattr(c, '_serialize'):
                     continue
-                serialized.update(c._serialize(self, depth))
+                serialized.update(c._serialize(self, depth-1))
             
         if typed:
             return self.__class__.__name__, serialized
@@ -69,17 +69,22 @@ class Serializable():
     def _serialize(self, depth):
         return {}
     
-    @unserialize
+    @classmethod
     def unserialize(cls, data):
         obj = cls()
         for c in cls.__mro__:
-            if not hasattr(c, '_unserialize')
+            if not hasattr(c, '_unserialize'):
                 continue
             c._unserialize(obj, data)
         return obj
         
     def _unserialize(self, data):
         pass
+        
+    def _serial_add(self, data, name, force=False):
+        val = getattr(self, name)
+        if force or val is not None:
+            data[name] = val
         
     def _serial_get(self, data, name):
         if name in data:
@@ -149,5 +154,3 @@ class ModelBase(Serializable):
 
         def __getitem__(self, key):
             return self.results[key]
-
-    
