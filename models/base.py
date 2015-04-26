@@ -1,9 +1,56 @@
 #!/usr/bin/env python3
-
+import collections
 
 class Serializable():
-    def serialize(self):
-        return self.__dict__
+    _serialize_depth = None
+    _validate = {}
+    
+    def validate(self):
+        for name, allowed in this._validate.items():
+            try:
+                val = getattr(self, name)
+            except AttributeError:
+                raise AttributeError('%s.%s does not exist' % (self.__class__.__name__, name))
+            
+            if not self._validate(val, allowed):
+                raise ValueError('%s.%s has to be %s' % (self.__class__.__name__, name, self._or(allowed)))
+                
+        return True
+        
+    def _validate_item(self, val, alloweds):
+        if type(alloweds) != tuple:
+            alloweds = (alloweds, )
+        for allowed in alloweds:
+            if allowed is None and val is None:
+                return True
+            elif type(allowed) is tuple and isinstance(val, collections.Iterable):
+                for v in val:
+                    if not self._validate(v, allowed):
+                        return False
+                return True
+            elif isinstance(val, allowed):
+                return True
+        return False
+        
+    def _validate_or(self, items):
+        out = []
+        for item in items:
+            if item is None:
+                out.append('None')
+            elif type(item) is tuple:
+                out.append('Iterable(%s)' % self._or(item))
+            else:
+                out.append(ítem.__name__)
+        out = [', '+o for o in out]
+        if len(out) > 1:
+            out[-1] = ' or '+out[-1][2:]
+        return ''.join(out)[2:]
+        
+    def serialize(self, depth):
+        return (self.__class__.__name__, self._serialize())
+        
+    def _serialize(self, depth):
+        pass
 
 
 class ModelBase(Serializable):

@@ -1,7 +1,28 @@
 #!/usr/bin/env python3
 from .base import ModelBase
 
+
+class Coordinates(ModelBase):
+    _validate = {
+        'lat': float,
+        'lon': float
+    }
+    
+    def __init__(self, lat, lon):
+        self.lat = lat
+        self.lon = lon
+        
+    
+
+
 class Location(ModelBase):
+    _validate = {
+        'country': (None, str),
+        'city': (None, str),
+        'name': (None, str),
+        'coords': (None, (2, float))
+    }
+    
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
         super().__init__()
         self.country = country
@@ -23,8 +44,8 @@ class Location(ModelBase):
         self._serial_add(data, 'name', ids)
         self._serial_add(data, 'coords', ids)
         return data
-
-
+        
+        
 class Stop(Location):
     def __init__(self, country: str=None, city: str=None, name: str=None, coords: tuple=None):
         super().__init__()
