@@ -6,16 +6,19 @@ class Serializable():
     _validate = {}
     
     def validate(self):
-        for name, allowed in this._validate.items():
-            try:
-                val = getattr(self, name)
-            except AttributeError:
-                raise AttributeError('%s.%s does not exist' % (self.__class__.__name__, name))
-            
-            if not self._validate(val, allowed):
-                raise ValueError('%s.%s has to be %s' % (self.__class__.__name__, name, self._or(allowed)))
+        for c in self.__class__.__mro__:
+            if not hasattr(c, '_validate')
+                continue
                 
-        return True
+            for name, allowed in c._validate.items():
+                try:
+                    val = getattr(self, name)
+                except AttributeError:
+                    raise AttributeError('%s.%s does not exist' % (self.__class__.__name__, name))
+                
+                if not self._validate(val, allowed):
+                    raise ValueError('%s.%s has to be %s' % (self.__class__.__name__, name, self._or(allowed)))
+            return True
         
     def _validate_item(self, val, alloweds):
         if type(alloweds) != tuple:
@@ -46,14 +49,63 @@ class Serializable():
             out[-1] = ' or '+out[-1][2:]
         return ''.join(out)[2:]
         
-    def serialize(self, depth):
-        return (self.__class__.__name__, self._serialize())
+    def serialize(self, depth=None, typed=False):
+        self.validate()
+        if depth is None:
+            depth = self._serialize_depth
+
+        serialized = {}
+        if depth:
+            for c in self.__class__.__mro__:
+                if not hasattr(c, '_serialize')
+                    continue
+                serialized.update(c._serialize(self, depth))
+            
+        if typed:
+            return self.__class__.__name__, serialized
+        else:
+            return serialized
         
     def _serialize(self, depth):
+        return {}
+    
+    @unserialize
+    def unserialize(cls, data):
+        obj = cls()
+        for c in cls.__mro__:
+            if not hasattr(c, '_unserialize')
+                continue
+            c._unserialize(obj, data)
+        return obj
+        
+    def _unserialize(self, data):
         pass
+        
+    def _serial_get(self, data, name):
+        if name in data:
+            setattr(self, name, data[name])
 
 
 class ModelBase(Serializable):
+    _validate = {
+        '_ids': dict,
+        '_raws': dict
+    }
+    
+    def __init__(self):
+        self._ids = {}
+        self._raws = {}
+        
+    def _serialize(self, depth):
+        data = super().serialize()
+        data['_ids'] = self._ids
+        data['_raws'] = self._raws
+        return data
+        
+    def _unserialize(self, data):
+        self.serial_get(data, '_ids')
+        self.serial_get(data, '_raws')
+    
     class Request(Serializable):
         pass
 
@@ -98,92 +150,4 @@ class ModelBase(Serializable):
         def __getitem__(self, key):
             return self.results[key]
 
-    def __init__(self):
-        self._ids = {}
-        self._raws = {}
-
-
-
-    @classmethod
-    def load(cls, data):
-        obj = cls()
-        obj._load(data)
-        return obj
-
-    def _load(self, data):
-        self._serial_get(data, '_ids')
-        self._serial_get(data, '_raws')
-
-    @classmethod
-    def unserialize(cls, data):
-        if data is None:
-            return None
-        if type(data) not in (list, tuple):
-            return data
-        mytype, data = data
-        if mytype is None:
-            return data
-        elif mytype == 'datetime':
-            return datetime.strptime(data, '%Y-%m-%d %H:%M')
-        elif mytype == 'timedelta':
-            return timedelta(seconds=data)
-        elif mytype == 'tuple':
-            return tuple(data)
-        elif mytype == 'list':
-            return data
-        else:
-            return globals()[mytype].load(data)
-
-    def serialize(self, ids=None):
-        if ids is None:
-            ids = []
-        myid = id(self)
-        if len(ids) != len(set(ids)):
-            return {}
-        data = {}
-        classes = self.__class__.__mro__
-        newids = ids+[myid]
-        for oneclass in classes:
-            if hasattr(oneclass, '_serialize'):
-                olddata = data
-                newdata = oneclass._serialize(self, newids)
-                if type(newdata) != dict and not data:
-                    data = newdata
-                    break
-                data = newdata
-                data.update(olddata)
-
-        if myid in ids:
-            data['is_truncated'] = True
-        return (self.__class__.__name__, data)
-
-    def _serialize(self, ids):
-        data = {}
-        self._serial_add(data, '_ids', ids)
-        if 'noraws' not in ids:
-            self._serial_add(data, '_raws', ids)
-        return data
-
-    def _serial_add(self, data, name, ids, **kwargs):
-        if 'val' in kwargs:
-            val = kwargs['val']
-        else:
-            val = getattr(self, name)
-            if val is None:
-                return
-        if isinstance(val, ModelBase):
-            data[name] = val.serialize(ids)
-        elif isinstance(val, datetime):
-            data[name] = ('datetime', val.strftime('%Y-%m-%d %H:%M'))
-        elif isinstance(val, timedelta):
-            data[name] = ('timedelta', val.total_seconds())
-        elif type(val) == list:
-            data[name] = ('list', val)
-        elif type(val) == tuple:
-            data[name] = ('tuple', val)
-        else:
-            data[name] = val
-
-    def _serial_get(self, data, name):
-        if name in data:
-            setattr(self, name, ModelBase.unserialize(data[name]))
+    
