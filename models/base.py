@@ -86,9 +86,13 @@ class Serializable():
         if force or val is not None:
             data[name] = val
         
-    def _serial_get(self, data, name):
+    def _serial_get(self, data, name, types=None):
         if name in data:
-            setattr(self, name, data[name])
+            if types is None:
+                setattr(self, name, data[name])
+            else:
+                if isinstance(types, BaseModel):
+                    types = (types, )
 
 
 class ModelBase(Serializable):

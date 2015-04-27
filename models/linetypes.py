@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from .base import ModelBase
+from .base import ModelBase, Serializable
 
 
-class LineTypes(ModelBase):
+class LineTypes(Serializable):
     _known = ('localtrain', 'longdistance', 'highspeed', 'urban', 'metro', 'tram',
               'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialable',
               'other', 'walk')
@@ -62,7 +62,7 @@ class LineTypes(ModelBase):
         return (isinstance(other, LineTypes) and self._incluced == other._included)
 
 
-class LineType(ModelBase):
+class LineType(Serializable):
     def __init__(self, name: str):
         super().__init__()
         if name in LineTypes._known:

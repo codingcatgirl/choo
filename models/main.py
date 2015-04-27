@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase, Serializable
-from .location import Location
+from .location import Coordinates, Location
 from .linetypes import LineType, LineTypes
 from .realtime import RealtimeTime
 
@@ -20,9 +20,9 @@ class Stop(Location):
     def _serialize(self, depth):
         data = {}
         if self.rides is not None:
-            data['rides'] = [ride.serialize() for ride in self.rides]
+            data['rides'] = [ride.serialize(depth) for ride in self.rides]
         if self.lines is not None:
-            data['lines'] = [line.serialize() for line in self.lines]
+            data['lines'] = [line.serialize(depth) for line in self.lines]
         return data
         
     def _unserialize(self, data):
@@ -46,21 +46,6 @@ class Stop(Location):
         if self.coords is not None and self.coords == other.coords:
             return True
         return self.name is not None and self.name == other.name and self.city == other.city and self.country == other.country
-
-    def _serialize(self, ids):
-        data = {}
-        if self.rides:
-            rides = [ride.serialize(ids) for ride in self.rides]
-            if rides.count({}) == len(rides):
-                rides = []
-            self._serial_add(data, 'rides', ids, val=rides)
-
-        if self.lines:
-            lines = [line.serialize(ids) for line in self.lines]
-            if lines.count({}) == len(lines):
-                lines = []
-            self._serial_add(data, 'lines', ids, val=lines)
-        return data
 
 
 class Line(ModelBase):
@@ -121,21 +106,43 @@ class Line(ModelBase):
             
             
 class TimeAndPlace(ModelBase):
-    def __init__(self, stop=None, platform=None, arrival=None, departure=None, coords: tuple=None):
+    _validate = {
+        'stop': Stop,
+        'platform': (None, str),
+        'coords': (None, Coordinates),
+        'arrival': (None, RealtimeTime),
+        'departure': (None, RealtimeTime)
+    }
+    
+    def __init__(self, stop=None, platform=None, arrival=None, departure=None, coords=None):
         super().__init__()
         self.stop = stop
         self.platform = platform
         self.coords = coords
         self.arrival = arrival
         self.departure = departure
-
-    def _load(self, data):
-        super()._load(data)
-        self._serial_get(data, 'stop')
+        
+    def _serialize(self, depth):
+        data = {}
+        self._serial_add(data, 'platform')
+        data['stop'] = self.stop.serialize(depth)
+        if self.coords:
+            data['coords'] = self.coords.serialize()
+        if self.arrival:
+            data['arrival'] = self.arrival.serialize()
+        if self.departure:
+            data['departure'] = self.departure.serialize()
+        return data
+        
+    def _unserialize(self, data):
         self._serial_get(data, 'platform')
-        self._serial_get(data, 'coords')
-        self._serial_get(data, 'arrival')
-        self._serial_get(data, 'departure')
+        self.stop = Stop.unserialize(data['stop'])
+        if 'coords' in data:
+            self.coords = Coordinates.unserialize(data['coords'])
+        if 'arrival' in data:
+            self.arrival = RealtimeTime.unserialize(data['arrival'])
+        if 'departure' in data:
+            self.departure = RealtimeTime.unserialize(data['departure'])
 
     def __eq__(self, other):
         return (isinstance(other, TimeAndPlace) and self.stop == other.stop and
@@ -145,17 +152,117 @@ class TimeAndPlace(ModelBase):
     def __repr__(self):
         return '<TimeAndPlace %s %s %s %s>' % (repr(self.arrival), repr(self.departure), repr(self.stop), repr(self.platform))
 
-    def _serialize(self, ids):
-        data = super()._serialize(ids)
-        self._serial_add(data, 'stop', ids)
-        self._serial_add(data, 'platform', ids)
-        self._serial_add(data, 'coords', ids)
-        self._serial_add(data, 'arrival', ids)
-        self._serial_add(data, 'departure', ids)
-        return data
-
 
 class Ride(ModelBase):
+    _validate = {
+        #'_stop': ((None, TimeAndPlace), ),
+        #'_paths': (None, str),
+        'line': (None, Line),
+        'number': (None, str),
+        'canceled': (None, bool),
+        'bike_friendly': (None, bool),
+        'infotexts': ((str, ), )
+    }
+    
+    def __init__(self, line: Line=None, number: str=None):
+        super().__init__()
+        self._stops = []
+        self._paths = {}
+        self.line = line
+        self.number = number
+        self.canceled = None
+        self.bike_friendly = None
+        self.infotexts = []
+        
+    def _serialize(self, depth):
+        data = {}
+        self._serial_add(data, 'number')
+        self._serial_add(data, 'canceled')
+        self._serial_add(data, 'bike_friendly')
+        if self.infotexts:
+            data['infotexts'] = self.infotexts
+        data['stops'] = [(None if s[1] is None else s[1].serialize(depth)) for s in self._stops]
+        # data['paths'] =  #todo
+        if self.line:
+            data['line'] = self.line.serialize(depth)
+        return data
+        
+    def _unserialize(self, data):
+        self._serial_get(data, 'number')
+        self._serial_get(data, 'canceled')
+        self._serial_get(data, 'bike_friendly')
+        self.infotexts = data['infotexts'] if 'infotexts' in data else []
+        for s in data['stops']:
+            self.append(TimeAndPlace.unserialize(s) if s is not None else None)
+        # self.paths #todo
+        if 'line' in data:
+            self.line = Line.unserialize(data['line'])
+        
+    @property
+    def is_complete(self):
+        return None not in self._stops
+
+    def __len__(self):
+        return len(self._stops)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            if key.step is not None:
+                raise NotImplementedError('slicing a Ride with steps is not supported')
+            return Ride.Segment(self,
+                               None if key.start is None else self._stops[int(key.start)][0],
+                               None if key.stop is None else self._stops[int(key.stop)][0])
+        else:
+            return self._stops[int(key)][1]
+
+    def __setitem__(self, key, item):
+        assert isinstance(item, TimeAndPlace) or item is None
+        self._stops[int(key)][1] = item
+
+    def __delitem__(self, key):
+        key = int(key)
+        del self._stops[key]
+        self._alter_pointers_after(key-1, -1)
+
+    def __iter__(self, key):
+        for stop in self._stops:
+            yield stop[1]
+
+    def items(self, key):
+        for stop in self._stops:
+            yield stop
+
+    def _alter_pointers_after(self, pos: int, diff: int):
+        for stop in self._stops[pos+1:]:
+            stop[0]._i += diff
+
+    def append(self, item):
+        assert isinstance(item, TimeAndPlace) or item is None
+        pointer = Ride.StopPointer(len(self._stops))
+        self._stops.append((pointer, item))
+        return pointer
+
+    def prepend(self, item):
+        assert isinstance(item, TimeAndPlace) or item is None
+        pointer = Ride.StopPointer(0)
+        self._stops.prepend((pointer, item))
+        self._alter_pointers_after(0, 1)
+        return pointer
+
+    def insert(self, position, item):
+        assert isinstance(item, TimeAndPlace) or item is None
+        position = max(0, min(position, len(self._stops)))
+        pointer = Ride.StopPointer(position)
+        self._stops.insert(position, (pointer, item))
+        self._alter_pointers_after(position, 1)
+        return pointer
+
+    def extend(self, item):
+        pass  # todo
+
+    def __eq__(self, other):
+        pass  # todo
+
     class StopPointer():
         def __init__(self, i: int):
             self._i = i
@@ -169,20 +276,33 @@ class Ride(ModelBase):
         def __repr__(self):
             return 'p:%d' % self._i
 
-    class Segment():
-        def __init__(self, ride, origin=None, destination=None):
+    class Segment(Serializable):
+        _validate = {
+            'ride': Ride,
+            '_pointer_origin': (None, Ride.StopPointer),
+            '_pointer_destination': (None, Ride.StopPointer)
+        }
+        
+        def __init__(self, ride=None, origin=None, destination=None):
             self.ride = ride
             self._pointer_origin = origin
             self._pointer_destination = destination
-
-        @classmethod
-        def load(cls, data):
-            ride = Ride.unserialize(data['ride'])
-            origin = data.get('origin', None)
-            destination = data.get('destination', None)
-            me = ride[origin:destination]
-            obj = cls(ride, me._pointer_origin, me._pointer_destination)
-            return obj
+            
+        def _serialize(self, depth):
+            data = {}
+            data['ride'] = self.ride.serialize(depth)
+            if self._pointer_origin:
+                data['origin'] = int(self._pointer_origin)
+            if self._pointer_destination:
+                data['destination'] = int(self._pointer_destination)-1
+            return data
+            
+        def _unserialize(self, data):
+            self.ride = Ride.unserialize(data['ride'])
+            if 'origin' in data:
+                self._pointer_origin = self.ride._stops[data['origin']][0]
+            if 'destination' in data:
+                self._pointer_destination = self.ride._stops[data['destination']+1][0]
 
         def _stops(self):
             return self.ride._stops[self._pointer_origin:self._pointer_destination]
@@ -252,128 +372,29 @@ class Ride(ModelBase):
                     self._pointer_origin == other._pointer_origin and
                     self._pointer_destination == other._pointer_destination)
 
-        def serialize(self, ids):
-            return ModelBase.serialize(self, ids)
-
-        def _serialize(self, ids):
-            data = {
-                'ride': self.ride.serialize(ids)
-            }
-            if self._pointer_origin is not None:
-                data['origin'] = int(self._pointer_origin)
-            if self._pointer_destination is not None:
-                data['destination'] = int(self._pointer_destination)
-            return data
-
-
-    def __init__(self, line: Line=None, number: str=None):
-        super().__init__()
-        self._stops = []
-        self._paths = {}
-        self.line = line
-        self.number = number
-        self.canceled = None
-        self.bike_friendly = None
-        self.infotexts = []
-
-    def _load(self, data):
-        super()._load(data)
-        self._serial_get(data, 'line')
-        self._serial_get(data, 'number')
-        self._serial_get(data, 'canceled')
-        self._serial_get(data, 'bike_friendly')
-
-        self._serial_get(data, 'stops')
-        self._stops = [TimeAndPlace.unserialize(stop) for stop in self.stops]
-        del self.stops
-
-        self._serial_get(data, 'paths')
-        self._paths = {tuple(self._stops[int(i)][0] for i in k.split(',')): [self.unserialize(p) for p in v] for k, v in self.paths}
-        del self.paths
-
-    @property
-    def is_complete(self):
-        return None not in self._stops
-
-    def __len__(self):
-        return len(self._stops)
-
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            if key.step is not None:
-                raise NotImplementedError('slicing a Ride with steps is not supported')
-            return Ride.Segment(self,
-                               None if key.start is None else self._stops[int(key.start)][0],
-                               None if key.stop is None else self._stops[int(key.stop)][0])
-        else:
-            return self._stops[int(key)][1]
-
-    def __setitem__(self, key, item):
-        assert isinstance(item, TimeAndPlace) or item is None
-        self._stops[int(key)] = item
-
-    def __delitem__(self, key):
-        key = int(key)
-        del self._stops[key]
-        self._alter_pointers_after(key-1, -1)
-
-    def __iter__(self, key):
-        for stop in self._stops:
-            yield stop[1]
-
-    def items(self, key):
-        for stop in self._stops:
-            yield stop
-
-    def _alter_pointers_after(self, pos: int, diff: int):
-        for stop in self._stops[pos+1:]:
-            stop[0]._i += diff
-
-    def append(self, item):
-        assert isinstance(item, TimeAndPlace) or item is None
-        pointer = Ride.StopPointer(len(self._stops))
-        self._stops.append((pointer, item))
-        return pointer
-
-    def prepend(self, item):
-        assert isinstance(item, TimeAndPlace) or item is None
-        pointer = Ride.StopPointer(0)
-        self._stops.prepend((pointer, item))
-        self._alter_pointers_after(0, 1)
-        return pointer
-
-    def insert(self, position, item):
-        assert isinstance(item, TimeAndPlace) or item is None
-        position = max(0, min(position, len(self._stops)))
-        pointer = Ride.StopPointer(position)
-        self._stops.insert(position, (pointer, item))
-        self._alter_pointers_after(position, 1)
-        return pointer
-
-    def extend(self, item):
-        pass  # todo
-
-    def __eq__(self, other):
-        pass  # todo
-
-    def _serialize(self, ids):
-        data = {}
-        self._serial_add(data, 'line', ids)
-        self._serial_add(data, 'number', ids)
-        self._serial_add(data, 'canceled', ids)
-        self._serial_add(data, 'bike_friendly', ids)
-        if self._stops:
-            stops = [(stop[1].serialize(ids) if stop[1] is not None else None) for stop in self._stops]
-            self._serial_add(data, 'stops', ids, val=stops)
-        self._serial_add(data, 'paths', ids, val={('%d,%d' % k): [('tuple', p) for p in v] for k,v in self._paths.items()})
-        return data
-        
         
 class Trip(ModelBase):
+    _validate = {
+        'parts': ((RideSegment, Way), ),
+        'walk_speed': str
+    }
+    
     def __init__(self):
         super().__init__()
         self.parts = []
         self.walk_speed = 'normal'
+        
+    def _serialize(self, depth):
+        data = {}
+        data['parts'] = [p.serialize(depth, True)]
+        return data
+        
+    def _unserialize(self, data):
+        self.parts = [globals()[model].unserialize(data) for model, data in data['parts']]
+        if 'origin' in data:
+            self._pointer_origin = self.ride._stops[data['origin']][0]
+        if 'destination' in data:
+            self._pointer_destination = self.ride._stops[data['destination']+1][0]
 
     class Request(ModelBase):
         def __init__(self):
@@ -400,19 +421,6 @@ class Trip(ModelBase):
             self._serial_add(data, 'parts', ids, val=parts)
             self._serial_add(data, 'walk_speed', ids)
             return data
-
-    def _load(self, data):
-        super()._load(data)
-        self._serial_get(data, 'walk_speed')
-        self._serial_get(data, 'parts')
-        self.parts = [ModelBase.unserialize(part) for part in self.parts]
-
-    def _serialize(self, ids):
-        data = {}
-        parts = [part.serialize(ids) for part in self.parts]
-        self._serial_add(data, 'parts', ids, val=parts)
-        self._serial_add(data, 'walk_speed', ids)
-        return data
 
     @property
     def origin(self):
