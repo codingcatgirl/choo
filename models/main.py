@@ -277,7 +277,7 @@ class Ride(ModelBase):
             return 'p:%d' % self._i
 
     class Segment(Serializable):
-        # we do this at the end of the file
+        # defined at the end of file
         #_validate = {
         #    'ride': Ride,
         #    '_pointer_origin': (None, Ride.StopPointer),
