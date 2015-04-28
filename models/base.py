@@ -18,7 +18,7 @@ class Serializable():
                 
                 if not self._validate(val, allowed):
                     raise ValueError('%s.%s has to be %s' % (self.__class__.__name__, name, self._or(allowed)))
-            return True
+        return True
         
     def _validate_item(self, val, alloweds):
         if type(alloweds) != tuple:
@@ -116,7 +116,8 @@ class ModelBase(Serializable):
         self.serial_get(data, '_raws')
     
     class Request(Serializable):
-        pass
+        def matches(self, obj):
+            obj.validate()
 
     class Results(Serializable):
         def __init__(self, results=[], subject=None, api=None, method=None):
@@ -125,7 +126,7 @@ class ModelBase(Serializable):
             self.api = api
             self.method = method
             self.results = tuple(results)
-
+            
         def _load(self, data):
             super()._load(data)
             self._serial_get(data, 'results')
