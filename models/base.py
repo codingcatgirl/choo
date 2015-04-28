@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import collections
+import copy
 
 class Serializable():
     _serialize_depth = None
@@ -93,9 +94,15 @@ class Serializable():
             else:
                 if isinstance(types, BaseModel):
                     types = (types, )
+                    
+                    
+class MetaModelBase(type):
+    def __init__(cls, a, b, c):
+        cls.Request.Model = cls
+        cls.Results.Model = cls
+        
 
-
-class ModelBase(Serializable):
+class ModelBase(Serializable, metaclass=MetaModelBase):
     _validate = {
         '_ids': dict,
         '_raws': dict
@@ -114,18 +121,35 @@ class ModelBase(Serializable):
     def _unserialize(self, data):
         self.serial_get(data, '_ids')
         self.serial_get(data, '_raws')
+        
+    def matches(self, request):
+        if not isinstance(obj, ModelBase.Request):
+            raise TypeError('not a request')
+        return request.matches(self)
+        
     
     class Request(Serializable):
         def matches(self, obj):
+            if not isinstance(obj, self.Model):
+                raise TypeError('%s.Request can only match %s' % (self.Model.__name__,  self.Model.__name__))
             obj.validate()
+            
+        def _matches(obj):
+            pass
+                    
 
     class Results(Serializable):
-        def __init__(self, results=[], subject=None, api=None, method=None):
+        def __init__(self, results=[]):
             super().__init__()
-            self.subject = subject
-            self.api = api
-            self.method = method
             self.results = tuple(results)
+            
+        def _serialize(self, depth):
+            data = {}
+            data['results'] = [((r[0].serialize(True), )+r[1:]) for r in self.results]
+            return data
+            
+        def _unserialize(self, data):
+            self.results = [((self.Model.unserialize(data[0]), )+data[1:]) for data in data['results']]
             
         def _load(self, data):
             super()._load(data)
@@ -152,6 +176,20 @@ class ModelBase(Serializable):
                 results = [item.serialize(ids) for item in self.results]
             self._serial_add(data, 'results', ids, val=results)
             return data
+            
+        def filter(self, request):
+            if not self.results:
+                return
+                
+            if not isinstance(request, self.Model.Request):
+                raise TypeError('%s.Results can be filtered with %s' % (self.Model.__name__,  self.Model.__name__))
+                
+            self.results = tuple(r for r in self.results if request.matches(r))
+                
+        def filtered(self, request):
+            obj = copy.copy(self)
+            obj.filter(request)
+            return obj
 
         def __iter__(self):
             for result in self.results:
