@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase, Serializable
-from .location import Coordinates, Location
+from .location import Coordinates, Location, Way
 from .linetypes import LineType, LineTypes
 from .realtime import RealtimeTime
 
@@ -277,11 +277,12 @@ class Ride(ModelBase):
             return 'p:%d' % self._i
 
     class Segment(Serializable):
-        _validate = {
-            'ride': Ride,
-            '_pointer_origin': (None, Ride.StopPointer),
-            '_pointer_destination': (None, Ride.StopPointer)
-        }
+        # we do this at the end of the file
+        #_validate = {
+        #    'ride': Ride,
+        #    '_pointer_origin': (None, Ride.StopPointer),
+        #    '_pointer_destination': (None, Ride.StopPointer)
+        #}
         
         def __init__(self, ride=None, origin=None, destination=None):
             self.ride = ride
@@ -375,7 +376,7 @@ class Ride(ModelBase):
         
 class Trip(ModelBase):
     _validate = {
-        'parts': ((RideSegment, Way), ),
+        'parts': ((Ride.Segment, Way), ),
         'walk_speed': str
     }
     
@@ -386,7 +387,7 @@ class Trip(ModelBase):
         
     def _serialize(self, depth):
         data = {}
-        data['parts'] = [p.serialize(depth, True)]
+        data['parts'] = [p.serialize(depth, True) for p in self.parts]
         return data
         
     def _unserialize(self, data):
@@ -489,4 +490,9 @@ class Trip(ModelBase):
 Stop._validate = {
     'rides': (None, (Ride.Segment, )),
     'lines': (None, (Line, ))
+}
+Ride.Segment._validate = {
+    'ride': Ride,
+    '_pointer_origin': (None, Ride.StopPointer),
+    '_pointer_destination': (None, Ride.StopPointer)
 }
