@@ -62,8 +62,8 @@ class LineTypes(Serializable):
         return bool(self._included)
 
     def __eq__(self, other):
-        return (isinstance(other, LineTypes) and
-                self._incluced == other._included)
+        assert isinstance(other, LineTypes)
+        return self._incluced == other._included
 
 
 class LineType(Serializable):
@@ -80,7 +80,12 @@ class LineType(Serializable):
     def _unserialize(self, data):
         self.name = data
 
-    def __eq__(self, name: str):
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        assert isinstance(other, LineType) or type(other) == str
+        name = str(other)
         if self.name == name or (name in LineTypes._shortcuts and
                                  self.name in LineTypes._shortcuts[name]):
             return True
