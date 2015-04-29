@@ -133,6 +133,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             if not isinstance(obj, self.Model):
                 raise TypeError('%s.Request can only match %s' % (self.Model.__name__,  self.Model.__name__))
             obj.validate()
+            return self._matches(obj)
             
         def _matches(obj):
             pass
