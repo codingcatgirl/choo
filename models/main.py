@@ -40,8 +40,7 @@ class Stop(Location):
         return '<%s %s, %s>' % ('Stop', self.city, self.name)
 
     def __eq__(self, other):
-        if not isinstance(other, Stop):
-            return None
+        assert isinstance(other, Stop)
         for k, id_ in self._ids.items():
             if id_ is not None and other._ids.get(k) == id_:
                 return True

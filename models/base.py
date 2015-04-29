@@ -5,7 +5,6 @@ import copy
 
 class Serializable:
     _serialize_depth = None
-    _validate = {}
 
     def validate(self):
         for c in self.__class__.__mro__:

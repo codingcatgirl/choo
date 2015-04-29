@@ -55,4 +55,8 @@ class RealtimeTime(Serializable):
         self.time -= other
 
     def __eq__(self, other):
-        return self.time == other.time
+        assert isinstance(other, RealtimeTime) or isinstance(other, datetime)
+        if isinstance(other, datetime):
+            return self.time == other
+        else:
+            return self.time == other.time
