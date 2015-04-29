@@ -3,6 +3,7 @@ from apis.efa import EFA
 
 supported = ('VRR', )
 
+
 class VRR(EFA):
     name = 'vrr'
     base_url = 'http://app.vrr.de/standard/'
@@ -11,6 +12,7 @@ class VRR(EFA):
     def __init__(self):
         self.ids = {}
         self.raws = {}
+
 
 def network(name):
     global supported

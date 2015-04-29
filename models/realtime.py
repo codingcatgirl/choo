@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable
+from .base import Serializable
 from datetime import datetime, timedelta
 
 
@@ -9,19 +9,20 @@ class RealtimeTime(Serializable):
         'delay': (None, timedelta)
     }
 
-    def __init__(self, time: datetime=None, delay: timedelta=None, livetime: datetime=None):
+    def __init__(self, time=None, delay=None, livetime=None):
         super().__init__()
         if time is not None and livetime is not None:
             if delay is not None:
-                assert livetime-time == delay
+                assert livetime - time == delay
             else:
-                delay = livetime-time
+                delay = livetime - time
 
         self.time = time
         self.delay = delay
 
     def _serialize(self, depth):
-        return [self.time.strftime('%Y-%m-%d %H:%M:%S'), self.delay.total_seconds() if self.delay is not None else None]
+        return [self.time.strftime('%Y-%m-%d %H:%M:%S'),
+                self.delay.total_seconds() if self.delay is not None else None]
 
     def _unserialize(self, data):
         self.time = datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')
@@ -29,7 +30,10 @@ class RealtimeTime(Serializable):
             self.delay = timedelta(seconds=data[1])
 
     def __repr__(self):
-        return '<RealtimeTime %s%s>' % (str(self.time)[:-3], (' +%d' % (self.delay.total_seconds()/60)) if self.delay is not None else '')
+        delay = ''
+        if self.delay is not None:
+            delay = ' +%d' % (self.delay.total_seconds() / 60)
+        return '<RealtimeTime %s%s>' % (str(self.time), delay)
 
     @property
     def is_live(self):
@@ -38,7 +42,7 @@ class RealtimeTime(Serializable):
     @property
     def livetime(self):
         if self.delay is not None:
-            return self.time+self.delay
+            return self.time + self.delay
         else:
             return self.time
 

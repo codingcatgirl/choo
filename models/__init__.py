@@ -4,7 +4,8 @@ from .linetypes import LineType, LineTypes
 from .realtime import RealtimeTime
 from .main import Trip, Ride, TimeAndPlace, Line, Stop
 
-def unserialize_typed():
+
+def unserialize_typed(data):
     return globals()[data[0]].unserialize(data[1])
 
 __all__ = ['Coordinates', 'Location', 'Stop', 'Address', 'POI', 'Line',
