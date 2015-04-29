@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import collections
+from collections import Iterable
 import copy
 
 
@@ -30,7 +30,7 @@ class Serializable:
             if allowed is None and val is None:
                 return True
             elif type(allowed) is tuple:
-                if not isinstance(val, collections.Iterable):
+                if not isinstance(val, Iterable):
                     return False
 
                 for v in val:
