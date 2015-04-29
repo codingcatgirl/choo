@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable
+from .base import Serializable
 
 
 class LineTypes(Serializable):
-    _known = ('localtrain', 'longdistance', 'highspeed', 'urban', 'metro', 'tram',
-              'citybus', 'regionalbus', 'expressbus', 'suspended', 'ship', 'dialable',
-              'other', 'walk')
+    _known = ('localtrain', 'longdistance', 'highspeed', 'urban', 'metro',
+              'tram', 'citybus', 'regionalbus', 'expressbus', 'suspended',
+              'ship', 'dialable', 'other', 'walk')
     _shortcuts = {
         'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
         'dial': ('dialbus', 'dialtaxi')
@@ -46,7 +46,10 @@ class LineTypes(Serializable):
             if name in self._known:
                 return name in self._included
             elif name in self._shortcuts:
-                return False not in [child in self._included for child in self._shortcuts[name]]
+                for child in self._shortcuts[name]:
+                    if child not in self._included:
+                        return False
+                return True
             else:
                 raise AttributeError('unsupported linetype')
         else:
@@ -59,7 +62,8 @@ class LineTypes(Serializable):
         return bool(self._included)
 
     def __eq__(self, other):
-        return (isinstance(other, LineTypes) and self._incluced == other._included)
+        return (isinstance(other, LineTypes) and
+                self._incluced == other._included)
 
 
 class LineType(Serializable):
@@ -77,12 +81,10 @@ class LineType(Serializable):
         self.name = data
 
     def __eq__(self, name: str):
-        if self.name == name or (name in LineTypes._shortcuts and self.name in LineTypes._shortcuts[name]):
+        if self.name == name or (name in LineTypes._shortcuts and
+                                 self.name in LineTypes._shortcuts[name]):
             return True
         elif name in LineTypes._known:
             return False
         else:
             raise AttributeError('unsupported linetype')
-
-    def _serialize(self, ids):
-        return self.name

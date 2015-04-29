@@ -2,6 +2,7 @@
 from .base import ModelBase, Serializable
 from datetime import timedelta
 
+
 class Coordinates(Serializable):
     _validate = {
         'lat': float,
@@ -72,7 +73,7 @@ class Way(ModelBase):
         'path': (None, (Coordinates, ))
     }
 
-    def __init__(self, origin: Location, destination: Location, distance: int=None):
+    def __init__(self, origin=None, destination=None, distance=None):
         super().__init__()
         self.origin = origin
         self.destination = destination
@@ -92,35 +93,16 @@ class Way(ModelBase):
         return data
 
     def _unserialize(self, data):
+        from .main import Stop
+        types = (Location, Stop, POI, Address, Coordinates)
         self._serial_get(data, 'distance')
         self._serial_get(data, 'duration')
-        self.origin = globals()[data['origin'][0]].unserialize(data['origin'][1])
-        self.destination = globals()[data['origin'][0]].unserialize(data['destination'][1])
+        self.origin = self._unserialize_typed(data['origin'], types)
+        self.destination = self._unserialize_typed(data['destination'], types)
         if 'path' in data:
             self.path = Coordinates.unserialize(data['path'])
 
-    @classmethod
-    def load(cls, data):
-        origin = Location.unserialize(data['origin'])
-        destination = Location.unserialize(data['destination'])
-        obj = cls(origin, destination)
-        obj.distance = data.get('distance', None)
-        obj.duration = data.get('duration', None)
-        obj.path = data.get('path', None)
-        if obj.path:
-            obj.path = [self.unserialize(p) for p in obj.path]
-        return obj
-
     def __eq__(self, other):
-        return (isinstance(other, Way) and self.origin == other.origin and self.destination == other.destination)
-
-    def _serialize(self, ids):
-        data = {}
-        self._serial_add(data, 'origin', ids)
-        self._serial_add(data, 'destination', ids)
-        self._serial_add(data, 'distance', ids)
-        self._serial_add(data, 'duration', ids)
-        if self.path:
-            path = [('tuple', v) for v in self.path]
-            self._serial_add(data, 'path', ids, val=path)
-        return data
+        assert isinstance(other, Way)
+        return (self.origin == other.origin and
+                self.destination == other.destination)
