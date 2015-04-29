@@ -8,7 +8,7 @@ class RealtimeTime(Serializable):
         'time': datetime,
         'delay': (None, timedelta)
     }
-    
+
     def __init__(self, time: datetime=None, delay: timedelta=None, livetime: datetime=None):
         super().__init__()
         if time is not None and livetime is not None:
@@ -19,10 +19,10 @@ class RealtimeTime(Serializable):
 
         self.time = time
         self.delay = delay
-        
+
     def _serialize(self, depth):
         return [self.time.strftime('%Y-%m-%d %H:%M:%S'), self.delay.total_seconds() if self.delay is not None else None]
-        
+
     def _unserialize(self, data):
         self.time = datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')
         if data[1] is not None:
@@ -52,4 +52,3 @@ class RealtimeTime(Serializable):
 
     def __eq__(self, other):
         return self.time == other.time
-        
