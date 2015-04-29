@@ -7,17 +7,17 @@ class Coordinates(Serializable):
         'lat': float,
         'lon': float
     }
-    
+
     def __init__(self, lat, lon):
         self.lat = lat
         self.lon = lon
-        
+
     def _serialize(self, depth):
         return [self.lat, self.lon]
-        
+
     def _unserialize(self, data):
         self.lat, self.lon = data
-        
+
 
 class Location(ModelBase):
     _validate = {
@@ -26,7 +26,7 @@ class Location(ModelBase):
         'name': str,
         'coords': (None, Coordinates)
     }
-    
+
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         self.country = country
@@ -42,15 +42,15 @@ class Location(ModelBase):
         if self.coords:
             data['coords'] = self.coords.serialize()
         return data
-        
+
     def _unserialize(self, data):
         self._serial_get(data, 'country')
         self._serial_get(data, 'city')
         self._serial_get(data, 'name')
         if 'coords' in data:
             self.coords = Coordinates.unserialize(data['coords'])
-            
-            
+
+
 class POI(Location):
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
@@ -61,8 +61,8 @@ class Address(Location):
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
-            
-        
+
+
 class Way(ModelBase):
     _validate = {
         'origin': Location,
@@ -71,7 +71,7 @@ class Way(ModelBase):
         'duration': timedelta,
         'path': (None, (Coordinates, ))
     }
-    
+
     def __init__(self, origin: Location, destination: Location, distance: int=None):
         super().__init__()
         self.origin = origin
@@ -80,7 +80,7 @@ class Way(ModelBase):
         self.duration = None
         self.path = None
         # todo: self.stairs = None
-        
+
     def _serialize(self, depth):
         data = {}
         self._serial_add(data, 'distance')
@@ -90,7 +90,7 @@ class Way(ModelBase):
         if self.path is not None:
             data['path'] = [p.serialize() for p in self.path]
         return data
-        
+
     def _unserialize(self, data):
         self._serial_get(data, 'distance')
         self._serial_get(data, 'duration')

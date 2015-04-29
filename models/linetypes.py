@@ -10,14 +10,14 @@ class LineTypes(Serializable):
         'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
         'dial': ('dialbus', 'dialtaxi')
     }
-    
+
     def __init__(self, all_types: bool=True):
         super().__init__()
         self._included = set(self._known) if all_types else set()
-        
+
     def _serialize(self, depth):
         return self._included
-                
+
     def _unserialize(self, data):
         self._included = data
 
@@ -69,10 +69,10 @@ class LineType(Serializable):
             self.name = name
         else:
             raise AttributeError('unsupported linetype')
-            
+
     def _serialize(self, depth):
         return self.name
-                
+
     def _unserialize(self, data):
         self.name = data
 
@@ -86,4 +86,3 @@ class LineType(Serializable):
 
     def _serialize(self, ids):
         return self.name
-        

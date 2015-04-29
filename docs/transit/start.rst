@@ -9,7 +9,7 @@ To get startet, let's look up Essen Hauptbahnhof in the VRR network using the co
 To do so, we first have to describe Essen Hauptbahnhof as a ``Stop``:
 
 .. code-block:: json
-    
+
     ["Stop", {
         "name": "Essen Hauptbahnhof"
     }]
@@ -19,9 +19,9 @@ The outer list describes the data type (``Stop``) and the data.
 Now we pass this data to the API.
 
 .. code-block:: none
-    
+
     transit VRR get_stop essen.json
-    
+
 The API method ``get_stop`` tries to get as much information as possible about a given stop with only one request to the server.
 
 .. code-block:: none
@@ -58,9 +58,9 @@ JSON Interface
 If you want to process the data you want it in a easily parsable format and you want it complete. So let's do that and look at what we get.
 
 .. code-block::
-    
+
     transit VRR get_stop --json-noraw essen.json
-    
+
 The ``--json-noraw`` argument suppresses the raw data (XML or whatever the backend sends) in the JSON as it would make the output even larger. If you want to pass the json output back to the Interface, you should (but do not have to) use ``--json``.
 
 For more information about the command line syntax and available methods, see `Command Line Usage`_ and `Network API`_.
@@ -152,7 +152,7 @@ If you set the filename to ``-`` you can pass the data via STDIN.
             }]
         ]
     }]
-    
+
 Although this is the same type of data it is much more detailed.
 First, we can see that the API returns a stop – the stop we gave as input – but with much more information.
 
@@ -180,21 +180,21 @@ In the ``rides`` attribute the next rides that pass this station are listed. To 
     The ``null`` items in between them mean that there may be missing stops between.
     If the TimeAndPlace object directly before and after the ``null`` items are about the same stop, they might be the same.
     To get all information about a ride, use the ``get_ride`` method.
-    
+
     Our stop is also listed in the ride. Because it is listed as a indirect child of itself, it gets the ``"is_truncated": true`` parameter.
     This means that objects that can lead to more children will not be listed. Here, the ``lines`` and ``rides`` attributes are empty lists.
-    
+
 **TimeAndPlace**
     A time and place object describes the time, stop and platform and coordinates where a ride meets a stop.
-    
+
 **RealtimeTime**
     Points in time are always given as a RealtimeTime object.
     A real time time object consists of a ``time`` attribute, which is always a ``datetime`` object in the ``YYYY-MM-DD HH:MM`` format and an optional ``delay`` attribute, which is the currently expected delay as a ``timedelta`` object in seconds.
-    
+
     If the ``delay`` attribute is missing, no real time data is available. If the ride is on time the delay will be 0 seconds.
-    
+
 For more information about the JSON format, see `Model Reference`_ and `Model Serialization`_.
-    
+
 Python Interface
 ----------------
 
@@ -204,28 +204,28 @@ Let's see how you would access this via the Python interface. **Every attribute 
 
     from transit.models import Stop
     import transit.networks
-    
+
     essen = Stop(name='Essen Hauptbahnhof')
     vrr = networks.network('VRR')
-    
+
     essen = vrr.get_stop_rides(essen)
     print(essen.city)  # Essen
     print(essen.name)  # Hauptbahnhof
-    
+
     # iterates through all lines
     for line in essen.lines:
         print(line.shortname)  # RB40 and similar
-        
+
     # iterates through all rides
     for ridesegment in essen.rides:
         ride = ridesegment.ride
-        
+
         print(ride.number)  # train number or similar
         print(ride.line.shortname)  # 106 or similar
-        
+
         # all Ride attributes can also accessed using the RideSegment
         print(ridesegment.number)  # same as ride.number
-        
+
         # iterate through all stops of the RideSegment
         for timeandplace in ridesegment:
             if timeandplace is not None:  # this is not a gap
@@ -235,13 +235,12 @@ Let's see how you would access this via the Python interface. **Every attribute 
                     print(timeandplace.departure.is_live)  # shortcut for delay is not None
                     print(timeandplace.departure.livetime)  # expceted time if real time information is available, otherwise planned time
                 print(timeandplace.stop.name) # Hauptbahnhof or similar
-        
+
         # iterate through all stops of the Ride
         for timeandplace in ridesegment.ride:
             # same as above, but without boundaries
-            
+
         # you can also slice a ride or ride segment to get another ride segment
         newsegment = ridesegment.ride[1:]
 
 For more information, see `Network API`_ and `Model Reference`_.
-    
