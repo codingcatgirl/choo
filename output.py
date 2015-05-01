@@ -3,8 +3,6 @@ from models.base import ModelBase
 from models import Location, Stop, POI, Address
 from models import Trip, TimeAndPlace, RealtimeTime
 from models import Ride, Line, LineType
-from datetime import datetime, timedelta
-import string
 
 
 class PrettyPrint():
