@@ -24,6 +24,7 @@ class Serializable:
     def _validate_item(self, val, alloweds):
         if type(alloweds) != tuple:
             alloweds = (alloweds, )
+
         for allowed in alloweds:
             if allowed is None:
                 if val is None:
@@ -41,7 +42,8 @@ class Serializable:
         return False
 
     def _validate_or(self, items):
-        out = []
+        if type(items) != tuple:
+            return items.__name__
         for item in items:
             if item is None:
                 out.append('None')
