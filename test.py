@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from networks import VRR
-from models import Stop, Trip
+from models import Stop, Trip, unserialize_typed
 from datetime import datetime
 from output import PrettyPrint
 import json
@@ -17,4 +17,6 @@ result = vrr.search_trips(trip)
 #result = vrr.get_stop_rides(bs)
 #p = PrettyPrint()
 #print(p.formatted(result))
-print(json.dumps(result.serialize(typed=True), indent=2))
+s = result.serialize(typed=True)
+bla = unserialize_typed(s)
+print(json.dumps(bla.serialize(typed=True), indent=2))
