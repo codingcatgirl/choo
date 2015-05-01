@@ -2,7 +2,7 @@
 from models.base import ModelBase
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, RealtimeTime
-from models import Trip
+from models import Trip, Coordinates
 from models import Ride, Line, LineType, LineTypes, Way
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
@@ -194,7 +194,7 @@ class EFA(API):
         data = xml.find('./itdTripRequest')
 
         results = self._parse_routes(data.find('./itdItinerary/itdRouteList'))
-        return Trip.Results(results, api=self.name)
+        return Trip.Results(results)
 
     def _stop_finder_request(self, stop: Stop):
         """ Searches a Stop; Returns a SearchResult(Stop) """
@@ -354,7 +354,7 @@ class EFA(API):
 
         # Coordinates
         if 'x' in data.attrib:
-            location.coords = (float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
+            location.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         return location, score
 
@@ -392,7 +392,7 @@ class EFA(API):
             trip = Trip()
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
                 trip.parts.append(self._parse_routepart(routepart))
-            trips.append(trip)
+            trips.append((trip, ))
         return trips
 
     def _parse_routepart(self, data):
@@ -401,11 +401,11 @@ class EFA(API):
 
         path = []
         for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
-            path.append((int(coords.find('x').text)/1000000, int(coords.find('y').text)/1000000))
+            path.append(Coordinates(int(coords.find('x').text)/1000000, int(coords.find('y').text)/1000000))
 
         if data.attrib['type'] == 'IT':
             way = Way(points[0].stop, points[1].stop)
-            way.distance = data.attrib.get('distance')
+            way.distance = float(data.attrib.get('distance'))
             duration = data.attrib.get('timeMinute', None)
             if duration is not None:
                 way.duration = timedelta(minutes=int(duration))
@@ -560,7 +560,7 @@ class EFA(API):
         result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
 
         if 'x' in data.attrib:
-            result.coords = (float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
+            result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # get and clean the platform
         platform = data.attrib['platform']

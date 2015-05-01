@@ -18,22 +18,22 @@ class Serializable:
                     raise AttributeError('%s.%s is missing' % (mycls, name))
 
                 if not self._validate_item(getattr(self, name), allowed):
-                    raise ValueError('%s.%s has to be %s' %
-                                     (mycls, name, self._or(allowed)))
+                    raise ValueError('%s.%s has to be %s, not %s' % (mycls, name, self._validate_or(allowed), type(getattr(self, name))))
         return True
 
     def _validate_item(self, val, alloweds):
         if type(alloweds) != tuple:
             alloweds = (alloweds, )
         for allowed in alloweds:
-            if allowed is None and val is None:
-                return True
+            if allowed is None:
+                if val is None:
+                    return True
             elif type(allowed) is tuple:
                 if not isinstance(val, Iterable):
                     return False
 
                 for v in val:
-                    if not self._validate(v, allowed):
+                    if not self._validate_item(v, allowed):
                         return False
                 return True
             elif isinstance(val, allowed):
@@ -46,7 +46,7 @@ class Serializable:
             if item is None:
                 out.append('None')
             elif type(item) is tuple:
-                out.append('Iterable(%s)' % self._or(item))
+                out.append('Iterable(%s)' % self._validate_or(item))
             else:
                 out.append(item.__name__)
 
@@ -68,14 +68,20 @@ class Serializable:
             depth = self._serialize_depth
 
         serialized = {}
-        if depth:
+        if depth != 0:
             for c in self.__class__.__mro__:
                 if not hasattr(c, '_serialize'):
                     continue
-                serialized.update(c._serialize(self, depth - 1))
+                more = c._serialize(self, (depth - 1 if depth is not None else None))
+                if not isinstance(more, dict):
+                    return more
+                serialized.update(more)
 
         if typed:
-            return self.__class__.__name__, serialized
+            if hasattr(self, 'Model'):
+                return self.Model.__name__+'.'+self.__class__.__name__, serialized
+            else:
+                return self.__class__.__name__, serialized
         else:
             return serialized
 
@@ -88,7 +94,6 @@ class Serializable:
         for c in cls.__mro__:
             if not hasattr(c, '_unserialize'):
                 continue
-            c._unserialize(obj, data)
         return obj
 
     def _unserialize(self, data):
@@ -125,7 +130,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
         self._raws = {}
 
     def _serialize(self, depth):
-        data = super().serialize()
+        data = {}
         data['_ids'] = self._ids
         data['_raws'] = self._raws
         return data
@@ -157,7 +162,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
 
         def _serialize(self, depth):
             data = {}
-            data['results'] = [((r[0].serialize(True), ) + r[1:])
+            data['results'] = [((r[0].serialize(), ) + r[1:])
                                for r in self.results]
             return data
 
