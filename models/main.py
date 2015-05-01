@@ -405,7 +405,7 @@ class Trip(ModelBase):
         self.parts = [self._unserialize_typed(part, (Ride.Segment, Way))
                       for model, part in data['parts']]
 
-    class Request(ModelBase):
+    class Request(ModelBase.Request):
         def __init__(self):
             super().__init__()
             self.parts = []
