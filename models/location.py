@@ -85,7 +85,7 @@ class Way(ModelBase):
     def _serialize(self, depth):
         data = {}
         self._serial_add(data, 'distance')
-        self._serial_add(data, 'duration')
+        data['duration'] = self.duration.total_seconds()
         data['origin'] = self.origin.serialize(depth, True)
         data['destination'] = self.destination.serialize(depth, True)
         if self.path is not None:

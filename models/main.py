@@ -169,6 +169,8 @@ class Ride(ModelBase):
         'infotexts': ((str, ), )
     }
 
+    _serialize_depth = 3
+
     def __init__(self, line: Line=None, number: str=None):
         super().__init__()
         self._stops = []
@@ -383,7 +385,7 @@ class Ride(ModelBase):
             return (self.ride == other.ride and
                     self._origin == other._origin and
                     self._destination == other._destination)
-
+Ride.Segment.Model = Ride
 
 class Trip(ModelBase):
     _validate = {
@@ -508,6 +510,6 @@ Stop._validate = {
 }
 Ride.Segment._validate = {
     'ride': Ride,
-    '_pointer_origin': (None, Ride.StopPointer),
-    '_pointer_destination': (None, Ride.StopPointer)
+    '_origin': (None, Ride.StopPointer),
+    '_destination': (None, Ride.StopPointer)
 }
