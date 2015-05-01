@@ -549,6 +549,11 @@ class EFA(API):
         name = data.attrib.get('nameWO', '')
         name = name if name else None
 
+        if name is None:
+            name = data.attrib.get('name', '')
+            if ', ' in name and (city is None or name.startswith(city)):
+                city, name = name.split(', ', 1)
+
         # todo – what kind of location is this?
         if walk and data.attrib['area'] == '0':
             location = Address(self.country, city, name)

@@ -39,7 +39,7 @@ class Location(ModelBase):
         data = {}
         self._serial_add(data, 'country')
         self._serial_add(data, 'city')
-        self._serial_add(data, 'name')
+        data['name'] = self.name
         if self.coords:
             data['coords'] = self.coords.serialize()
         return data
