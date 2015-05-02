@@ -56,7 +56,7 @@ class Location(ModelBase):
 
 
 class Stop(Location):
-    _serialize_depth = 2
+    _serialize_depth = 5
 
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()

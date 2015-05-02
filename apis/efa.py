@@ -111,7 +111,7 @@ class EFA(API):
         post = {
             'changeSpeed': triprequest.walk_speed,
             'command': '',
-             'coordOutputFormat': 'WGS84',
+            'coordOutputFormat': 'WGS84',
             'imparedOptionsActive': 1,
             'includedMeans': 'checkbox',
             'itOptionsActive': 1,
@@ -254,7 +254,7 @@ class EFA(API):
             stop.lines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
-                origin, destination, line, rideid, ridenum, canceled = self._parse_mot(line)
+                origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
                 line.first_stop = origin
                 line.last_stop = destination
                 stop.lines.append(line)
@@ -364,11 +364,18 @@ class EFA(API):
         departures = data.findall('./itdDeparture')
         for departure in departures:
             # Get Line Information
-            origin, destination, line, rideid, ridenum, canceled = self._parse_mot(departure.find('./itdServingLine'))
+            origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'))
+
+            if ridenum is None:
+                ridedata = departure.find('./itdServingTrip')
+                if ridedata is not None:
+                    ridenum = ridedata.attrib.get('tripCode', None)
+                    if ridenum is not None:
+                        ridenum = ridenum.strip()
 
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
-            ride._ids[self.name] = rideid
+            ride.direction = ridedir
             ride.canceled = canceled
             if origin is not None:
                 ride.append(TimeAndPlace(origin))
@@ -414,12 +421,12 @@ class EFA(API):
             return way
 
         else:
-            origin, destination, line, rideid, ridenum, canceled = self._parse_mot(data.find('./itdMeansOfTransport'))
+            origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(data.find('./itdMeansOfTransport'))
 
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
-            ride._ids[self.name] = rideid
             ride.canceled = canceled
+            ride.direction = ridedir
             for infotext in data.findall('./infoTextList/infoTextListElem'):
                 ride.infotexts.append(infotext)
             if origin is not None:
@@ -485,11 +492,15 @@ class EFA(API):
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
-        rideid = data.attrib.get('stateless', None) # todo
+        ridenum = data.attrib['tC'] if 'tC' in data else None
         diva = data.find('./motDivaParams')
+        ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
-            ridenum = diva.attrib['line']
+            line._ids[self.name] = (diva.attrib['project'], diva.attrib['line'])
+            ridedir = diva.attrib['direction'].strip()
+            if not ridedir:
+                ridedir = None
 
         op = data.find('./itdOperator')
         if op is not None:
@@ -539,7 +550,7 @@ class EFA(API):
         if routedescription is not None:
             line.route = routedescription.text
 
-        return origin, destination, line, rideid, ridenum, canceled
+        return origin, destination, line, ridenum, ridedir, canceled
 
     def _parse_trip_point(self, data, walk=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
