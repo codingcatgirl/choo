@@ -405,7 +405,7 @@ class EFA(API):
 
         path = []
         for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
-            path.append(Coordinates(int(coords.find('x').text) / 1000000, int(coords.find('y').text) / 1000000))
+            path.append(Coordinates(int(coords.find('y').text) / 1000000, int(coords.find('x').text) / 1000000))
 
         if data.attrib['type'] == 'IT':
             way = Way(points[0].stop, points[1].stop)
