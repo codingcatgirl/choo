@@ -4,10 +4,12 @@ from datetime import timedelta
 
 
 class Coordinates(Serializable):
-    _validate = {
-        'lat': float,
-        'lon': float
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'lat': float,
+            'lon': float
+        }
 
     def __init__(self, lat=None, lon=None):
         self.lat = lat
@@ -21,12 +23,14 @@ class Coordinates(Serializable):
 
 
 class Location(ModelBase):
-    _validate = {
-        'country': (None, str),
-        'city': (None, str),
-        'name': str,
-        'coords': (None, Coordinates)
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'country': (None, str),
+            'city': (None, str),
+            'name': str,
+            'coords': (None, Coordinates)
+        }
 
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
@@ -65,13 +69,15 @@ class Address(Location):
 
 
 class Way(ModelBase):
-    _validate = {
-        'origin': Location,
-        'destination': Location,
-        'distance': (int, float),
-        'duration': timedelta,
-        'path': (None, (Coordinates, ))
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'origin': Location,
+            'destination': Location,
+            'distance': (int, float),
+            'duration': timedelta,
+            'path': (None, (Coordinates, ))
+        }
 
     def __init__(self, origin=None, destination=None, distance=None):
         super().__init__()

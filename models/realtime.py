@@ -4,10 +4,12 @@ from datetime import datetime, timedelta
 
 
 class RealtimeTime(Serializable):
-    _validate = {
-        'time': datetime,
-        'delay': (None, timedelta)
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'time': datetime,
+            'delay': (None, timedelta)
+        }
 
     def __init__(self, time=None, delay=None, livetime=None):
         super().__init__()

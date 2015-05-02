@@ -13,7 +13,7 @@ class Serializable:
 
             mycls = self.__class__.__name__
 
-            for name, allowed in c._validate.items():
+            for name, allowed in c._validate().items():
                 if not hasattr(self, name):
                     raise AttributeError('%s.%s is missing' % (mycls, name))
 
@@ -88,7 +88,7 @@ class Serializable:
     @classmethod
     def _serialized_name(cls):
         if hasattr(cls, 'Model'):
-            return cls.Model.__name__+'.'+cls.__name__
+            return cls.Model.__name__ + '.' + cls.__name__
         else:
             return cls.__name__
 
@@ -127,10 +127,12 @@ class MetaModelBase(type):
 
 
 class ModelBase(Serializable, metaclass=MetaModelBase):
-    _validate = {
-        '_ids': dict,
-        '_raws': dict
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            '_ids': dict,
+            '_raws': dict
+        }
 
     def __init__(self):
         self._ids = {}
@@ -154,8 +156,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
     class Request(Serializable):
         def matches(self, obj):
             if not isinstance(obj, self.Model):
-                raise TypeError('%s.Request can only match %s' %
-                                (self.Model.__name__, self.Model.__name__))
+                raise TypeError('%s.Request can only match %s' % (self.Model.__name__, self.Model.__name__))
             obj.validate()
             return self._matches(obj)
 
@@ -181,8 +182,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
                 return
 
             if not isinstance(request, self.Model.Request):
-                raise TypeError('%s.Results can be filtered with %s' %
-                                (self.Model.__name__, self.Model.__name__))
+                raise TypeError('%s.Results can be filtered with %s' % (self.Model.__name__, self.Model.__name__))
 
             self.results = tuple(r for r in self.results if request.matches(r))
 
