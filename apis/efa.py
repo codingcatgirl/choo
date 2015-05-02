@@ -533,6 +533,10 @@ class EFA(API):
         else:
             canceled = None
 
+        train = data.find('./itdTrain')
+        if train is not None:
+            line.linetype = LineType('highspeed' if train.get('type') in ('ICE', 'THA') else 'longdistance')
+
         # origin and destination
         origin = data.attrib.get('directionFrom')
         origin = Stop(self.country, None, origin) if origin else None
