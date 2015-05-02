@@ -13,8 +13,8 @@ trip = Trip.Request()
 trip.origin = bs
 trip.destination = du
 
-#result = vrr.search_trips(trip)
-result = vrr.get_stop_rides(bs)
+result = vrr.search_trips(trip)
+#result = vrr.get_stop_rides(bs)
 #p = PrettyPrint()
 #print(p.formatted(result))
 print(json.dumps(result.serialize(typed=True), indent=2))
