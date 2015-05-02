@@ -13,6 +13,7 @@ class Ride(ModelBase):
         self._paths = {}
         self.line = line
         self.number = number
+        self.direction = None
         self.canceled = None
         self.bike_friendly = None
         self.infotexts = []
@@ -22,6 +23,7 @@ class Ride(ModelBase):
         return {
             'line': (None, Line),
             'number': (None, str),
+            'direction': (None, str),
             'canceled': (None, bool),
             'bike_friendly': (None, bool),
             'infotexts': ((str, ), )
@@ -30,6 +32,7 @@ class Ride(ModelBase):
     def _serialize(self, depth):
         data = {}
         self._serial_add(data, 'number')
+        self._serial_add(data, 'direction')
         self._serial_add(data, 'canceled')
         self._serial_add(data, 'bike_friendly')
         if self.infotexts:
