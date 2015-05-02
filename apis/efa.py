@@ -492,7 +492,7 @@ class EFA(API):
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
-        ridenum = data.attrib['tC'] if 'tC' in data else None
+        ridenum = data.attrib.get('tC', None)
         diva = data.find('./motDivaParams')
         ridedir = None
         if diva is not None:
