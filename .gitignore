@@ -4,6 +4,8 @@ dump.xml
 __pycache__/
 *.py[cod]
 
+Bildschirmfoto*
+
 # C extensions
 *.so
 

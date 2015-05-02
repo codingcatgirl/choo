@@ -6,16 +6,16 @@ from output import PrettyPrint
 import json
 
 vrr = VRR()
-bs = Stop(city='essen', name='borbeck süd bf')
-bo = Stop(city='essen', name='rathaus essen')
+bs = Stop(city='essen', name='bockmühle')
+bo = Stop(city='essen', name='essen dellwig ost')
 
 trip = Trip.Request()
-trip.origin = bs
-trip.destination = bo
+trip.origin = bo
+trip.destination = bs
 
-#result = vrr.search_trips(trip)
+result = vrr.search_trips(trip)
 #result = vrr.get_stop_rides(bs)
-result = vrr.get_stop_rides(bo)
+#result = vrr.get_stop_rides(bo)
 #p = PrettyPrint()
 #print(p.formatted(result))
 print(json.dumps(result.serialize(typed=True), indent=2))
