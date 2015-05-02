@@ -44,6 +44,7 @@ class Serializable:
     def _validate_or(self, items):
         if type(items) != tuple:
             return items.__name__
+        out = []
         for item in items:
             if item is None:
                 out.append('None')
@@ -60,7 +61,7 @@ class Serializable:
     def _unserialize_typed(self, data, types=None):
         type_, data = data
         for t in types:
-            if t.__name__ == type_:
+            if t._serialized_name() == type_:
                 return t.unserialize(data)
         raise TypeError('Wrong datatype for unserialization')
 
@@ -80,12 +81,16 @@ class Serializable:
                 serialized.update(more)
 
         if typed:
-            if hasattr(self, 'Model'):
-                return self.Model.__name__+'.'+self.__class__.__name__, serialized
-            else:
-                return self.__class__.__name__, serialized
+            return self.__class__._serialized_name(), serialized
         else:
             return serialized
+
+    @classmethod
+    def _serialized_name(cls):
+        if hasattr(cls, 'Model'):
+            return cls.Model.__name__+'.'+cls.__name__
+        else:
+            return cls.__name__
 
     def _serialize(self, depth):
         return {}
@@ -94,8 +99,8 @@ class Serializable:
     def unserialize(cls, data):
         obj = cls()
         for c in cls.__mro__:
-            if not hasattr(c, '_unserialize'):
-                continue
+            if hasattr(c, '_unserialize'):
+                c._unserialize(obj, data)
         return obj
 
     def _unserialize(self, data):
@@ -138,8 +143,8 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
         return data
 
     def _unserialize(self, data):
-        self.serial_get(data, '_ids')
-        self.serial_get(data, '_raws')
+        self._serial_get(data, '_ids')
+        self._serial_get(data, '_raws')
 
     def matches(self, request):
         if not isinstance(request, ModelBase.Request):
@@ -169,8 +174,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             return data
 
         def _unserialize(self, data):
-            self.results = [((self.Model.unserialize(d[0]), ) + d[1:])
-                            for d in data['results']]
+            self.results = [((self.Model.unserialize(d[0]), ) + d[1:]) for d in data['results']]
 
         def filter(self, request):
             if not self.results:
