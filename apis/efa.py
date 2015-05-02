@@ -487,6 +487,10 @@ class EFA(API):
                                   'citybus', 'regionalbus', 'expressbus', 'suspended',
                                   'ship', 'dialable', 'other')[mottype])
 
+        train = data.find('./itdTrain')
+        if train is not None:
+            line.linetype = LineType('highspeed' if train.get('type') in ('ICE', 'THA') else 'longdistance')
+
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
         ridenum = data.attrib.get('tC', None)
@@ -532,10 +536,6 @@ class EFA(API):
             canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
         else:
             canceled = None
-
-        train = data.find('./itdTrain')
-        if train is not None:
-            line.linetype = LineType('highspeed' if train.get('type') in ('ICE', 'THA') else 'longdistance')
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
