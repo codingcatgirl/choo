@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from models.base import ModelBase
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, RealtimeTime
 from models import Trip, Coordinates
@@ -29,11 +28,9 @@ class EFA(API):
     def get_trip(self, trip: Stop):
         pass
 
-
     # Internal methods start here
-
     def _post(self, endpoint, data):
-        text = requests.post(self.base_url+endpoint, data=data).text
+        text = requests.post(self.base_url + endpoint, data=data).text
         open('dump.xml', 'w').write(text)
         return ET.fromstring(text)
 
@@ -124,12 +121,12 @@ class EFA(API):
             'language': 'de',
             'locationServerActive': 1,
             'maxChanges': max_changes,
-            'name_via': '',#.decode('utf-8').encode('iso-8859-1'),
+            'name_via': '',  # .decode('utf-8').encode('iso-8859-1'),
             'nextDepsPerLeg': 1,
-            'place_via': '',#decode('utf-8').encode('iso-8859-1'),
+            'place_via': '',  # decode('utf-8').encode('iso-8859-1'),
             'ptOptionsActive': 1,
             'requestID': 0,
-            'routeType': 'LEASTTIME',#{'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
+            'routeType': 'LEASTTIME',  # {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
             'sessionID': 0,
             'text': 1993,
             'type_via': 'stop',
@@ -137,8 +134,8 @@ class EFA(API):
             'outputFormat': 'XML'
         }
 
-        #if use_realtime: post['useRealtime'] = 1
-		#if with_bike: post['bikeTakeAlong'] = 1
+        # if use_realtime: post['useRealtime'] = 1
+        # if with_bike: post['bikeTakeAlong'] = 1
 
         if ('localtrain', 'longdistance', 'highspeed') in linetypes:
             post['inclMOT_0'] = 'on'
@@ -213,7 +210,7 @@ class EFA(API):
             results = [results]
         results = [result for result in results if isinstance(stop, result[0].__class__)]
 
-        return SearchResults(results, api=self.name)
+        return Stop.Results(results)
 
     def _departure_monitor_request(self, stop: Stop, time: datetime=None):
         """ Fills in Stop.rides; Can Return A SearchResult(Stop) without rides. """
@@ -247,7 +244,7 @@ class EFA(API):
         stop = self._parse_odv(data.find('./itdOdv'))
 
         if type(stop) == list:
-            return SearchResults(stop, api=self.name)
+            return Stop.Results(stop)
 
         lineslist = data.find('./itdServingLines')
         if lineslist is not None:
@@ -408,7 +405,7 @@ class EFA(API):
 
         path = []
         for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
-            path.append(Coordinates(int(coords.find('x').text)/1000000, int(coords.find('y').text)/1000000))
+            path.append(Coordinates(int(coords.find('x').text) / 1000000, int(coords.find('y').text) / 1000000))
 
         if data.attrib['type'] == 'IT':
             way = Way(points[0].stop, points[1].stop)
@@ -433,7 +430,7 @@ class EFA(API):
                 ride.append(TimeAndPlace(origin))
             ride.append(None)
 
-            #todo: parse path
+            # todo: parse path
 
             first = None
             last = None
@@ -447,18 +444,18 @@ class EFA(API):
                     pointer = ride.append(p)
                     if first is None:
                         first = pointer
-                last = ride.append(None) # we have no gaps in between but after
+                last = ride.append(None)  # we have no gaps in between but after
             else:
                 for p in points:
                     pointer = ride.append(p)
                     if first is None:
                         first = pointer
-                    last = ride.append(None) # there can be gaps in between
+                    last = ride.append(None)  # there can be gaps in between
 
             if destination is not None:
                 ride.append(TimeAndPlace(destination))
 
-            ride._paths[(first,last)] = path
+            ride._paths[(first, last)] = path
 
             return ride[first:last]
 
@@ -516,7 +513,7 @@ class EFA(API):
             ridenum = data.attrib.get('trainNum', None)  # overwrites the diva one
 
             prefix = data.attrib.get('trainType', '')
-            line.shortname = prefix+ridenum if prefix else line.name
+            line.shortname = (prefix + ridenum) if prefix else line.name
 
             # todo: longdistance and similar
             # if result.network == 'ddb':
@@ -638,10 +635,10 @@ class EFA(API):
                 delay = timedelta(minutes=delay) if delay >= 0 else None
                 result.departure = RealtimeTime(time=times[1], delay=delay)
 
-        #for genattr in data.findall('./genAttrList/genAttrElem'):
-        #	name = genattr.find('name').text
-        #	value = genattr.find('value').text
-        #	if name == 'platformChange' and value == 'changed':
-        #		result.changed_platform = True
+        # for genattr in data.findall('./genAttrList/genAttrElem'):
+        #  	name = genattr.find('name').text
+        # 	value = genattr.find('value').text
+        # 	if name == 'platformChange' and value == 'changed':
+        # 		result.changed_platform = True
 
         return result
