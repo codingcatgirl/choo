@@ -363,12 +363,12 @@ class EFA(API):
             # Get Line Information
             origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'))
 
-            if ridenum is None:
-                ridedata = departure.find('./itdServingTrip')
-                if ridedata is not None:
-                    ridenum = ridedata.attrib.get('tripCode', None)
-                    if ridenum is not None:
-                        ridenum = ridenum.strip()
+            # if ridenum is None:
+            #     ridedata = departure.find('./itdServingTrip')
+            #     if ridedata is not None:
+            #         ridenum = ridedata.attrib.get('tripCode', None)
+            #         if ridenum is not None:
+            #             ridenum = ridenum.strip()
 
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
@@ -493,7 +493,6 @@ class EFA(API):
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
-        ridenum = data.attrib.get('tC', None)
         diva = data.find('./motDivaParams')
         ridedir = None
         if diva is not None:
@@ -502,6 +501,10 @@ class EFA(API):
             ridedir = diva.attrib['direction'].strip()
             if not ridedir:
                 ridedir = None
+
+        ridenum = data.attrib.get('tC', None)
+        if ridenum is None:
+            ridenum = data.attrib.get('key', None)
 
         op = data.find('./itdOperator')
         if op is not None:

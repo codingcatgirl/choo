@@ -7,7 +7,7 @@ import json
 
 vrr = VRR()
 bs = Stop(city='essen', name='borbeck süd bf')
-bo = Stop(city='essen', name='hbf')
+bo = Stop(city='essen', name='rathaus essen')
 
 trip = Trip.Request()
 trip.origin = bs
