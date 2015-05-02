@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-from .location import Coordinates, Location, Address, POI, Way
-from .linetypes import LineType, LineTypes
+from .locations import Coordinates, Stop, Location, Address, POI
+from .line import Line, LineType, LineTypes
+from .trip import Trip
+from .ride import Ride, RideSegment
+from .way import Way
+from .timeandplace import TimeAndPlace
 from .realtime import RealtimeTime
-from .main import Trip, Ride, TimeAndPlace, Line, Stop
 
 
 def unserialize_typed(data):
@@ -15,4 +18,4 @@ def unserialize_typed(data):
 
 __all__ = ['Coordinates', 'Location', 'Stop', 'Address', 'POI', 'Line',
            'LineType', 'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Ride',
-           'Trip', 'Way', 'unserialize_typed']
+           'RideSegment', 'Trip', 'Way', 'unserialize_typed']

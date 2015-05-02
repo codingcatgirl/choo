@@ -18,7 +18,7 @@ class Serializable:
                     raise AttributeError('%s.%s is missing' % (mycls, name))
 
                 if not self._validate_item(getattr(self, name), allowed):
-                    raise ValueError('%s.%s has to be %s, not %s' % (mycls, name, self._validate_or(allowed), type(getattr(self, name))))
+                    raise ValueError('%s.%s has to be %s, not %s' % (mycls, name, self._validate_or(allowed), repr(getattr(self, name))))
         return True
 
     def _validate_item(self, val, alloweds):

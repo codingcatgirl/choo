@@ -1,5 +1,66 @@
 #!/usr/bin/env python3
-from .base import Serializable
+from .base import ModelBase, Serializable
+
+
+class Line(ModelBase):
+    @classmethod
+    def _validate(cls):
+        from .locations import Stop
+        return {
+            'linetype': (None, LineType),
+            'product': (None, str),
+            'name': (None, str),
+            'shortname': (None, str),
+            'route': (None, str),
+            'first_stop': (None, Stop),
+            'last_stop': (None, Stop),
+            'network': (None, str),
+            'operator': (None, str)
+        }
+
+    def __init__(self, linetype=None):
+        super().__init__()
+        self.linetype = linetype
+        self.product = None
+        self.name = None
+        self.shortname = None
+        self.route = None
+        self.first_stop = None
+        self.last_stop = None
+
+        self.network = None
+        self.operator = None
+
+    def _serialize(self, depth):
+        data = {}
+        self._serial_add(data, 'product')
+        self._serial_add(data, 'name')
+        self._serial_add(data, 'shortname')
+        self._serial_add(data, 'route')
+        self._serial_add(data, 'network')
+        self._serial_add(data, 'operator')
+        if self.linetype:
+            data['linetype'] = self.linetype.serialize()
+        if self.first_stop:
+            data['first_stop'] = self.first_stop.serialize(depth)
+        if self.last_stop:
+            data['last_stop'] = self.last_stop.serialize(depth)
+        return data
+
+    def _unserialize(self, data):
+        from .locations import Stop
+        self._serial_get(data, 'product')
+        self._serial_get(data, 'name')
+        self._serial_get(data, 'shortname')
+        self._serial_get(data, 'route')
+        self._serial_get(data, 'network')
+        self._serial_get(data, 'operator')
+        if 'linetype' in data:
+            self.linetype = LineType.unserialize(data['linetype'])
+        if 'first_stop' in data:
+            self.first_stop = Stop.unserialize(data['first_stop'])
+        if 'last_stop' in data:
+            self.last_stop = Stop.unserialize(data['last_stop'])
 
 
 class LineTypes(Serializable):
