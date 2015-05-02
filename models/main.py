@@ -7,11 +7,12 @@ from datetime import timedelta
 
 
 class Stop(Location):
-    # defined at the end of file
-    # _validate = {
-    #     'rides': (None, (Ride.Segment, )),
-    #     'lines': (None, (Line, ))
-    # }
+    @classmethod
+    def _validate(cls):
+        return {
+            'rides': (None, (RideSegment, )),
+            'lines': (None, (Line, ))
+        }
 
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
@@ -32,7 +33,7 @@ class Stop(Location):
         self._serial_get(data, 'city')
         self._serial_get(data, 'name')
         if 'rides' in data:
-            self.rides = [Ride.Segment.unserialize(r) for r in data['rides']]
+            self.rides = [RideSegment.unserialize(r) for r in data['rides']]
         if 'lines' in data:
             self.lines = [Line.unserialize(line) for line in data['lines']]
 
@@ -51,17 +52,19 @@ class Stop(Location):
 
 
 class Line(ModelBase):
-    _validate = {
-        'linetype': (None, LineType),
-        'product': (None, str),
-        'name': (None, str),
-        'shortname': (None, str),
-        'route': (None, str),
-        'first_stop': (None, Stop),
-        'last_stop': (None, Stop),
-        'network': (None, str),
-        'operator': (None, str)
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'linetype': (None, LineType),
+            'product': (None, str),
+            'name': (None, str),
+            'shortname': (None, str),
+            'route': (None, str),
+            'first_stop': (None, Stop),
+            'last_stop': (None, Stop),
+            'network': (None, str),
+            'operator': (None, str)
+        }
 
     def __init__(self, linetype: LineType=None):
         super().__init__()
@@ -108,13 +111,15 @@ class Line(ModelBase):
 
 
 class TimeAndPlace(ModelBase):
-    _validate = {
-        'stop': Stop,
-        'platform': (None, str),
-        'coords': (None, Coordinates),
-        'arrival': (None, RealtimeTime),
-        'departure': (None, RealtimeTime)
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'stop': Stop,
+            'platform': (None, str),
+            'coords': (None, Coordinates),
+            'arrival': (None, RealtimeTime),
+            'departure': (None, RealtimeTime)
+        }
 
     def __init__(self, stop=None, platform=None, arrival=None, departure=None, coords=None):
         super().__init__()
@@ -159,15 +164,17 @@ class TimeAndPlace(ModelBase):
 
 
 class Ride(ModelBase):
-    _validate = {
-        # '_stop': ((None, TimeAndPlace), ),
-        # '_paths': (None, str),
-        'line': (None, Line),
-        'number': (None, str),
-        'canceled': (None, bool),
-        'bike_friendly': (None, bool),
-        'infotexts': ((str, ), )
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            # '_stop': ((None, TimeAndPlace), ),
+            # '_paths': (None, str),
+            'line': (None, Line),
+            'number': (None, str),
+            'canceled': (None, bool),
+            'bike_friendly': (None, bool),
+            'infotexts': ((str, ), )
+        }
 
     _serialize_depth = 3
 
@@ -221,7 +228,7 @@ class Ride(ModelBase):
         if isinstance(key, slice):
             if key.step is not None:
                 raise TypeError('Ride cannot be sliced with steps')
-            return Ride.Segment(self,
+            return RideSegment(self,
                                 self.pointer(key.start) if key.start else None,
                                 self.pointer(key.stop) if key.stop else None)
         else:
@@ -288,110 +295,114 @@ class Ride(ModelBase):
         def __repr__(self):
             return 'p:%d' % self._i
 
-    class Segment(Serializable):
-        # defined at the end of file
-        # _validate = {
-        #     'ride': Ride,
-        #     '_pointer_origin': (None, Ride.StopPointer),
-        #     '_pointer_destination': (None, Ride.StopPointer)
-        # }
 
-        def __init__(self, ride=None, origin=None, destination=None):
-            self.ride = ride
-            self._origin = origin
-            self._destination = destination
+class RideSegment(Serializable):
+    @classmethod
+    def _validate(cls):
+        return {
+            'ride': Ride,
+            '_origin': (None, Ride.StopPointer),
+            '_destination': (None, Ride.StopPointer)
+        }
 
-        def _serialize(self, depth):
-            data = {}
-            data['ride'] = self.ride.serialize(depth)
-            if self._origin:
-                data['origin'] = int(self._origin)
-            if self._destination:
-                data['destination'] = int(self._destination) - 1
-            return data
+    def __init__(self, ride=None, origin=None, destination=None):
+        self.ride = ride
+        self._origin = origin
+        self._destination = destination
 
-        def _unserialize(self, data):
-            self.ride = Ride.unserialize(data['ride'])
-            if 'origin' in data:
-                self._origin = self.ride.pointer(data['origin'])
-            if 'destination' in data:
-                self._destination = self.ride.pointer(data['destination'] + 1)
+    def _serialize(self, depth):
+        data = {}
+        data['ride'] = self.ride.serialize(depth)
+        if self._origin:
+            data['origin'] = int(self._origin)
+        if self._destination:
+            data['destination'] = int(self._destination) - 1
+        return data
 
-        def _stops(self):
-            return self.ride._stops[self._origin:self._destination]
+    def _unserialize(self, data):
+        self.ride = Ride.unserialize(data['ride'])
+        if 'origin' in data:
+            self._origin = self.ride.pointer(data['origin'])
+        if 'destination' in data:
+            self._destination = self.ride.pointer(data['destination'] + 1)
 
-        @property
-        def is_complete(self):
-            return None not in self._stops()
+    def _stops(self):
+        return self.ride._stops[self._origin:self._destination]
 
-        def __len__(self):
-            return len(self._stops)
+    @property
+    def is_complete(self):
+        return None not in self._stops()
 
-        def __getitem__(self, key):
-            if isinstance(key, slice):
-                if key.step is not None:
-                    raise TypeError('Ride.Segment cannot be slices with steps')
-                if self._origin is not None:
-                    if type(key.start) != int:
-                        start = key.start
-                    elif key.start >= 0:
-                        start = int(self._origin) + key.start
-                    else:
-                        start = int(self._destination) + 1 - key.start
-                    if type(key.stop) != int:
-                        stop = key.stop
-                    elif key.start >= 0:
-                        stop = int(self._origin) + key.stop
-                    else:
-                        stop = int(self._destination) + 1 - key.stop
+    def __len__(self):
+        return len(self._stops)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            if key.step is not None:
+                raise TypeError('RideSegment cannot be slices with steps')
+            if self._origin is not None:
+                if type(key.start) != int:
+                    start = key.start
+                elif key.start >= 0:
+                    start = int(self._origin) + key.start
                 else:
-                    start, stop = key.start, key.stop
-                return Ride.Segment(self.ride, start, stop)
+                    start = int(self._destination) + 1 - key.start
+                if type(key.stop) != int:
+                    stop = key.stop
+                elif key.start >= 0:
+                    stop = int(self._origin) + key.stop
+                else:
+                    stop = int(self._destination) + 1 - key.stop
             else:
-                if type(key) != int:
-                    return self.ride[key]
-                else:
-                    return self._stops()[key][1]
+                start, stop = key.start, key.stop
+            return RideSegment(self.ride, start, stop)
+        else:
+            if type(key) != int:
+                return self.ride[key]
+            else:
+                return self._stops()[key][1]
 
-        def __iter__(self, key=None):
-            for stop in self._stops():
-                yield stop[1]
+    def __iter__(self, key=None):
+        for stop in self._stops():
+            yield stop[1]
 
-        def items(self, key):
-            for stop in self._stops():
-                yield stop
+    def items(self, key):
+        for stop in self._stops():
+            yield stop
 
-        @property
-        def origin(self):
-            return self.ride[0].stop
+    @property
+    def origin(self):
+        return self.ride[0].stop
 
-        @property
-        def destination(self):
-            return self.ride[-1].stop
+    @property
+    def destination(self):
+        return self.ride[-1].stop
 
-        @property
-        def departure(self):
-            return self.ride[0].departure
+    @property
+    def departure(self):
+        return self.ride[0].departure
 
-        @property
-        def arrival(self):
-            return self.ride[-1].arrival
+    @property
+    def arrival(self):
+        return self.ride[-1].arrival
 
-        def __getattr__(self, name):
-            return getattr(self.ride, name)
+    def __getattr__(self, name):
+        return getattr(self.ride, name)
 
-        def __eq__(self, other):
-            assert isinstance(other, Ride.Segment)
-            return (self.ride == other.ride and
-                    self._origin == other._origin and
-                    self._destination == other._destination)
-Ride.Segment.Model = Ride
+    def __eq__(self, other):
+        assert isinstance(other, RideSegment)
+        return (self.ride == other.ride and
+                self._origin == other._origin and
+                self._destination == other._destination)
+
 
 class Trip(ModelBase):
-    _validate = {
-        'parts': ((Ride.Segment, Way), ),
-        'walk_speed': str
-    }
+    @classmethod
+    def _validate(cls):
+        return {
+            'parts': ((RideSegment, Way), ),
+            'walk_speed': str
+        }
 
     def __init__(self):
         super().__init__()
@@ -404,7 +415,7 @@ class Trip(ModelBase):
         return data
 
     def _unserialize(self, data):
-        self.parts = [self._unserialize_typed(part, (Ride.Segment, Way))
+        self.parts = [self._unserialize_typed(part, (RideSegment, Way))
                       for part in data['parts']]
 
     class Request(ModelBase.Request):
@@ -445,7 +456,7 @@ class Trip(ModelBase):
     def departure(self):
         delta = timedelta(0)
         for part in self.parts:
-            if isinstance(part, Ride.Segment):
+            if isinstance(part, RideSegment):
                 return (part.departure - delta) if part.departure else None
             elif part.duration is None:
                 return None
@@ -456,7 +467,7 @@ class Trip(ModelBase):
     def arrival(self):
         delta = timedelta(0)
         for part in reversed(self.parts):
-            if isinstance(part, Ride.Segment):
+            if isinstance(part, RideSegment):
                 return (part.arrival + delta) if part.arrival else None
             elif part.duration is None:
                 return None
@@ -476,14 +487,14 @@ class Trip(ModelBase):
     def changes(self):
         changes = -1
         for part in self.parts:
-            if isinstance(part, Ride.Segment):
+            if isinstance(part, RideSegment):
                 changes += 1
         return max(0, changes)
 
     @property
     def bike_friendly(self):
         for part in self.parts:
-            if not isinstance(part, Ride.Segment):
+            if not isinstance(part, RideSegment):
                 continue
             if part.bike_friendly is None:
                 return None
@@ -502,14 +513,3 @@ class Trip(ModelBase):
         r.max_changtes = self.max_changes
         r.bike_friendly = self.bike_friendly
         return r
-
-
-Stop._validate = {
-    'rides': (None, (Ride.Segment, )),
-    'lines': (None, (Line, ))
-}
-Ride.Segment._validate = {
-    'ride': Ride,
-    '_origin': (None, Ride.StopPointer),
-    '_destination': (None, Ride.StopPointer)
-}
