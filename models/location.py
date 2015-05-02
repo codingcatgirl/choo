@@ -9,7 +9,7 @@ class Coordinates(Serializable):
         'lon': float
     }
 
-    def __init__(self, lat, lon):
+    def __init__(self, lat=None, lon=None):
         self.lat = lat
         self.lon = lon
 
@@ -85,7 +85,7 @@ class Way(ModelBase):
     def _serialize(self, depth):
         data = {}
         self._serial_add(data, 'distance')
-        data['duration'] = self.duration.total_seconds()
+        data['duration'] = int(self.duration.total_seconds())
         data['origin'] = self.origin.serialize(depth, True)
         data['destination'] = self.destination.serialize(depth, True)
         if self.path is not None:
@@ -96,11 +96,11 @@ class Way(ModelBase):
         from .main import Stop
         types = (Location, Stop, POI, Address, Coordinates)
         self._serial_get(data, 'distance')
-        self._serial_get(data, 'duration')
+        self.duration = timedelta(seconds=data['duration'])
         self.origin = self._unserialize_typed(data['origin'], types)
         self.destination = self._unserialize_typed(data['destination'], types)
         if 'path' in data:
-            self.path = Coordinates.unserialize(data['path'])
+            self.path = [Coordinates.unserialize(p) for p in data['path']]
 
     def __eq__(self, other):
         assert isinstance(other, Way)

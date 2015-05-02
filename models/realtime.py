@@ -22,7 +22,7 @@ class RealtimeTime(Serializable):
 
     def _serialize(self, depth):
         return [self.time.strftime('%Y-%m-%d %H:%M:%S'),
-                self.delay.total_seconds() if self.delay is not None else None]
+                int(self.delay.total_seconds()) if self.delay is not None else None]
 
     def _unserialize(self, data):
         self.time = datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')

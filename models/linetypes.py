@@ -67,9 +67,9 @@ class LineTypes(Serializable):
 
 
 class LineType(Serializable):
-    def __init__(self, name: str):
+    def __init__(self, name=None):
         super().__init__()
-        if name in LineTypes._known:
+        if name is None or name in LineTypes._known:
             self.name = name
         else:
             raise AttributeError('unsupported linetype')
