@@ -75,10 +75,11 @@ class Stop(Location):
 
     def _serialize(self, depth):
         data = {}
-        if self.rides is not None:
-            data['rides'] = [ride.serialize(depth) for ride in self.rides]
-        if self.lines is not None:
-            data['lines'] = [line.serialize(depth) for line in self.lines]
+        if depth:
+            if self.rides is not None:
+                data['rides'] = [ride.serialize(depth) for ride in self.rides]
+            if self.lines is not None:
+                data['lines'] = [line.serialize(depth) for line in self.lines]
         return data
 
     def _unserialize(self, data):
