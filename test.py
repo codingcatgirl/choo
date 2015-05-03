@@ -6,7 +6,7 @@ from output import PrettyPrint
 import json
 
 vrr = VRR()
-bs = Stop(city='essen', name='rathaus essen')
+bs = Stop(city='essen', name='borbeck bf')
 bo = Stop(city='duisburg', name='hbf')
 
 trip = Trip.Request()
