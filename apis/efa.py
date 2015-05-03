@@ -132,7 +132,7 @@ class EFA(API):
             'text': 1993,
             'type_via': 'stop',
             'useRealtime': 1,
-            'outputFormat': 'XML'
+            'outputFormat': 'XML',
         }
 
         # if use_realtime: post['useRealtime'] = 1
@@ -408,9 +408,13 @@ class EFA(API):
         for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
             path.append(Coordinates(int(coords.find('y').text) / 1000000, int(coords.find('x').text) / 1000000))
 
-        if data.attrib['type'] == 'IT':
+        motdata = self._parse_mot(data.find('./itdMeansOfTransport'))
+
+        if motdata is None or data.attrib['type'] == 'IT':
             way = Way(points[0].stop, points[1].stop)
-            way.distance = float(data.attrib.get('distance'))
+            way.distance = data.attrib.get('distance')
+            if way.distance is not None:
+                way.distance = float(way.distance)
             duration = data.attrib.get('timeMinute', None)
             if duration is not None:
                 way.duration = timedelta(minutes=int(duration))
@@ -419,7 +423,7 @@ class EFA(API):
             return way
 
         else:
-            origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(data.find('./itdMeansOfTransport'))
+            origin, destination, line, ridenum, ridedir, canceled = motdata
 
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
@@ -455,7 +459,7 @@ class EFA(API):
                 ride.append(TimeAndPlace(destination))
 
             segment = ride[first:last]
-            paths = self._split_path(path, [p.coords for p in segment])
+            paths = self._split_path(path, [p.coords for p in segment])[:-1]
             for i, point in segment.items():
                 if not paths:
                     break

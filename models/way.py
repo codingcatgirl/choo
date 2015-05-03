@@ -18,7 +18,7 @@ class Way(ModelBase):
         return {
             'origin': Location,
             'destination': Location,
-            'distance': (int, float),
+            'distance': (None, int, float),
             'duration': timedelta,
             'path': (None, (Coordinates, ))
         }
