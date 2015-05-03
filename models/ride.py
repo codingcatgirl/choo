@@ -40,7 +40,7 @@ class Ride(ModelBase):
         data['stops'] = []
         for pointer, stop in self._stops:
             data['stops'].append(stop.serialize(depth) if stop else None)
-        data['paths'] =  {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
+        data['paths'] = {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
         if self.line:
             data['line'] = self.line.serialize(depth)
         return data
