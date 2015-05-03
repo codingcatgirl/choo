@@ -610,7 +610,7 @@ class EFA(API):
 
     def _parse_trip_point(self, data, walk=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
-        city = data.attrib.get('locality', '')
+        city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
         name = data.attrib.get('nameWO', '')
