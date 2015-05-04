@@ -158,7 +158,7 @@ class RideSegment(Serializable):
         if self._origin:
             data['origin'] = int(self._origin)
         if self._destination:
-            data['destination'] = int(self._destination) - 1
+            data['destination'] = int(self._destination)
         return data
 
     def _unserialize(self, data):
@@ -166,10 +166,10 @@ class RideSegment(Serializable):
         if 'origin' in data:
             self._origin = self.ride.pointer(data['origin'])
         if 'destination' in data:
-            self._destination = self.ride.pointer(data['destination'] + 1)
+            self._destination = self.ride.pointer(data['destination'])
 
     def _stops(self):
-        return self.ride._stops[self._origin:self._destination]
+        return self.ride._stops[self._origin:int(self._destination)+1]
 
     @property
     def is_complete(self):
