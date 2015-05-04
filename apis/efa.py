@@ -431,9 +431,6 @@ class EFA(API):
             ride.direction = ridedir
             for infotext in data.findall('./infoTextList/infoTextListElem'):
                 ride.infotexts.append(infotext)
-            if origin is not None:
-                ride.append(TimeAndPlace(origin))
-            ride.append(None)
 
             first = None
             last = None
@@ -444,19 +441,45 @@ class EFA(API):
                 if waypoints[-1].stop != points[1].stop:
                     waypoints.append(points[1])
                 for p in waypoints:
+                    if first is None:
+                        if origin is not None:
+                            if origin != p.stop:
+                                ride.append(TimeAndPlace(origin))
+                                ride.append(None)
+                        else:
+                            ride.append(None)
                     pointer = ride.append(p)
                     if first is None:
                         first = pointer
-                last = ride.append(None)  # we have no gaps in between but after
+                last = pointer
+
+                if destination is not None:
+                    if destination != p.stop:
+                        ride.append(None)
+                        ride.append(TimeAndPlace(destination))
+                else:
+                    ride.append(None)
             else:
                 for p in points:
+                    if first is None:
+                        if origin is not None:
+                            if origin != p.stop:
+                                ride.append(TimeAndPlace(origin))
+                                ride.append(None)
+                        else:
+                            ride.append(None)
+                    ride.append(None)
                     pointer = ride.append(p)
                     if first is None:
                         first = pointer
-                    last = ride.append(None)  # there can be gaps in between
+                last = pointer
 
-            if destination is not None:
-                ride.append(TimeAndPlace(destination))
+                if destination is not None:
+                    if destination != p.stop:
+                        ride.append(None)
+                        ride.append(TimeAndPlace(destination))
+                else:
+                    ride.append(None)
 
             segment = ride[first:last]
             paths = self._split_path(path, [p.coords for p in segment])[:-1]
