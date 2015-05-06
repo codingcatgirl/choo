@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from models import Location, Stop, POI, Address
-from models import TimeAndPlace, RealtimeTime
+from models import TimeAndPlace, Platform, RealtimeTime
 from models import Trip, Coordinates
 from models import Ride, Line, LineType, LineTypes, Way
 from datetime import datetime, timedelta
@@ -655,18 +655,19 @@ class EFA(API):
             location = Stop(self.country, city, name)
             location._ids[self.name] = int(data.attrib['stopID'])
 
-        result = TimeAndPlace(location)
-        result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
-
-        if 'x' in data.attrib:
-            result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
-
         # get and clean the platform
         platform = data.attrib['platform']
         if not platform.strip():
             platform = data.attrib['platformName']
         match = re.search(r'[0-9].*$', data.attrib['platformName'])
-        result.platform = match.group(0) if match is not None else platform
+        platform = Platform(location, match.group(0) if match is not None else platform)
+        platform._ids[self.name] = (data.attrib['area'], platform.name)
+
+        result = TimeAndPlace(location, platform)
+        result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
+
+        if 'x' in data.attrib:
+            result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):

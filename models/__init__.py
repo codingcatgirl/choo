@@ -4,7 +4,7 @@ from .line import Line, LineType, LineTypes
 from .trip import Trip
 from .ride import Ride, RideSegment
 from .way import Way
-from .timeandplace import TimeAndPlace
+from .timeandplace import TimeAndPlace, Platform
 from .realtime import RealtimeTime
 
 
@@ -17,5 +17,5 @@ def unserialize_typed(data):
         return globals()[model].unserialize(data)
 
 __all__ = ['Coordinates', 'Location', 'Stop', 'Address', 'POI', 'Line',
-           'LineType', 'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Ride',
-           'RideSegment', 'Trip', 'Way', 'unserialize_typed']
+           'LineType', 'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Platform',
+           'Ride', 'RideSegment', 'Trip', 'Way', 'unserialize_typed']
