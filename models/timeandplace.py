@@ -25,6 +25,9 @@ class Platform(ModelBase):
     def _unserialize(self, data):
         self.name = data['name']
 
+    def __repr__(self, data):
+        return '<Platform %s>' % self.name
+
 
 class TimeAndPlace(ModelBase):
     def __init__(self, stop=None, platform=None, arrival=None, departure=None, coords=None):
