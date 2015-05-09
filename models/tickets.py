@@ -2,4 +2,5 @@
 from .base import ModelBase
 
 class Ticket(ModelBase):
-    pass
+    def __init__(self):
+        pass
