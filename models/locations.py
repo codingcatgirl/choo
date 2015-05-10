@@ -35,6 +35,7 @@ class Location(ModelBase):
         self.city = city
         self.name = name
         self.coords = coords
+        self.near_stops = []
 
     @classmethod
     def _validate(cls):
@@ -42,7 +43,8 @@ class Location(ModelBase):
             'country': (None, str),
             'city': (None, str),
             'name': str,
-            'coords': (None, Coordinates)
+            'coords': (None, Coordinates),
+            'near_stops': ((Location, ), )
         }
 
     def _serialize(self, depth):
@@ -52,6 +54,8 @@ class Location(ModelBase):
         data['name'] = self.name
         if self.coords:
             data['coords'] = self.coords.serialize()
+        if self.near_stops:
+            data['near_stops'] = [s.serialize() for s in self.near_stops]
         return data
 
     def _unserialize(self, data):
@@ -60,6 +64,8 @@ class Location(ModelBase):
         self._serial_get(data, 'name')
         if 'coords' in data:
             self.coords = Coordinates.unserialize(data['coords'])
+        if 'near_stops' in data:
+            self.near_stops = [Stop.unserialize(s) for s in data['near_stops']]
 
 
 class Stop(Location):
