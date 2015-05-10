@@ -3,6 +3,7 @@ from .base import ModelBase
 from .way import Way
 from .ride import RideSegment
 from .line import LineTypes
+from .tickets import TicketList
 from datetime import timedelta
 
 
@@ -11,22 +12,29 @@ class Trip(ModelBase):
         super().__init__()
         self.parts = []
         self.walk_speed = 'normal'
+        self.tickets = None
 
     @classmethod
     def _validate(cls):
         return {
             'parts': ((RideSegment, Way), ),
-            'walk_speed': str
+            'tickets': (None, TicketList)
         }
 
     def _serialize(self, depth):
         data = {}
         data['parts'] = [p.serialize(depth, True) for p in self.parts]
+        self._serial_get(data, 'walk_speed')
+        if self.tickets:
+            data['tickets'] = self.tickets.serialize()
         return data
 
     def _unserialize(self, data):
         self.parts = [self._unserialize_typed(part, (RideSegment, Way))
                       for part in data['parts']]
+        self._serial_add(data, 'walk_speed')
+        if 'tickets' in data:
+            self.tickets = TicketList.unserialize(data['tickets'])
 
     class Request(ModelBase.Request):
         def __init__(self):
