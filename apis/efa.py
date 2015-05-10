@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
-from models import Trip, Coordinates
+from models import Trip, Coordinates, TicketList, TicketData
 from models import Ride, Line, LineType, LineTypes, Way
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
@@ -397,7 +397,53 @@ class EFA(API):
             trip = Trip()
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
                 trip.parts.append(self._parse_routepart(routepart))
-            trips.append((trip, ))
+
+            ticketlist = TicketList()
+            tickets = route.find('./itdFare/itdSingleTicket')
+            if tickets:
+                authority = tickets.attrib['net']
+                ticketlist.single = TicketData(authority, tickets.attrib['unitsAdult'], float(tickets.attrib['fareAdult']), float(tickets.attrib['fareChild']))
+                ticketlist.bike = TicketData(authority, tickets.attrib['unitsBikeAdult'], float(tickets.attrib['fareBikeAdult']), float(tickets.attrib['fareBikeChild']))
+                ticketlist.currency = tickets.attrib['currency']
+                ticketlist.level_name = tickets.attrib['unitName']
+                for ticket in tickets.findall('./itdGenericTicketList/itdGenericTicketGroup'):
+                    t = TicketData()
+                    name = ticket.find('./itdGenericTicket[ticket="TICKETTYPE"]/value')
+                    if name is None or not name.text:
+                        continue
+
+                    authority = ticket.find('./itdGenericTicket[ticket="TARIFF_AUTHORITY"]/value')
+                    if authority is not None and authority.text:
+                        t.authority = authority.text
+
+                    level = ticket.find('./itdGenericTicket[ticket="FARE_CATEGORY"]/value')
+                    if level is not None and level.text:
+                        t.level = level.text
+
+                    prices = []
+                    adult = ticket.find('./itdGenericTicket[ticket="TICKET_ID_ADULT"]/value')
+                    if adult is not None and adult.text:
+                        price = ticket.find('./itdGenericTicket[ticket="FARE_ADULT"]/value')
+                        if price is not None and price.text:
+                            prices.append(float(price.text))
+
+                    child = ticket.find('./itdGenericTicket[ticket="TICKET_ID_CHILD"]/value')
+                    if child is not None and child.text:
+                        price = ticket.find('./itdGenericTicket[ticket="FARE_CHILD"]/value')
+                        if price is not None and price.text:
+                            prices.append(float(price.text))
+
+                    if not prices:
+                        continue
+
+                    t.price = prices[0]
+                    if len(prices) == 2:
+                        t.price_child = prices[1]
+                    ticketlist.other[name.text] = t
+                trip.tickets = ticketlist
+
+                trips.append((trip, ))
+
         return trips
 
     def _parse_routepart(self, data):

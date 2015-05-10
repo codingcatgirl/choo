@@ -2,6 +2,7 @@
 from .locations import Coordinates, Stop, Location, Address, POI
 from .line import Line, LineType, LineTypes
 from .trip import Trip
+from .tickets import TicketList, TicketData
 from .ride import Ride, RideSegment
 from .way import Way
 from .timeandplace import TimeAndPlace, Platform
@@ -18,4 +19,5 @@ def unserialize_typed(data):
 
 __all__ = ['Coordinates', 'Location', 'Stop', 'Address', 'POI', 'Line',
            'LineType', 'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Platform',
-           'Ride', 'RideSegment', 'Trip', 'Way', 'unserialize_typed']
+           'Ride', 'RideSegment', 'Trip', 'Way', 'TicketList', 'TicketData',
+           'unserialize_typed']
