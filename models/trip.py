@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from .base import ModelBase
 from .way import Way
+from .locations import Coordinates, Location, Stop, POI, Address
 from .ride import RideSegment
 from .line import LineTypes
 from .tickets import TicketList
@@ -35,6 +36,33 @@ class Trip(ModelBase):
         self._serial_add(data, 'walk_speed')
         if 'tickets' in data:
             self.tickets = TicketList.unserialize(data['tickets'])
+
+    class Results(ModelBase.Results):
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.origin = None
+            self.via = None
+            self.destination = None
+
+        @classmethod
+        def _validate(cls):
+            return {
+                'origin': Location,
+                'via': (None, Location),
+                'destination': Location
+            }
+
+        def _load(self, data):
+            super()._load(data)
+            types = (Location, Stop, POI, Address, Coordinates)
+            self.origin = self._unserialize_typed(data['origin'], types)
+            self.destination = self._unserialize_typed(data['destination'], types)
+
+        def _serialize(self, depth):
+            data = {}
+            data['origin'] = self.origin.serialize(depth, True)
+            data['destination'] = self.destination.serialize(depth, True)
+            return data
 
     class Request(ModelBase.Request):
         def __init__(self):

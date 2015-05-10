@@ -191,8 +191,10 @@ class EFA(API):
         xml = self._post('XSLT_TRIP_REQUEST2', post)
         data = xml.find('./itdTripRequest')
 
-        results = self._parse_routes(data.find('./itdItinerary/itdRouteList'))
-        return Trip.Results(results)
+        results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList')))
+        results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
+        results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
+        return results
 
     def _stop_finder_request(self, stop: Stop):
         """ Searches a Stop; Returns a SearchResult(Stop) """
@@ -262,6 +264,20 @@ class EFA(API):
 
         return stop
 
+    def _parse_stop_line(self, data):
+        """ Parse an ODV line (for example an AssignedStop) """
+        city = data.attrib.get('locality', data.attrib.get('place', ''))
+        city = city if city else None
+
+        name = data.text
+        stop = Stop(self.country, city, name)
+        stop._ids[self.name] = int(data.attrib['stopID'])
+
+        if 'x' in data.attrib:
+            stop.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
+
+        return stop
+
     def _parse_odv(self, data):
         """ Parse an ODV (OriginDestinationVia) XML node """
         odvtype = data.attrib['type']
@@ -301,6 +317,10 @@ class EFA(API):
             ne = n.find('./odvNameElem')
             result = self._name_elem(ne, city, odvtype)[0]
             result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
+            for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
+                stop = self._parse_stop_line(near_stop)
+                if stop != result:
+                    result.near_stops.append(stop)
             return result
 
     def _name_elem(self, data, city, odvtype):
