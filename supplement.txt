@@ -1,0 +1,101 @@
+  (00100000)
+Essen Hbf → IC → Greifswald
+Essen Hbf → ICE → Dresden
+Essen Hbf → ICE → Düsseldorf
+Essen Hbf → ICE → Wien
+Essen Hbf → ICE → München
+Essen Hbf → ICE → Köln/Bonn
+Essen Hbf → ICE → Dortmund
+Essen Hbf → ICE → Dortmund
+Essen Hbf → ICE → München hbf
+Essen Hbf → ICE → Berlin Hbf (tief)
+Essen Hbf → Rügen → Stuttgart Hbf
+Essen Hbf → THA → Paris
+Essen Hbf → Wörtersee → Dortmund Hbf
+Essen Hbf → Basel Bad Bf
+Essen Hbf → Zug → Dortmund
+Essen Hbf → Zug → Dortmund
+S-Bahn
+STR, U, Bus, Schnellbus bis auf einen
+Duisburg Hbf → RB31 → Xanten
+der ganze rest… 
+
+1 (00110001)
+Dortmund Hbf → Bus → Dortmund Airport
+
+A (01000001)
+Essen Hbf → IC → Leipzig
+Essen Hbf → IC → Düsseldorf
+Essen Hbf → IC → Berlin Ostbf
+Essen Hbf → IC → Aachen Hbf
+Essen Hbf → Zug → München
+Dortmund Hbf → IC → Dresden
+Dortmund Hbf → IC → Köln
+Dortmund Hbf → IC → Köln
+Dortmund Hbf → ICE → Frankfurt Main
+Dortmund Hbf → Zug → Praha hl.n.
+Dortmund Hbf → Zug → München Hbf
+Köln → ICE → Dortmund
+Köln → ICE → München 
+
+B (01000010)
+Essen Hbf → RB42 → Münster Hbf
+Essen Hbf → Zug → Kiel
+Duisburg Hbf → RB33 → Wesel
+Duisburg Hbf → RB33 → Aachen
+Duisburg Hbf → RB35 → Wesel
+Duisburg Hbf → RB35 → Düsseldorf
+Dortmund Hbf → IC → Köln
+Dortmund Hbf → IC → Dresden
+Köln → RB27 → Koblenz
+Köln → RB27 → Rommerskirch
+Köln → RB48 → Wuppertal
+Köln → RB48 → Mehlen Bf
+Köln → IC → Norddeich
+
+C (01000011)
+Essen Hbf → IC → Münster
+Essen Hbf → IC → Insbruck
+Köln → RB27 → Mönchengladbach
+
+D (01000100)
+Essen Hbf → IC → Südkreuz
+Essen Hbf → IC → Köln
+Dortmund Hbf → RB → Bestwig
+Köln → IC → Tübingen
+Köln → RB → Koblenz
+Köln → RB → Nettetal
+Köln → RB → Dellbrück
+Köln → RB → Kall
+
+G (01000111)
+Essen Hbf → ICE → München
+Dortmund Hbf → ICE → Düsseldorf
+
+L (01001100)
+Essen Hbf → RB40 → Hagen Hbf
+Essen HBF → RE16 → Siegen
+
+M (0100110)
+Köln → MittelRheinBahn → KölnDeutz
+Köln → MittelRheinBahn → Koblenz
+
+P (01010000)
+Essen Hbf → RE11 → Dortmund Hbf
+Duisburg Hbf → RE11 → Dortmund Hbf
+Essen Hbf → IC → Magdeburg
+Essen Hbf → ICE → Frankfurt
+Essen Hbf → Zug → Oberstdorf
+Dortmund Hbf → Zug → Oberstdorf
+Dortmund Hbf → IC → Magdeburg
+Köln → Zug → Wien Hbf (Autoreisezuganlage)
+Köln → Zug → Düsseldorf
+
+Q (01010001)
+Essen Hbf → SchnellBus → Bottrop
+Dortmund Hbf → Zug → Warszawa Wschodnia
+
+Y (01011001)
+Essen Hbf → HKX → Hamburg
+Essen Hbf → HKX → Köln
+Köln → HKX → Hamburg
