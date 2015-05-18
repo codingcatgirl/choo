@@ -76,7 +76,7 @@ L (01001100)
 Essen Hbf → RB40 → Hagen Hbf
 Essen HBF → RE16 → Siegen
 
-M (0100110)
+M (01001101)
 Köln → MittelRheinBahn → KölnDeutz
 Köln → MittelRheinBahn → Koblenz
 
