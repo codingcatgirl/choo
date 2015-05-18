@@ -15,10 +15,10 @@ Essen Hbf → Wörtersee → Dortmund Hbf
 Essen Hbf → Basel Bad Bf
 Essen Hbf → Zug → Dortmund
 Essen Hbf → Zug → Dortmund
-S-Bahn
-STR, U, Bus, Schnellbus bis auf einen
 Duisburg Hbf → RB31 → Xanten
-der ganze rest… 
+S-Bahn
+STR, U, Bus, Schnellbus
+und der ganze rest… (Ausnahmen vorbehalten)
 
 1 (00110001)
 Dortmund Hbf → Bus → Dortmund Airport
@@ -37,6 +37,7 @@ Dortmund Hbf → Zug → Praha hl.n.
 Dortmund Hbf → Zug → München Hbf
 Köln → ICE → Dortmund
 Köln → ICE → München 
+Düsseldorf → ICE → Essen
 
 B (01000010)
 Essen Hbf → RB42 → Münster Hbf
@@ -67,14 +68,20 @@ Köln → RB → Koblenz
 Köln → RB → Nettetal
 Köln → RB → Dellbrück
 Köln → RB → Kall
+Bonn → IC → Dortmund
+Bonn → RE → Koblenz
+Bonn → RB → Ahrbrück
 
 G (01000111)
 Essen Hbf → ICE → München
 Dortmund Hbf → ICE → Düsseldorf
+Düsseldorf → ICE → München
 
 L (01001100)
 Essen Hbf → RB40 → Hagen Hbf
 Essen HBF → RE16 → Siegen
+Düsseldorf → RegioBahn S28 → Mettmann Stadtwald
+Düsseldorf → RegioBahn S28 → Kaarst Kaarster See
 
 M (01001101)
 Köln → MittelRheinBahn → KölnDeutz
@@ -99,3 +106,7 @@ Y (01011001)
 Essen Hbf → HKX → Hamburg
 Essen Hbf → HKX → Köln
 Köln → HKX → Hamburg
+Düsseldorf → IC Bus → Bruxelles-Nord
+
+e (01100101)
+Düsseldorf → Abellio S-Bahn S7 → Remscheid-Lennep
