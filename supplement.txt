@@ -43,6 +43,16 @@ Berlin → ICE → Oldenburg
 Berlin → RE → Wismar
 Berlin → ICE → Leipzig
 Berlin → Zug → Budapest-Keleti
+Mannheim → IC → Frankfurt
+Mannheim → IC → Saarbrücken
+Mannheim → ICE → Zürich
+Mannheim → ICE → Frankfurt
+Mannheim → ICE → Essen
+Mannheim → RE → Heilbronn
+Mannheim → Zug → München Hbf
+Mannheim → Zug → Frankfurt
+Mannheim → S51 (DB Regio AG) → Aglasterhausen
+Mannheim → S51 (DB Regio AG) → Ludwigshafen
 
 B (01000010)
 Essen Hbf → RB42 → Münster Hbf
@@ -61,6 +71,9 @@ Köln → IC → Norddeich
 Berlin → IRE → Hamburg
 Berlin → IC → Hamburg
 Berlin → ICE → Hamburg-Altona
+Mannheim → IC → Frankfurt
+Mannheim → RB → Ludwigshafen
+Mannheim → S3 (DB Regio AG) → Germersheim
 
 C (01000011)
 Essen Hbf → IC → Münster
@@ -68,6 +81,8 @@ Essen Hbf → IC → Insbruck
 Köln → RB27 → Mönchengladbach
 Berlin → ICE → Leipzig
 Berlin → ICE → Hamburg-Altona
+Mannheim → IC → Münster
+Mannheim → IC → Innsbruck
 
 D (01000100)
 Essen Hbf → IC → Südkreuz
@@ -84,6 +99,10 @@ Bonn → RB → Ahrbrück
 Berlin → ICE → Hamburg-Altona
 Berlin → ICE → Erfurt
 Berlin → IC → Köln
+Mannheim → IC → Dortmund
+
+E (01000101)
+Mannheim → IC → Mainz
 
 G (01000111)
 Essen Hbf → ICE → München
@@ -121,13 +140,13 @@ Berlin → ICE → Berlin Gesundbrunnen
 Berlin → ICE → München
 Berlin → RB → Senftenberg
 Berlin → RB → Gesundbrunnen
+Mannheim → IC → Hannover
+Mannheim → RE → Heilbronn
+Mannheim → RE → Mosbach
 
 Q (01010001)
 Essen Hbf → SchnellBus → Bottrop
 Dortmund Hbf → Zug → Warszawa Wschodnia
-
-R (01010010)
-Berlin → ICE → Hamburg-Altona
 
 V (01010110)
 Berlin → RE → Ludwigsfelde
@@ -138,6 +157,10 @@ Essen Hbf → HKX → Hamburg
 Essen Hbf → HKX → Köln
 Köln → HKX → Hamburg
 Düsseldorf → IC Bus → Bruxelles-Nord
+
+Z (01011010)
+Mannheim → Fernbus → Praha hl.n. Autob.St.Wilsonova
+Mannheim → Fernbus → Strasbourg gare
 
 e (01100101)
 Düsseldorf → Abellio S-Bahn S7 → Remscheid-Lennep
