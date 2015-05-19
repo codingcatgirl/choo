@@ -129,10 +129,10 @@ class EFA(API):
             'requestID': 0,
             'routeType': 'LEASTTIME',  # {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
             'sessionID': 0,
-            'text': 1993,
             'type_via': 'stop',
             'useRealtime': 1,
             'outputFormat': 'XML',
+            'debug': 1,
         }
 
         # if use_realtime: post['useRealtime'] = 1
