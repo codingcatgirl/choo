@@ -679,9 +679,13 @@ class EFA(API):
             line.product = data.attrib.get('trainName', '')
 
             if not line.product:
+                line.product = data.attrib.get('productName', '')
+
+            if not line.product:
                 line.product = data.find('./itdNoTrain').attrib['name']
 
-            ridenum = data.attrib.get('trainNum', None)  # overwrites the diva one
+            if 'trainNum' in data.attrib:
+                ridenum = data.attrib['trainNum']  # overwrites the diva one
 
             prefix = data.attrib.get('trainType', '')
             line.shortname = (prefix + ridenum) if prefix else line.name
