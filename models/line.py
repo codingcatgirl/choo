@@ -99,9 +99,9 @@ class LineType(Serializable):
         return self._value
 
     def __contains__(self, other):
-        if type(other) == 'str':
+        if type(other) == str:
             other = LineType(other)
-        self._value.startswith(other._value)
+        return other._value.startswith(self._value)
 
 
 class LineTypes(Serializable):
