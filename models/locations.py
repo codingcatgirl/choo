@@ -28,15 +28,70 @@ class Coordinates(Serializable):
         return '<Coordinates %.6f %.6f>' % (self.lat, self.lon)
 
 
-class Location(ModelBase):
+class AbstractLocation(ModelBase):
+    def __init__(self, coords=None):
+        super().__init__()
+        self.coords = coords
+
+    @classmethod
+    def _validate(cls):
+        return {
+            'coords': (None, Coordinates),
+        }
+
+    def _serialize(self, depth):
+        data = {}
+        if self.coords:
+            data['coords'] = self.coords.serialize()
+        return data
+
+    def _unserialize(self, data):
+        if 'coords' in data:
+            self.coords = Coordinates.unserialize(data['coords'])
+
+
+class Platform(AbstractLocation):
+    def __init__(self, stop=None, name=None, full_name=None):
+        super().__init__()
+        self.stop = stop
+        self.name = name
+        self.full_name = full_name
+
+    @classmethod
+    def _validate(cls):
+        return {
+            'stop': Stop,
+            'name': (str, None),
+            'full_name': (str, None),
+        }
+
+    def _serialize(self, depth):
+        data = {}
+        data['stop'] = self.stop.serialize()
+        if self.name is not None:
+            data['name'] = self.name
+        if self.full_name is not None:
+            data['full_name'] = self.full_name
+        return data
+
+    def _unserialize(self, data):
+        self.stop = Stop.unserialize(data['stop'])
+        if 'name' in data:
+            self.name = data['name']
+        if 'full_name' in data:
+            self.full_name = data['full_name']
+
+    def __repr__(self, data):
+        return '<Platform %s %s>' % (repr(self.stop), repr(self.full_name))
+
+
+class Location(AbstractLocation):
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         self.country = country
         self.city = city
         self.name = name
         self.full_name = '%s, %s' % (city, name) if city is not None else name
-        self.is_train_station = None
-        self.coords = coords
         self.near_stops = []
 
     @classmethod
@@ -45,7 +100,6 @@ class Location(ModelBase):
             'country': (None, str),
             'city': (None, str),
             'name': str,
-            'coords': (None, Coordinates),
             'near_stops': ((Location, ), )
         }
 
@@ -54,8 +108,6 @@ class Location(ModelBase):
         self._serial_add(data, 'country')
         self._serial_add(data, 'city')
         data['name'] = self.name
-        if self.coords:
-            data['coords'] = self.coords.serialize()
         if self.near_stops:
             data['near_stops'] = [s.serialize() for s in self.near_stops]
         return data
