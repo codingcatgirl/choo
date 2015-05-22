@@ -34,6 +34,8 @@ class Location(ModelBase):
         self.country = country
         self.city = city
         self.name = name
+        self.full_name = '%s, %s' % (city, name) if city is not None else name
+        self.is_train_station = None
         self.coords = coords
         self.near_stops = []
 
