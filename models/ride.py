@@ -214,22 +214,22 @@ class RideSegment(Serializable):
 
     @property
     def origin(self):
-        return self.ride[0].stop
+        return self[0].stop
 
     @property
     def destination(self):
-        return self.ride[-1].stop
+        return self[-1].stop
 
     @property
     def departure(self):
-        return self.ride[0].departure
+        return self[0].departure
 
     @property
     def arrival(self):
-        return self.ride[-1].arrival
+        return self[-1].arrival
 
-    def __getattr__(self, name):
-        return getattr(self.ride, name)
+    #def __getattr__(self, name):
+    #    return getattr(self.ride, name)
 
     def __eq__(self, other):
         assert isinstance(other, RideSegment)
