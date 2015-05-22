@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase
-from .locations import Coordinates, Location, Stop, POI, Address
+from .locations import Coordinates, AbstractLocation, Stop, POI, Address
 from datetime import timedelta
 
 
@@ -16,8 +16,8 @@ class Way(ModelBase):
     @classmethod
     def _validate(cls):
         return {
-            'origin': Location,
-            'destination': Location,
+            'origin': AbstractLocation,
+            'destination': AbstractLocation,
             'distance': (None, int, float),
             'duration': timedelta,
             'path': (None, (Coordinates, ))
@@ -34,7 +34,7 @@ class Way(ModelBase):
         return data
 
     def _unserialize(self, data):
-        types = (Location, Stop, POI, Address, Coordinates)
+        types = (AbstractLocation, Location, Stop, Platform, POI, Address)
         self._serial_get(data, 'distance')
         self.duration = timedelta(seconds=data['duration'])
         self.origin = self._unserialize_typed(data['origin'], types)
