@@ -182,8 +182,8 @@ class EFA(API):
             post['inclMOT_11'] = 'on'
 
         # todo
-        if 'walk' in linetypes:
-            post['useProxFootSearch'] = 1
+        # if 'walk' in linetypes:
+        #    post['useProxFootSearch'] = 1
 
         assert isinstance(triprequest.origin, Location)
         assert isinstance(triprequest.destination, Location)
