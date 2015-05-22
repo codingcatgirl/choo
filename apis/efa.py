@@ -15,6 +15,7 @@ class EFA(API):
     name = 'efa'
     base_url = None
     country_by_id = ()
+    ifopt_platforms = False
 
     def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
@@ -744,7 +745,7 @@ class EFA(API):
             platform = data.attrib['platformName']
         match = re.search(r'[0-9].*$', data.attrib['platformName'])
         platform = Platform(location, match.group(0) if match is not None else platform)
-        platform._ids[self.name] = (data.attrib['area'], platform.name)
+        platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
 
         result = TimeAndPlace(location, platform)
         result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
