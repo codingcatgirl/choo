@@ -747,6 +747,12 @@ class EFA(API):
         platform = Platform(location, match.group(0) if match is not None else platform)
         platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
 
+        ifopt = data.attrib.get('gid', '').split(':')
+        if len(ifopt) == 5:
+            location.country = ifopt[0]
+            location._ids['ifopt'] = (ifopt[1], ifopt[2])
+            platform._ids['ifopt'] = (ifopt[3], ifopt[4])
+
         result = TimeAndPlace(location, platform)
         result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
 
