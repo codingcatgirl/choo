@@ -301,7 +301,6 @@ class EFA(API):
                 pe = p.findall('./odvPlaceElem')
                 for item in pe:
                     location = Location(None, city=item.text)
-                    location._raws[self.name] = ET.tostring(pe, 'utf-8').decode()
                     results.append(location)
             return results
         else:
@@ -313,7 +312,6 @@ class EFA(API):
         if n.attrib['state'] == 'empty':
             if city is not None:
                 location = Location(None, city)
-                location._raws[self.name] = ET.tostring(pe, 'utf-8').decode()
                 results.append(location)
             return results
         elif n.attrib['state'] != 'identified':
