@@ -14,7 +14,7 @@ import math
 class EFA(API):
     name = 'efa'
     base_url = None
-    country = None
+    country_by_id = ()
 
     def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
@@ -179,7 +179,7 @@ class EFA(API):
         if 'other' in linetypes:
             post['inclMOT_11'] = 'on'
 
-        #todo
+        # todo
         if 'walk' in linetypes:
             post['useProxFootSearch'] = 1
 
@@ -265,13 +265,19 @@ class EFA(API):
 
         return stop
 
+    def _get_country(self, i):
+        for s, country in self.country_by_id:
+            if i.startswith(s):
+                return country
+        return None
+
     def _parse_stop_line(self, data):
         """ Parse an ODV line (for example an AssignedStop) """
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
         name = data.text
-        stop = Stop(self.country, city, name)
+        stop = Stop(self._get_country(data.attrib['stopID']), city, name)
         stop._ids[self.name] = int(data.attrib['stopID'])
 
         if 'x' in data.attrib:
@@ -292,7 +298,7 @@ class EFA(API):
             if p.attrib['state'] == 'list':
                 pe = p.findall('./odvPlaceElem')
                 for item in pe:
-                    location = Location(self.country, city=item.text)
+                    location = Location(None, city=item.text)
                     location._raws[self.name] = ET.tostring(pe, 'utf-8').decode()
                     results.append(location)
             return results
@@ -304,7 +310,7 @@ class EFA(API):
         n = data.find('./itdOdvName')
         if n.attrib['state'] == 'empty':
             if city is not None:
-                location = Location(self.country, city)
+                location = Location(None, city)
                 location._raws[self.name] = ET.tostring(pe, 'utf-8').decode()
                 results.append(location)
             return results
@@ -338,13 +344,13 @@ class EFA(API):
         location = None
         name = data.attrib.get('objectName', data.text)
         if odvtype == 'stop':
-            location = Stop(self.country, city, name)
+            location = Stop(None, city, name)
         elif odvtype == 'poi':
-            location = POI(self.country, city, name)
+            location = POI(None, city, name)
         elif odvtype == 'street':
-            location = Address(self.country, city, name)
+            location = Address(None, city, name)
         elif odvtype in ('singlehouse', 'coord', 'address'):
-            location = Address(self.country, city, name)
+            location = Address(None, city, name)
             location.street = data.attrib['streetName'] if 'streetName' in data.attrib else None
             location.number = data.attrib['buildingNumber'] if 'buildingNumber' in data.attrib else None
             location.number = data.attrib['houseNumber'] if 'houseNumber' in data.attrib else None
@@ -357,16 +363,18 @@ class EFA(API):
         myid = data.attrib.get('id', '')
         if stopid:
             if location is None:
-                location = Stop(self.country, city, name)
+                location = Stop(None, city, name)
             if isinstance(location, Stop):
+                location.country = self._get_country(stopid)
                 location._ids[self.name] = int(stopid)
         elif myid:
             if location is None:
-                location = POI(self.country, city, name)
+                location = POI(None, city, name)
+            location.country = self._get_country(myid)
             location._ids[self.name] = int(myid)
         elif location is None:
             # Still no clue about the Type? Well, it's an Address then.
-            location = Address(self.country, city, name)
+            location = Address(None, city, name)
 
         # This is used when we got more than one Location
         score = int(data.attrib.get('matchQuality', 0))
@@ -386,9 +394,9 @@ class EFA(API):
             origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'))
 
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
-                line.linetype = LineType('highspeed')
+                line.linetype = LineType('train.longdistance.highspeed')
             elif departure.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAINS"]') is not None:
-                line.linetype = LineType('longdistance')
+                line.linetype = LineType('train.longdistance')
 
             # if ridenum is None:
             #     ridedata = departure.find('./itdServingTrip')
@@ -634,13 +642,13 @@ class EFA(API):
 
         # determine Type
         mottype = int(data.attrib['motType'])
-        line.linetype = LineType(('train.local', 'urban', 'metro', 'urban', 'tram',
+        line.linetype = LineType(('train', 'urban', 'metro', 'urban', 'tram',
                                   'bus.city', 'bus.regional', 'bus.express', 'suspended',
                                   'ship', 'dialable', 'other')[mottype])
 
         train = data.find('./itdTrain')
         if train is not None:
-            line.linetype = LineType('train.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
+            line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
@@ -648,7 +656,7 @@ class EFA(API):
         ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
-            line._ids[self.name] = (diva.attrib['project'], diva.attrib['line'])
+            line._ids[self.name] = (diva.attrib['project'], diva.attrib['line'], diva.attrib['supplement'])
             ridedir = diva.attrib['direction'].strip()
             if not ridedir:
                 ridedir = None
@@ -665,6 +673,7 @@ class EFA(API):
         if mottype == 0:
             line.name = data.attrib['symbol']
             line.product = data.attrib.get('trainName', '')
+
             if not line.product:
                 line.product = data.find('./itdNoTrain').attrib['name']
 
@@ -673,12 +682,13 @@ class EFA(API):
             prefix = data.attrib.get('trainType', '')
             line.shortname = (prefix + ridenum) if prefix else line.name
 
-            # todo: longdistance and similar
-            # if result.network == 'ddb':
-            #    if result.line[0:2] in ('96', '91'):
-            #        result.linetype.name = 'longdistance'
-            #    elif result.line[0:2] == '98':
-            #        result.linetype.name = 'highspeed'
+            if not line.shortname:
+                train = data.find('./itdTrain')
+                if train is not None:
+                    line.shortname = train.attrib['type']
+
+            if not line.name:
+                line.name = line.shortname
         else:
             line.product = data.attrib.get('productName', '')
             if not line.product:
@@ -693,11 +703,12 @@ class EFA(API):
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
-        origin = Stop(self.country, None, origin) if origin else None
+        origin = Stop(None, None, origin) if origin else None
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
-        destination = Stop(self.country, None, destination) if destination else None
+        destination = Stop(None, None, destination) if destination else None
         if data.attrib.get('destID', ''):
+            destination.country = self._get_country(data.attrib['destID'])
             destination._ids[self.name] = int(data.attrib['destID'])
 
         # route description
@@ -722,9 +733,9 @@ class EFA(API):
 
         # todo – what kind of location is this?
         if walk and data.attrib['area'] == '0':
-            location = Address(self.country, city, name)
+            location = Address(None, city, name)
         else:
-            location = Stop(self.country, city, name)
+            location = Stop(self._get_country(data.attrib['stopID']), city, name)
             location._ids[self.name] = int(data.attrib['stopID'])
 
         # get and clean the platform
