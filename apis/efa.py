@@ -509,6 +509,11 @@ class EFA(API):
         else:
             origin, destination, line, ridenum, ridedir, canceled = motdata
 
+            if data.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
+                line.linetype = LineType('train.longdistance.highspeed')
+            elif data.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAIN"]') is not None:
+                line.linetype = LineType('train.longdistance')
+
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
             ride.canceled = canceled
@@ -646,7 +651,7 @@ class EFA(API):
 
         # determine Type
         mottype = int(data.attrib['motType'])
-        line.linetype = LineType(('train', 'urban', 'metro', 'urban', 'tram',
+        line.linetype = LineType(('train.local', 'urban', 'metro', 'urban', 'tram',
                                   'bus.city', 'bus.regional', 'bus.express', 'suspended',
                                   'ship', 'dialable', 'other')[mottype])
 
