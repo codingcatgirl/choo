@@ -7,7 +7,7 @@ supported = ('VRR', )
 class VRR(EFA):
     name = 'vrr'
     base_url = 'http://app.vrr.de/standard/'
-    country = 'de'
+    country_by_id = (('2', 'de'), )
 
     def __init__(self):
         self.ids = {}

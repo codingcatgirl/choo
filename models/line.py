@@ -109,7 +109,6 @@ class LineTypes(Serializable):
         super().__init__()
         self._included = set([LineType(s) for s in include])
         self._excluded = set([LineType(s) for s in exclude])
-        print(self)
 
     def _serialize(self, depth):
         data = {}
