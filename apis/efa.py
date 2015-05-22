@@ -533,7 +533,7 @@ class EFA(API):
                     if first is None:
                         if origin is not None:
                             if origin != p.stop:
-                                ride.append(TimeAndPlace(origin))
+                                ride.append(TimeAndPlace(Platform(origin)))
                                 ride.append(None)
                         else:
                             ride.append(None)
@@ -545,7 +545,7 @@ class EFA(API):
                 if destination is not None:
                     if destination != p.stop:
                         ride.append(None)
-                        ride.append(TimeAndPlace(destination))
+                        ride.append(TimeAndPlace(Platform(destination)))
                 else:
                     ride.append(None)
             else:
@@ -553,7 +553,7 @@ class EFA(API):
                     if first is None:
                         if origin is not None:
                             if origin != p.stop:
-                                ride.append(TimeAndPlace(origin))
+                                ride.append(TimeAndPlace(Platform(origin)))
                                 ride.append(None)
                         else:
                             ride.append(None)
@@ -566,7 +566,7 @@ class EFA(API):
                 if destination is not None:
                     if destination != p.stop:
                         ride.append(None)
-                        ride.append(TimeAndPlace(destination))
+                        ride.append(TimeAndPlace(Platform(destination)))
                 else:
                     ride.append(None)
 
@@ -756,7 +756,13 @@ class EFA(API):
         if not platform.strip():
             platform = data.attrib['platformName']
         match = re.search(r'[0-9].*$', data.attrib['platformName'])
-        platform = Platform(location, match.group(0) if match is not None else platform)
+        platform = match.group(0) if match is not None else platform
+
+        full_platform = data.attrib['platformName']
+        if platform == full_platform and 'pointType' in data.attrib:
+            full_platform = '%s %s' % (data.attrib['pointType'], platform)
+
+        platform = Platform(location, platform, full_platform)
         platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
 
         ifopt = data.attrib.get('gid', '').split(':')
@@ -765,7 +771,7 @@ class EFA(API):
             location._ids['ifopt'] = (ifopt[1], ifopt[2])
             platform._ids['ifopt'] = (ifopt[3], ifopt[4])
 
-        result = TimeAndPlace(location, platform)
+        result = TimeAndPlace(platform)
         result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
 
         if 'x' in data.attrib:
