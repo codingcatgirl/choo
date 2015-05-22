@@ -433,8 +433,18 @@ class EFA(API):
         routes = data.findall('./itdRoute')
         for route in routes:
             trip = Trip()
+            interchange = None
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
-                trip.parts.append(self._parse_routepart(routepart))
+                part = self._parse_routepart(routepart)
+                if interchange is not None:
+                    interchange.destination = part[0].platform
+                trip.parts.append(part)
+
+                interchange = self._parse_interchange(routepart)
+                lastinterchange = interchange
+                if interchange is not None:
+                    interchange.origin = part[-1].platform
+                    trip.parts.append(interchange)
 
             ticketlist = TicketList()
             tickets = route.find('./itdFare/itdSingleTicket')
@@ -483,6 +493,24 @@ class EFA(API):
             trips.append((trip, ))
 
         return trips
+
+    def _parse_interchange(self, data):
+        """ Parses an optional interchange path of a itdPartialRoute into a Way """
+        info = data.find('./itdFootPathInfo')
+        if info is None:
+            return None
+
+        way = Way()
+        way.duration = timedelta(minutes=int(info.attrib.get('duration')))
+
+        path = []
+        for coords in data.findall('./itdInterchangePathCoordinates/itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
+            path.append(Coordinates(int(coords.find('y').text) / 1000000, int(coords.find('x').text) / 1000000))
+
+        if path:
+            way.path = path
+
+        return way
 
     def _parse_routepart(self, data):
         """ Parses itdPartialRoute into a RideSegment or Way """
