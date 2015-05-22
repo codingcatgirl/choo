@@ -130,23 +130,19 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
     @classmethod
     def _validate(cls):
         return {
-            '_ids': dict,
-            '_raws': dict
+            '_ids': dict
         }
 
     def __init__(self):
         self._ids = {}
-        self._raws = {}
 
     def _serialize(self, depth):
         data = {}
         data['_ids'] = self._ids
-        data['_raws'] = self._raws
         return data
 
     def _unserialize(self, data):
         self._serial_get(data, '_ids')
-        self._serial_get(data, '_raws')
 
     def matches(self, request):
         if not isinstance(request, ModelBase.Request):
