@@ -787,6 +787,8 @@ class EFA(API):
         platform = match.group(0) if match is not None else platform
 
         full_platform = data.attrib['platformName']
+        if not full_platform:
+            full_platform = platform
         if platform == full_platform and 'pointType' in data.attrib:
             full_platform = '%s %s' % (data.attrib['pointType'], platform)
 
