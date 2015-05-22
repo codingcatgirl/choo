@@ -129,10 +129,10 @@ class EFA(API):
             'requestID': 0,
             'routeType': 'LEASTTIME',  # {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
             'sessionID': 0,
-            'text': 1993,
             'type_via': 'stop',
             'useRealtime': 1,
             'outputFormat': 'XML',
+            'debug': 1,
         }
 
         # if use_realtime: post['useRealtime'] = 1
@@ -384,6 +384,11 @@ class EFA(API):
         for departure in departures:
             # Get Line Information
             origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'))
+
+            if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
+                line.linetype = LineType('highspeed')
+            elif departure.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAINS"]') is not None:
+                line.linetype = LineType('longdistance')
 
             # if ridenum is None:
             #     ridedata = departure.find('./itdServingTrip')
