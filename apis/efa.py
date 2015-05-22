@@ -16,6 +16,7 @@ class EFA(API):
     base_url = None
     country_by_id = ()
     ifopt_platforms = False
+    ifopt_stopid_digits = 0
 
     def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
@@ -368,11 +369,15 @@ class EFA(API):
             if isinstance(location, Stop):
                 location.country = self._get_country(stopid)
                 location._ids[self.name] = int(stopid)
+                if self.ifopt_stopid_digits:
+                    location._ids['ifopt'] = (None, str(int(stopid[-self.ifopt_stopid_digits:])))
         elif myid:
             if location is None:
                 location = POI(None, city, name)
             location.country = self._get_country(myid)
             location._ids[self.name] = int(myid)
+            if self.ifopt_stopid_digits:
+                location._ids['ifopt'] = (None, str(int(myid[-self.ifopt_stopid_digits:])))
         elif location is None:
             # Still no clue about the Type? Well, it's an Address then.
             location = Address(None, city, name)
