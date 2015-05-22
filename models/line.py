@@ -105,7 +105,7 @@ class LineType(Serializable):
 
 
 class LineTypes(Serializable):
-    def __init__(self, include=(''), exclude=()):
+    def __init__(self, include=('', ), exclude=()):
         super().__init__()
         self._included = set([LineType(s) for s in include])
         self._excluded = set([LineType(s) for s in exclude])
