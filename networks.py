@@ -8,6 +8,7 @@ class VRR(EFA):
     name = 'vrr'
     base_url = 'http://app.vrr.de/standard/'
     country_by_id = (('2', 'de'), )
+    ifopt_platforms = True
 
     def __init__(self):
         self.ids = {}
