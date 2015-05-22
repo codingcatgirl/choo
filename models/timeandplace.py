@@ -10,13 +10,15 @@ class TimeAndPlace(ModelBase):
         self.platform = platform
         self.arrival = arrival
         self.departure = departure
+        self.passthrough = False
 
     @classmethod
     def _validate(cls):
         return {
             'platform': (None, Platform),
             'arrival': (None, RealtimeTime),
-            'departure': (None, RealtimeTime)
+            'departure': (None, RealtimeTime),
+            'passthrough': bool
         }
 
     def _serialize(self, depth):
@@ -27,6 +29,7 @@ class TimeAndPlace(ModelBase):
             data['arrival'] = self.arrival.serialize()
         if self.departure:
             data['departure'] = self.departure.serialize()
+        data['passthrough'] = self.passthrough
         return data
 
     def _unserialize(self, data):
@@ -35,6 +38,8 @@ class TimeAndPlace(ModelBase):
             self.arrival = RealtimeTime.unserialize(data['arrival'])
         if 'departure' in data:
             self.departure = RealtimeTime.unserialize(data['departure'])
+        if 'passthrough' in data:
+            self.passthrough = data['passthrough']
 
     @property
     def stop(self):

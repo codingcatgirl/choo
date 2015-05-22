@@ -660,7 +660,7 @@ class EFA(API):
         d = data.find('./itdDate').attrib
         t = data.find('./itdTime').attrib
 
-        # -! means nope, there is no time known
+        # -1 means nope, there is no time known
         if d['weekday'] == '-1' or d['day'] == '-1' or t['minute'] == '-1':
             return None
 
@@ -849,6 +849,9 @@ class EFA(API):
             times = []
             for itddatetime in data.findall('./itdDateTime'):
                 times.append(self._parse_datetime(itddatetime))
+
+            if not [t for t in times if t is not None]:
+                result.passthrough = True
 
             if len(times) > 0 and times[0] is not None:
                 delay = int(data.attrib.get('arrDelay', '-1'))
