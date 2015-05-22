@@ -39,7 +39,7 @@ class EFA(API):
 
     def _convert_location(self, location: Location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
-        myid, raw = self._my_data(location)
+        myid = self._my_data(location)
 
         city = location.city
 
@@ -323,7 +323,6 @@ class EFA(API):
         else:
             ne = n.find('./odvNameElem')
             result = self._name_elem(ne, city, odvtype)[0]
-            result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
             for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
                 stop = self._parse_stop_line(near_stop)
                 if stop != result:
@@ -688,7 +687,6 @@ class EFA(API):
             line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
 
         # general Line and Ride attributes
-        line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
         diva = data.find('./motDivaParams')
         ridedir = None
         if diva is not None:
@@ -802,7 +800,6 @@ class EFA(API):
             platform._ids['ifopt'] = (ifopt[3], ifopt[4])
 
         result = TimeAndPlace(platform)
-        result._raws[self.name] = ET.tostring(data, 'utf-8').decode()
 
         if 'x' in data.attrib:
             result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
