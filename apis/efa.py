@@ -749,6 +749,8 @@ class EFA(API):
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination._ids[self.name] = int(data.attrib['destID'])
+            if self.ifopt_stopid_digits:
+                destination._ids['ifopt'] = (None, str(int(data.attrib['destID'][-self.ifopt_stopid_digits:])))
 
         # route description
         routedescription = data.find('./itdRouteDescText')
