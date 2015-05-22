@@ -63,94 +63,99 @@ class Line(ModelBase):
             self.last_stop = Stop.unserialize(data['last_stop'])
 
 
-class LineTypes(Serializable):
-    _known = ('localtrain', 'longdistance', 'highspeed', 'urban', 'metro',
-              'tram', 'citybus', 'regionalbus', 'expressbus', 'suspended',
-              'ship', 'dialable', 'other', 'walk')
-    _shortcuts = {
-        'bus': ('citybus', 'regionalbus', 'expressbus', 'dialbus'),
-        'dial': ('dialbus', 'dialtaxi')
-    }
-
-    def __init__(self, all_types: bool=True):
-        super().__init__()
-        self._included = set(self._known) if all_types else set()
-
-    def _serialize(self, depth):
-        return self._included
-
-    def _unserialize(self, data):
-        self._included = data
-
-    def add(self, *args: str):
-        for name in args:
-            if name in self._known:
-                self._included.add(name)
-            elif name in self._shortcuts:
-                for child in self._shortcuts[name]:
-                    self._included.add(child)
-            else:
-                raise AttributeError('unsupported linetype: %s' % repr(name))
-
-    def remove(self, *args: str):
-        for name in args:
-            if name in self._known:
-                self._included.discard(name)
-            elif name in self._shortcuts:
-                for child in self._shortcuts[name]:
-                    self._included.discard(child)
-            else:
-                raise AttributeError('unsupported linetype: %s' % repr(name))
-
-    def __contains__(self, name: str):
-        if type(name) == str:
-            if name in self._known:
-                return name in self._included
-            elif name in self._shortcuts:
-                for child in self._shortcuts[name]:
-                    if child not in self._included:
-                        return False
-                return True
-            else:
-                raise AttributeError('unsupported linetype')
-        else:
-            for child in name:
-                if name not in self._included:
-                    return False
-            return True
-
-    def __nonzero__(self):
-        return bool(self._included)
-
-    def __eq__(self, other):
-        assert isinstance(other, LineTypes)
-        return self._incluced == other._included
-
-
 class LineType(Serializable):
-    def __init__(self, name=None):
-        super().__init__()
-        if name is None or name in LineTypes._known:
-            self.name = name
+    _known = (
+        '', 'train', 'train.local', 'train.longdistance', 'train.longdistance.highspeed',
+        'urban', 'metro', 'tram',
+        'bus', 'bus.regional', 'bus.city', 'bus.express',
+        'suspended', 'ship', 'dialable', 'other'
+    )
+    _created = {}
+
+    def __new__(cls, value=''):
+        if isinstance(value, cls):
+            return value
+        elif value not in cls._known:
+            raise AttributeError('invalid linetype: %s' % repr(value))
+        if value in cls._created:
+            return cls._created[value]
         else:
-            raise AttributeError('unsupported linetype')
+            self = super().__new__(cls)
+            self._value = value
+            cls._created[value] = self
+            return self
 
     def _serialize(self, depth):
-        return self.name
+        return self._value
 
-    def _unserialize(self, data):
-        self.name = data
+    @classmethod
+    def unserialize(cls, data):
+        return cls(data)
+
+    def __repr__(self):
+        return 'LineType(%s)' % repr(self._value)
 
     def __str__(self):
-        return self.name
+        return self._value
 
-    def __eq__(self, other):
-        assert isinstance(other, LineType) or type(other) == str
-        name = str(other)
-        if self.name == name or (name in LineTypes._shortcuts and
-                                 self.name in LineTypes._shortcuts[name]):
-            return True
-        elif name in LineTypes._known:
-            return False
-        else:
-            raise AttributeError('unsupported linetype')
+    def __contains__(self, other):
+        if type(other) == 'str':
+            other = LineType(other)
+        self._value.startswith(other._value)
+
+
+class LineTypes(Serializable):
+    def __init__(self, include=(''), exclude=()):
+        super().__init__()
+        self._included = set([LineType(s) for s in include])
+        self._excluded = set([LineType(s) for s in exclude])
+        print(self)
+
+    def _serialize(self, depth):
+        data = {}
+        data['include'] = [str(s) for s in self._include]
+        if self._exclude:
+            data['exclude'] = [str(s) for s in self._exclude]
+
+    def _unserialize(self, data):
+        if 'include' in data:
+            self._included = set([LineType(s) for s in data['include']])
+        if 'exclude' in data:
+            self._excluded = set([LineType(s) for s in data['exclude']])
+
+    def include(self, *args):
+        args = [LineType(a) for a in args]
+        for include in args[:]:
+            args = [a for a in args if a not in include]
+
+        for include in args:
+            self._included = [i for i in self._included if i not in include]
+            self._exclude = [e for e in self._excluded if e in include]
+
+        self._included = set(self._included + args)
+        self._excluded = set([e for e in self._excluded if [i for i in self._included if e in i]])
+
+    def exclude(self, *args):
+        args = [LineType(a) for a in args]
+        for exclude in args[:]:
+            args = [a for a in args if a not in exclude]
+
+        for exclude in args:
+            self._included = [i for i in self._included if i not in exclude]
+            self._exclude = [e for e in self._excluded if e in exclude]
+
+        self._included = set(self._included)
+        self._excluded = set(self._excluded + args)
+        self._excluded = set([e for e in self._excluded if [i for i in self._included if e in i]])
+
+    def __contains__(self, linetype):
+        linetype = LineType(linetype)
+        for exclude in self._excluded:
+            if linetype in exclude:
+                return False
+
+        for include in self._included:
+            if linetype in include:
+                return True
+
+        return False

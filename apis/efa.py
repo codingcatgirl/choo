@@ -138,12 +138,12 @@ class EFA(API):
         # if use_realtime: post['useRealtime'] = 1
         # if with_bike: post['bikeTakeAlong'] = 1
 
-        if ('localtrain', 'longdistance', 'highspeed') in linetypes:
+        if 'train' in linetypes:
             post['inclMOT_0'] = 'on'
 
-        if 'highspeed' in linetypes:
+        if 'train.longdistance.highspeed' in linetypes:
             post['lineRestriction'] = 400
-        elif 'longdistance' in linetypes:
+        elif 'train.longdistance' in linetypes:
             post['lineRestriction'] = 401
         else:
             post['lineRestriction'] = 403
@@ -158,13 +158,13 @@ class EFA(API):
         if 'tram' in linetypes:
             post['inclMOT_4'] = 'on'
 
-        if 'citybus' in linetypes:
+        if 'bus.city' in linetypes:
             post['inclMOT_5'] = 'on'
 
-        if 'regionalbus' in linetypes:
+        if 'bus.regional' in linetypes:
             post['inclMOT_6'] = 'on'
 
-        if 'expressbus' in linetypes:
+        if 'bus.express' in linetypes:
             post['inclMOT_7'] = 'on'
 
         if 'suspended' in linetypes:
@@ -179,6 +179,7 @@ class EFA(API):
         if 'other' in linetypes:
             post['inclMOT_11'] = 'on'
 
+        #todo
         if 'walk' in linetypes:
             post['useProxFootSearch'] = 1
 
@@ -628,13 +629,13 @@ class EFA(API):
 
         # determine Type
         mottype = int(data.attrib['motType'])
-        line.linetype = LineType(('localtrain', 'urban', 'metro', 'urban', 'tram',
-                                  'citybus', 'regionalbus', 'expressbus', 'suspended',
+        line.linetype = LineType(('train.local', 'urban', 'metro', 'urban', 'tram',
+                                  'bus.city', 'bus.regional', 'bus.express', 'suspended',
                                   'ship', 'dialable', 'other')[mottype])
 
         train = data.find('./itdTrain')
         if train is not None:
-            line.linetype = LineType('highspeed' if train.get('type') in ('ICE', 'THA') else 'longdistance')
+            line.linetype = LineType('train.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
 
         # general Line and Ride attributes
         line._raws[self.name] = ET.tostring(data, 'utf-8').decode()
