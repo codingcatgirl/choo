@@ -16,7 +16,7 @@ class EFA(API):
     base_url = None
     country_by_id = ()
     ifopt_platforms = False
-    ifopt_stopid_digits = 0
+    ifopt_stopid_digits = False
 
     def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
