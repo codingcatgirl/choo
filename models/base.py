@@ -159,7 +159,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             obj.validate()
             return self._matches(obj)
 
-        def _matches(obj):
+        def _matches(self, obj):
             pass
 
     class Results(Serializable):
