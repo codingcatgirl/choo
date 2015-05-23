@@ -143,6 +143,9 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
 
     def _unserialize(self, data):
         self._serial_get(data, '_ids')
+        for name, val in tuple(self._ids.items()):
+            if type(val) == list:
+                self._ids[name] = tuple(val)
 
     def matches(self, request):
         if not isinstance(request, ModelBase.Request):
