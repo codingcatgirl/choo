@@ -53,6 +53,8 @@ class EFA(API):
         elif isinstance(location, Stop):
             if myid is not None:
                 r = {'type': 'stop', 'place': None, 'name': str(myid)}
+            elif 'ifopt' in location._ids and None not in location._ids['ifopt'] and location.country is not None:
+                r = {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % ((location.country, ) + location._ids['ifopt'])}
             else:
                 r = {'type': 'stop', 'place': city, 'name': location.name}
         elif isinstance(location, Address):
