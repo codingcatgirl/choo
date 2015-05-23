@@ -115,8 +115,6 @@ class Location(AbstractLocation):
         self._serial_get(data, 'country')
         self._serial_get(data, 'city')
         self._serial_get(data, 'name')
-        if 'coords' in data:
-            self.coords = Coordinates.unserialize(data['coords'])
         if 'near_stops' in data:
             self.near_stops = [Stop.unserialize(s) for s in data['near_stops']]
 
