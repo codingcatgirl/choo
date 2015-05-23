@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase
-from .locations import Coordinates, Stop, Platform
+from .locations import Platform
 from .realtime import RealtimeTime
 
 
