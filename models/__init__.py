@@ -5,7 +5,7 @@ from .trip import Trip
 from .tickets import TicketList, TicketData
 from .ride import Ride, RideSegment
 from .way import Way
-from .timeandplace import TimeAndPlace, Platform
+from .timeandplace import TimeAndPlace
 from .realtime import RealtimeTime
 
 
