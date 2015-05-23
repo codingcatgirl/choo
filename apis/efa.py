@@ -198,10 +198,10 @@ class EFA(API):
         if triprequest.with_bike:
             post['bikeTakeAlong'] = 1
 
-        if not triprequest.wheelchair:
+        if triprequest.wheelchair:
             post['wheelchair'] = 1
 
-        if not triprequest.low_floor_only:
+        if triprequest.low_floor_only:
             post['lowPlatformVhcl'] = 1
 
         if not triprequest.allow_solid_stairs:
