@@ -48,6 +48,7 @@ class Ride(ModelBase):
 
     def _unserialize(self, data):
         self._serial_get(data, 'number')
+        self._serial_get(data, 'direction')
         self._serial_get(data, 'canceled')
         self._serial_get(data, 'bike_friendly')
         self.infotexts = data['infotexts'] if 'infotexts' in data else []
