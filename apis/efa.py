@@ -185,9 +185,33 @@ class EFA(API):
         if 'other' in linetypes:
             post['inclMOT_11'] = 'on'
 
-        # todo
-        # if 'walk' in linetypes:
-        #    post['useProxFootSearch'] = 1
+        if triprequest.wayduration_origin or triprequest.wayduration_destination:
+            post['useProxFootSearch'] = 1
+
+        waytypes = {'walk': 100, 'bike': 104, 'car': 104, 'taxi': 105}
+        post['trITDepMOT'] = waytypes[str(triprequest.waytype_origin)]
+        post['trITArrMOT'] = waytypes[str(triprequest.waytype_destination)]
+
+        post['trITDepMOTvalue%d' % post['trITDepMOT']] = triprequest.wayduration_origin.total_seconds() // 60
+        post['trITArrMOTvalue%d' % post['trITArrMOT']] = triprequest.wayduration_destination.total_seconds() // 60
+
+        if triprequest.with_bike:
+            post['bikeTakeAlong'] = 1
+
+        if not triprequest.wheelchair:
+            post['wheelchair'] = 1
+
+        if not triprequest.low_floor_only:
+            post['lowPlatformVhcl'] = 1
+
+        if not triprequest.allow_solid_stairs:
+            post['noSolidStairs'] = 1
+
+        if not triprequest.allow_escalators:
+            post['noEscalators'] = 1
+
+        if not triprequest.allow_elevators:
+            post['noElevators'] = 1
 
         assert isinstance(triprequest.origin, Location)
         assert isinstance(triprequest.destination, Location)
