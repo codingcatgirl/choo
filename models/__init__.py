@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .locations import Coordinates, Stop, Location, Address, POI
+from .locations import Coordinates, AbstractLocation, Platform, Stop, Location, Address, POI
 from .line import Line, LineType, LineTypes
 from .trip import Trip
 from .tickets import TicketList, TicketData
@@ -17,7 +17,7 @@ def unserialize_typed(data):
     else:
         return globals()[model].unserialize(data)
 
-__all__ = ['Coordinates', 'Location', 'Stop', 'Address', 'POI', 'Line',
-           'LineType', 'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Platform',
-           'Ride', 'RideSegment', 'Trip', 'Way', 'TicketList', 'TicketData',
-           'unserialize_typed']
+__all__ = ['Coordinates', 'AbstractLocation', 'Platform', 'Location', 'Stop',
+           'Address', 'POI', 'Line', 'LineType', 'LineTypes', 'RealtimeTime',
+           'TimeAndPlace', 'Platform', 'Ride', 'RideSegment', 'Trip', 'Way',
+           'TicketList', 'TicketData', 'unserialize_typed']
