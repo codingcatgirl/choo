@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase
-from .locations import Coordinates, AbstractLocation, Stop, POI, Address
+from .locations import Coordinates, AbstractLocation, Location, Platform, Stop, POI, Address
 from datetime import timedelta
 
 
