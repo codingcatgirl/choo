@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase, Serializable
+from .locations import Coordinates
 from .timeandplace import TimeAndPlace
 from .line import Line
 
@@ -52,7 +53,8 @@ class Ride(ModelBase):
         self.infotexts = data['infotexts'] if 'infotexts' in data else []
         for s in data['stops']:
             self.append(TimeAndPlace.unserialize(s) if s is not None else None)
-        # self.paths #todo
+        for i, path in data['paths'].items():
+            self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
         if 'line' in data:
             self.line = Line.unserialize(data['line'])
 
