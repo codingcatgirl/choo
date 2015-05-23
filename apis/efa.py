@@ -772,6 +772,13 @@ class EFA(API):
             if ', ' in name and (city is None or name.startswith(city)):
                 city, name = name.split(', ', 1)
 
+        if city is None:
+            tmp = data.attrib.get('stopName', '')
+            if tmp.endswith(name):
+                tmp = tmp[:-len(name)].strip()
+                if tmp:
+                    city = tmp
+
         # todo – what kind of location is this?
         if walk and data.attrib['area'] == '0':
             location = Address(None, city, name)
