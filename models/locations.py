@@ -130,6 +130,7 @@ class Stop(Location):
         Location.__init__(self, country, city, name, coords)
         self.rides = []
         self.lines = []
+        self.train_station_name = None
 
     @classmethod
     def _validate(cls):
@@ -137,7 +138,8 @@ class Stop(Location):
         from .line import Line
         return {
             'rides': (None, (RideSegment, )),
-            'lines': (None, (Line, ))
+            'lines': (None, (Line, )),
+            'train_station_name': (None, str)
         }
 
     def _serialize(self, depth):
@@ -147,18 +149,17 @@ class Stop(Location):
                 data['rides'] = [ride.serialize(depth) for ride in self.rides]
             if self.lines is not None:
                 data['lines'] = [line.serialize(depth) for line in self.lines]
+        self._serial_add(data, 'train_station_name')
         return data
 
     def _unserialize(self, data):
         from .ride import RideSegment
         from .line import Line
-        self._serial_get(data, 'country')
-        self._serial_get(data, 'city')
-        self._serial_get(data, 'name')
         if 'rides' in data:
             self.rides = [RideSegment.unserialize(r) for r in data['rides']]
         if 'lines' in data:
             self.lines = [Line.unserialize(line) for line in data['lines']]
+        self._serial_get(data, 'train_station_name')
 
     def __repr__(self):
         return '<%s %s, %s>' % ('Stop', self.city, self.name)
