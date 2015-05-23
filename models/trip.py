@@ -200,3 +200,6 @@ class Trip(ModelBase):
         r.max_changtes = self.max_changes
         r.bike_friendly = self.bike_friendly
         return r
+
+    def __iter__(self):
+        yield from self.parts
