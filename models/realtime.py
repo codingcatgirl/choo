@@ -59,6 +59,20 @@ class RealtimeTime(Serializable):
     def __eq__(self, other):
         assert isinstance(other, RealtimeTime) or isinstance(other, datetime)
         if isinstance(other, datetime):
-            return self.time == other
+            return self.livetime == other
         else:
-            return self.time == other.time
+            return self.livetime == other.livetime
+
+    def __lt__(self, other):
+        assert isinstance(other, RealtimeTime) or isinstance(other, datetime)
+        if isinstance(other, datetime):
+            return self.livetime < other
+        else:
+            return self.livetime < other.livetime
+
+    def __gt__(self, other):
+        assert isinstance(other, RealtimeTime) or isinstance(other, datetime)
+        if isinstance(other, datetime):
+            return self.livetime < other
+        else:
+            return self.livetime < other.livetime
