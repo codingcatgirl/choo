@@ -163,14 +163,16 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             pass
 
     class Results(Serializable):
-        def __init__(self, results=[]):
+        def __init__(self, results=[], scored=False):
             super().__init__()
-            self.results = tuple(results)
+            if scored:
+                self.results = tuple(results)
+            else:
+                self.results = tuple((r, None) for r in results)
 
         def _serialize(self, depth):
             data = {}
-            data['results'] = [(r[0].serialize(), r[1])
-                               for r in self.results]
+            data['results'] = [(r[0].serialize(), r[1]) for r in self.results]
             return data
 
         def _unserialize(self, data):
