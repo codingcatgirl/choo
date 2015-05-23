@@ -169,12 +169,12 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
 
         def _serialize(self, depth):
             data = {}
-            data['results'] = [((r[0].serialize(), ) + r[1:])
+            data['results'] = [(r[0].serialize(), r[1])
                                for r in self.results]
             return data
 
         def _unserialize(self, data):
-            self.results = [((self.Model.unserialize(d[0]), ) + d[1:]) for d in data['results']]
+            self.results = [(self.Model.unserialize(d[0]), d[1]) for d in data['results']]
 
         def filter(self, request):
             if not self.results:
@@ -191,6 +191,9 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             return obj
 
         def __iter__(self):
+            yield from (r[0] for r in self.results)
+
+        def scored(self):
             yield from self.results
 
         def __getitem__(self, key):
