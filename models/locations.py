@@ -81,7 +81,7 @@ class Platform(AbstractLocation):
         if 'full_name' in data:
             self.full_name = data['full_name']
 
-    def __repr__(self, data):
+    def __repr__(self):
         return '<Platform %s %s>' % (repr(self.stop), repr(self.full_name))
 
 
