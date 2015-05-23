@@ -37,33 +37,6 @@ class Trip(ModelBase):
         if 'tickets' in data:
             self.tickets = TicketList.unserialize(data['tickets'])
 
-    class Results(ModelBase.Results):
-        def __init__(self, *args):
-            super().__init__(*args)
-            self.origin = None
-            self.via = None
-            self.destination = None
-
-        @classmethod
-        def _validate(cls):
-            return {
-                'origin': Location,
-                'via': (None, Location),
-                'destination': Location
-            }
-
-        def _load(self, data):
-            super()._load(data)
-            types = (Location, Stop, POI, Address, Coordinates)
-            self.origin = self._unserialize_typed(data['origin'], types)
-            self.destination = self._unserialize_typed(data['destination'], types)
-
-        def _serialize(self, depth):
-            data = {}
-            data['origin'] = self.origin.serialize(depth, True)
-            data['destination'] = self.destination.serialize(depth, True)
-            return data
-
     class Request(ModelBase.Request):
         def __init__(self):
             super().__init__()
@@ -104,6 +77,59 @@ class Trip(ModelBase):
             self._serial_add(data, 'parts', ids, val=parts)
             self._serial_add(data, 'walk_speed', ids)
             return data
+
+        def _matches(self, obj):
+            if (self.origin != obj.origin or
+                self.destination != obj.destination):
+                print('meh!', self.origin, obj.origin)
+                #return False
+
+            for i, part in enumerate(obj):
+                if isinstance(part, RideSegment):
+                    if part.line.linetype not in self.linetypes:
+                        return False
+                else:
+                    if part.waytype == WayType('walk'):
+                        continue
+                    if i == 0:
+                        if self.waytype_origin != part.waytype:
+                            return False
+                    elif i+1 == len(obj):
+                        if self.waytype_destination != part.waytype:
+                            return False
+                    else:
+                        if self.waytype_via != part.waytype:
+                            return False
+
+            return True
+
+    class Results(ModelBase.Results):
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.origin = None
+            self.via = None
+            self.destination = None
+
+        @classmethod
+        def _validate(cls):
+            return {
+                'origin': Location,
+                'via': (None, Location),
+                'destination': Location
+            }
+
+        def _load(self, data):
+            super()._load(data)
+            types = (Location, Stop, POI, Address, Coordinates)
+            self.origin = self._unserialize_typed(data['origin'], types)
+            self.destination = self._unserialize_typed(data['destination'], types)
+
+        def _serialize(self, depth):
+            data = {}
+            data['origin'] = self.origin.serialize(depth, True)
+            data['destination'] = self.destination.serialize(depth, True)
+            return data
+
 
     @property
     def origin(self):
