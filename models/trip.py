@@ -174,11 +174,10 @@ class Trip(ModelBase):
 
     @property
     def linetypes(self):
-        types = LineTypes(False)
+        types = LineTypes(())
         for part in self.parts:
-            linetype = part.line.linetype
-            if linetype is not None:
-                types.add(linetype)
+            if isinstance(part, RideSegment):
+                types.include(part.line.linetype)
         return types
 
     @property
