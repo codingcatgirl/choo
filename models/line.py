@@ -122,6 +122,14 @@ class LineTypes(Serializable):
         if 'exclude' in data:
             self._excluded = set([LineType(s) for s in data['exclude']])
 
+    def __repr__(self):
+        args = []
+        if tuple(self._included) != ('', ):
+            args.append('%s' % repr(tuple(str(s) for s in self._included)))
+        if self._excluded:
+            args.append(('exclude=' if not args else '') + '%s' % repr(tuple(str(s) for s in self._excluded)))
+        return 'LineTypes(%s)' % ', '.join(args)
+
     def include(self, *args):
         args = [LineType(a) for a in args]
         for include in args[:]:
