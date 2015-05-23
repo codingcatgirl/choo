@@ -79,10 +79,15 @@ class Trip(ModelBase):
             return data
 
         def _matches(self, obj):
-            if (self.origin != obj.origin or
-                self.destination != obj.destination):
-                print('meh!', self.origin, obj.origin)
-                #return False
+            if self.origin != obj.origin or self.destination != obj.destination:
+                return False
+
+            if not obj.wayonly:
+                if self.departure is not None and self.departure < obj.departure:
+                    return False
+
+                if self.arrival is not None and self.arrival > obj.arrival:
+                    return False
 
             for i, part in enumerate(obj):
                 if isinstance(part, RideSegment):
@@ -94,7 +99,7 @@ class Trip(ModelBase):
                     if i == 0:
                         if self.waytype_origin != part.waytype:
                             return False
-                    elif i+1 == len(obj):
+                    elif i + 1 == len(obj):
                         if self.waytype_destination != part.waytype:
                             return False
                     else:
@@ -129,7 +134,6 @@ class Trip(ModelBase):
             data['origin'] = self.origin.serialize(depth, True)
             data['destination'] = self.destination.serialize(depth, True)
             return data
-
 
     @property
     def origin(self):
