@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from .base import ModelBase
 from .way import Way, WayType
-from .locations import Coordinates, Location, Stop, POI, Address
+from .locations import Coordinates, AbstractLocation, Platform, Location, Stop, POI, Address
 from .ride import RideSegment
 from .line import LineTypes
 from .tickets import TicketList
@@ -123,9 +123,8 @@ class Trip(ModelBase):
                 'destination': Location
             }
 
-        def _load(self, data):
-            super()._load(data)
-            types = (Location, Stop, POI, Address, Coordinates)
+        def _unserialize(self, data):
+            types = (Location, AbstractLocation, Platform, Stop, POI, Address, Coordinates)
             self.origin = self._unserialize_typed(data['origin'], types)
             self.destination = self._unserialize_typed(data['destination'], types)
 
