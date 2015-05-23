@@ -23,8 +23,7 @@ class TimeAndPlace(ModelBase):
 
     def _serialize(self, depth):
         data = {}
-        if self.platform:
-            data['platform'] = self.platform.serialize()
+        data['platform'] = self.platform.serialize()
         if self.arrival:
             data['arrival'] = self.arrival.serialize()
         if self.departure:
@@ -33,7 +32,7 @@ class TimeAndPlace(ModelBase):
         return data
 
     def _unserialize(self, data):
-        self._serial_get(data, 'platform')
+        self.platform = Platform.unserialize(data['platform'])
         if 'arrival' in data:
             self.arrival = RealtimeTime.unserialize(data['arrival'])
         if 'departure' in data:
