@@ -133,7 +133,11 @@ class LineTypes(Serializable):
     def include(self, *args):
         args = [LineType(a) for a in args]
         for include in args[:]:
-            args = [a for a in args if a not in include]
+            args = [a for a in args if a not in include or a is include]
+        args = list(set(args))
+
+        if not args:
+            return
 
         for include in args:
             self._included = [i for i in self._included if i not in include]
@@ -145,7 +149,11 @@ class LineTypes(Serializable):
     def exclude(self, *args):
         args = [LineType(a) for a in args]
         for exclude in args[:]:
-            args = [a for a in args if a not in exclude]
+            args = [a for a in args if a not in exclude or a is exclude]
+        args = list(set(args))
+
+        if not args:
+            return
 
         for exclude in args:
             self._included = [i for i in self._included if i not in exclude]
