@@ -91,7 +91,6 @@ class Location(AbstractLocation):
         self.country = country
         self.city = city
         self.name = name
-        self.full_name = '%s, %s' % (city, name) if city is not None else name
         self.near_stops = []
 
     @classmethod
@@ -141,6 +140,15 @@ class Stop(Location):
             'lines': (None, (Line, )),
             'train_station_name': (None, str)
         }
+
+    @property
+    def full_name(self):
+        if self.train_station_name is not None:
+            return self.train_station_name
+        elif self.city is None:
+            return self.name
+        else:
+            return '%s, %s' % (self.city, self.name)
 
     def _serialize(self, depth):
         data = {}
