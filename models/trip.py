@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import ModelBase
-from .way import Way
+from .way import Way, WayType
 from .locations import Coordinates, Location, Stop, POI, Address
 from .ride import RideSegment
 from .line import LineTypes
