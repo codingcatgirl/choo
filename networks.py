@@ -10,6 +10,13 @@ class VRR(EFA):
     country_by_id = (('2', 'de'), )
     ifopt_platforms = True
     ifopt_stopid_digits = 5
+    train_station_suffixes = {
+        ' S': '',
+        ' Bf': '',
+        'Hauptbahnhof': 'Hbf',
+        ' Bahnhof': '',
+        'Hbf': 'Hbf',
+    }
 
     def __init__(self):
         self.ids = {}

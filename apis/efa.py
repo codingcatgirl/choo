@@ -17,6 +17,8 @@ class EFA(API):
     country_by_id = ()
     ifopt_platforms = False
     ifopt_stopid_digits = False
+    train_station_suffixes = {}
+    train_station_lines = LineTypes(('train', 'urban'))
 
     def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
@@ -265,6 +267,14 @@ class EFA(API):
         departureslist = data.find('./itdDepartureList')
         stop.rides = self._parse_departures(departureslist, stop)
 
+        train_station = False
+        for line in stop.lines:
+            if line.linetype in self.train_station_lines:
+                train_station = True
+                break
+
+        self._make_train_station(stop, train_station)
+
         return stop
 
     def _get_country(self, i):
@@ -272,6 +282,22 @@ class EFA(API):
             if i.startswith(s):
                 return country
         return None
+
+    def _make_train_station(self, stop, force=False):
+        if not isinstance(stop, Stop):
+            return
+
+        if not force:
+            for suffix in self.train_station_suffixes:
+                if stop.name.endswith(suffix):
+                    break
+            else:
+                return
+
+        name = stop.name
+        for suffix, replacement in self.train_station_suffixes.items():
+            name = name.replace(suffix, replacement)
+        stop.train_station_name = ('%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)).strip()
 
     def _parse_stop_line(self, data):
         """ Parse an ODV line (for example an AssignedStop) """
@@ -281,6 +307,8 @@ class EFA(API):
         name = data.text
         stop = Stop(self._get_country(data.attrib['stopID']), city, name)
         stop._ids[self.name] = int(data.attrib['stopID'])
+
+        self._make_train_station(stop)
 
         if 'x' in data.attrib:
             stop.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
@@ -385,6 +413,8 @@ class EFA(API):
         # Coordinates
         if 'x' in data.attrib:
             location.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
+
+        self._make_train_station(location)
 
         return location, score
 
@@ -541,6 +571,8 @@ class EFA(API):
             elif data.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAIN"]') is not None:
                 line.linetype = LineType('train.longdistance')
 
+            train_line = line.linetype in self.train_station_lines
+
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
             ride.canceled = canceled
@@ -551,7 +583,7 @@ class EFA(API):
             first = None
             last = None
             if data.find('./itdStopSeq'):
-                waypoints = [self._parse_trip_point(point) for point in data.findall('./itdStopSeq/itdPoint')]
+                waypoints = [self._parse_trip_point(point, train_line=train_line) for point in data.findall('./itdStopSeq/itdPoint')]
                 if not waypoints or waypoints[0].stop != points[0].stop:
                     waypoints.insert(0, points[0])
                 if waypoints[-1].stop != points[1].stop:
@@ -686,6 +718,8 @@ class EFA(API):
         if train is not None:
             line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
 
+        train_line = line.linetype in self.train_station_lines
+
         # general Line and Ride attributes
         diva = data.find('./motDivaParams')
         ridedir = None
@@ -743,6 +777,7 @@ class EFA(API):
         # origin and destination
         origin = data.attrib.get('directionFrom')
         origin = Stop(None, None, origin) if origin else None
+        self._make_train_station(origin, train_line)
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
         destination = Stop(None, None, destination) if destination else None
@@ -751,6 +786,7 @@ class EFA(API):
             destination._ids[self.name] = int(data.attrib['destID'])
             if self.ifopt_stopid_digits:
                 destination._ids['ifopt'] = (None, str(int(data.attrib['destID'][-self.ifopt_stopid_digits:])))
+        self._make_train_station(destination, train_line)
 
         # route description
         routedescription = data.find('./itdRouteDescText')
@@ -759,7 +795,7 @@ class EFA(API):
 
         return origin, destination, line, ridenum, ridedir, canceled
 
-    def _parse_trip_point(self, data, walk=False):
+    def _parse_trip_point(self, data, walk=False, train_line=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
@@ -785,6 +821,7 @@ class EFA(API):
         else:
             location = Stop(self._get_country(data.attrib['stopID']), city, name)
             location._ids[self.name] = int(data.attrib['stopID'])
+            self._make_train_station(location, train_line)
 
             if self.ifopt_stopid_digits:
                 location._ids['ifopt'] = (None, str(int(data.attrib['stopID'][-self.ifopt_stopid_digits:])))
