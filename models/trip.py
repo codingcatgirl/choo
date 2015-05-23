@@ -70,12 +70,27 @@ class Trip(ModelBase):
             self.parts = []
             self.walk_speed = 'normal'
             self.origin = None
+            self.via = []
             self.destination = None
             self.departure = None
             self.arrival = None
             self.linetypes = LineTypes()
             self.max_changes = None
-            self.bike_friendly = None
+
+            self.with_bike = False
+            self.wheelchair = False
+            self.low_floor_only = False
+            self.allow_solid_stairs = True
+            self.allow_escalators = True
+            self.allow_elevators = True
+
+            self.waytype_origin = WayType('walk')
+            self.waytype_via = WayType('walk')
+            self.waytype_destination = WayType('walk')
+
+            self.wayduration_origin = timedelta(minutes=10)
+            self.wayduration_via = timedelta(minutes=10)
+            self.wayduration_destination = timedelta(minutes=10)
 
         def _load(self, data):
             super()._load(data)
