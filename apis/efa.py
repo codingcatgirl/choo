@@ -545,7 +545,7 @@ class EFA(API):
                     ticketlist.other[name.text] = t
                 trip.tickets = ticketlist
 
-            trips.append((trip, ))
+            trips.append(trip)
 
         return trips
 
