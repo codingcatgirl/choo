@@ -413,14 +413,14 @@ class EFA(API):
             ride.direction = ridedir
             ride.canceled = canceled
             if origin is not None:
-                ride.append(TimeAndPlace(origin))
+                ride.append(TimeAndPlace(Platform(origin)))
             ride.append(None)
             mypoint = self._parse_trip_point(departure)
-            mypoint.stop = stop
+            #mypoint.platform.stop = stop
             pointer = ride.append(mypoint)
             ride.append(None)
             if destination is not None:
-                ride.append(TimeAndPlace(destination))
+                ride.append(TimeAndPlace(Platform(destination)))
 
             # Return RideSegment from the Station we depart from on
             results.append(ride[pointer:])
