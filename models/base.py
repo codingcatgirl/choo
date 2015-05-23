@@ -191,8 +191,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             return obj
 
         def __iter__(self):
-            for result in self.results:
-                yield result
+            yield from self.results
 
         def __getitem__(self, key):
             return self.results[key]
