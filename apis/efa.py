@@ -2,7 +2,7 @@
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
 from models import Trip, Coordinates, TicketList, TicketData
-from models import Ride, Line, LineType, LineTypes, Way
+from models import Ride, Line, LineType, LineTypes, Way, WayType
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
@@ -554,7 +554,8 @@ class EFA(API):
         motdata = self._parse_mot(data.find('./itdMeansOfTransport'))
 
         if motdata is None or data.attrib['type'] == 'IT':
-            way = Way(points[0].stop, points[1].stop)
+            waytype = {'100': 'walk', '101': 'bike', '104': 'car', '105': 'taxi'}[data.find('./itdMeansOfTransport').attrib['type']]
+            way = Way(WayType(waytype), points[0].stop, points[1].stop)
             way.distance = data.attrib.get('distance')
             if way.distance is not None:
                 way.distance = float(way.distance)
