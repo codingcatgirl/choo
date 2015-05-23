@@ -228,8 +228,8 @@ class RideSegment(Serializable):
     def arrival(self):
         return self[-1].arrival
 
-    #def __getattr__(self, name):
-    #    return getattr(self.ride, name)
+    def __getattr__(self, name):
+        return getattr(self.ride, name)
 
     def __eq__(self, other):
         assert isinstance(other, RideSegment)
