@@ -166,6 +166,13 @@ class Trip(ModelBase):
                 delta += part.duration
 
     @property
+    def wayonly(self):
+        for part in self:
+            if isinstance(part, RideSegment):
+                return False
+        return True
+
+    @property
     def linetypes(self):
         types = LineTypes(False)
         for part in self.parts:
