@@ -11,14 +11,15 @@ class Serializable:
             if not hasattr(c, '_validate'):
                 continue
 
-            mycls = self.__class__.__name__
+            mycls = c.__name__
 
             for name, allowed in c._validate().items():
                 if not hasattr(self, name):
                     raise AttributeError('%s.%s is missing' % (mycls, name))
 
                 if not self._validate_item(getattr(self, name), allowed):
-                    raise ValueError('%s.%s has to be %s, not %s' % (mycls, name, self._validate_or(allowed), repr(getattr(self, name))))
+                    print(c._validate())
+                    raise ValueError('%s.%s has to be %s, not %s' % (c._serialized_name(), name, self._validate_or(allowed), repr(getattr(self, name))))
         return True
 
     def _validate_item(self, val, alloweds):
