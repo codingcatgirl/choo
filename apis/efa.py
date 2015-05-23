@@ -786,21 +786,29 @@ class EFA(API):
             location = Stop(self._get_country(data.attrib['stopID']), city, name)
             location._ids[self.name] = int(data.attrib['stopID'])
 
+            if self.ifopt_stopid_digits:
+                location._ids['ifopt'] = (None, str(int(data.attrib['stopID'][-self.ifopt_stopid_digits:])))
+
         # get and clean the platform
         platform = data.attrib['platform']
         if not platform.strip():
             platform = data.attrib['platformName']
         match = re.search(r'[0-9].*$', data.attrib['platformName'])
         platform = match.group(0) if match is not None else platform
+        if not platform:
+            platform = None
 
         full_platform = data.attrib['platformName']
         if not full_platform:
             full_platform = platform
         if platform == full_platform and 'pointType' in data.attrib:
             full_platform = '%s %s' % (data.attrib['pointType'], platform)
+        if not full_platform:
+            full_platform = None
 
         platform = Platform(location, platform, full_platform)
-        platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
+        if full_platform is not None:
+            platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
 
         ifopt = data.attrib.get('gid', '').split(':')
         if len(ifopt) == 5:
