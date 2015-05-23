@@ -66,7 +66,6 @@ class TicketData(Serializable):
         return data
 
     def _unserialize(self, data):
-        self.name = data['name']
         self.price = data['price']
         self._serial_get(data, 'authority')
         self._serial_get(data, 'level')
