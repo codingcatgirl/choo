@@ -60,7 +60,7 @@ class Platform(AbstractLocation):
 
 
 class Location(AbstractLocation):
-    def __init__(self, country=None, city=None, name=None, coords=None):
+    def __init__(self, country=None, city=None, name=None):
         super().__init__()
         self.country = country
         self.city = city
@@ -91,11 +91,14 @@ class Location(AbstractLocation):
         if name == 'near_stops':
             self.near_stops = [Stop.unserialize(s) for s in data]
 
+    def __repr__(self):
+        return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))
+
 
 class Stop(Location):
-    def __init__(self, country=None, city=None, name=None, coords=None):
+    def __init__(self, country=None, city=None, name=None):
         super().__init__()
-        Location.__init__(self, country, city, name, coords)
+        Location.__init__(self, country, city, name)
         self.rides = []
         self.lines = []
         self.train_station_name = None
@@ -160,12 +163,21 @@ class Stop(Location):
 
 
 class POI(Location):
-    def __init__(self, country=None, city=None, name=None, coords=None):
+    def __init__(self, country=None, city=None, name=None):
         super().__init__()
-        Location.__init__(self, country, city, name, coords)
+        Location.__init__(self, country, city, name)
 
 
 class Address(Location):
-    def __init__(self, country=None, city=None, name=None, coords=None):
+    def __init__(self, country=None, city=None, name=None):
         super().__init__()
-        Location.__init__(self, country, city, name, coords)
+        Location.__init__(self, country, city, name)
+        self.street = None
+        self.number = None
+
+    @classmethod
+    def _validate(cls):
+        return {
+            'street': (None, str),
+            'number': (None, str),
+        }
