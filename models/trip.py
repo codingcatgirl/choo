@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from .base import ModelBase, TripPart
 from .way import Way, WayType
-from .locations import Coordinates, AbstractLocation, Platform, Location, Stop, POI, Address
+from .locations import Location
 from .ride import RideSegment
 from .line import LineTypes
 from .tickets import TicketList
