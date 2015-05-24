@@ -71,18 +71,15 @@ class Ride(ModelBase):
         elif name == '_paths':
             return 'paths', {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
 
-    def _unserialize(self, data):
-        self._serial_get(data, 'number')
-        self._serial_get(data, 'direction')
-        self._serial_get(data, 'canceled')
-        self._serial_get(data, 'bike_friendly')
-        self.infotexts = data['infotexts'] if 'infotexts' in data else []
-        for s in data['stops']:
-            self.append(TimeAndPlace.unserialize(s) if s is not None else None)
-        for i, path in data['paths'].items():
-            self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
-        if 'line' in data:
-            self.line = Line.unserialize(data['line'])
+    def _unserialize_custom(self, name, data):
+        if name == 'infotexts':
+            self.infotexts = data
+        if name == 'stops':
+            for s in data:
+                self.append(TimeAndPlace.unserialize(s) if s is not None else None)
+        if name == 'paths':
+            for i, path in data.items():
+                self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
 
     @property
     def is_complete(self):
