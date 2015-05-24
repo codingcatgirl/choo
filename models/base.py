@@ -1,46 +1,40 @@
 #!/usr/bin/env python3
 from collections import Iterable
+from datetime import timedelta
 import copy
 
 
 class Serializable:
-    _serialize_depth = None
-
     def validate(self):
         for c in self.__class__.__mro__:
             if not hasattr(c, '_validate'):
                 continue
 
-            mycls = c.__name__
-
             for name, allowed in c._validate().items():
                 if not hasattr(self, name):
-                    raise AttributeError('%s.%s is missing' % (mycls, name))
+                    raise AttributeError('%s.%s is missing' % (c._serialized_name(), name))
 
-                if not self._validate_item(getattr(self, name), allowed):
-                    print(c._validate())
+                val = getattr(self, name)
+
+                if allowed is None:
+                    if not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
+                        raise ValueError('%s.%s has non-iterable value: %s' % (c._serialized_name(), name, repr(getattr(self, name))))
+                    if not c._validate_custom(self, name, val):
+                        raise ValueError('%s.%s has invalid complex value: %s' % (c._serialized_name(), name, repr(getattr(self, name))))
+                    continue
+
+                if type(allowed) != tuple:
+                    allowed = (allowed, )
+
+                for a in allowed:
+                    if a is None:
+                        if val is None:
+                            break
+                    elif isinstance(val, a):
+                        break
+                else:
                     raise ValueError('%s.%s has to be %s, not %s' % (c._serialized_name(), name, self._validate_or(allowed), repr(getattr(self, name))))
         return True
-
-    def _validate_item(self, val, alloweds):
-        if type(alloweds) != tuple:
-            alloweds = (alloweds, )
-
-        for allowed in alloweds:
-            if allowed is None:
-                if val is None:
-                    return True
-            elif type(allowed) is tuple:
-                if not isinstance(val, Iterable):
-                    return False
-
-                for v in val:
-                    if not self._validate_item(v, allowed):
-                        return False
-                return True
-            elif isinstance(val, allowed):
-                return True
-        return False
 
     def _validate_or(self, items):
         if type(items) != tuple:
@@ -66,25 +60,59 @@ class Serializable:
                 return t.unserialize(data)
         raise TypeError('Wrong datatype for unserialization')
 
-    def serialize(self, depth=None, typed=False):
-        self.validate()
-        if depth is None:
-            depth = self._serialize_depth
+    @classmethod
+    def _unfold_subclasses(cls, allowed):
+        if type(allowed) is not tuple:
+            allowed = (allowed, )
 
-        serialized = {}
-        if depth != 0:
+        l = 0
+        while len(allowed) != l:
+            l = len(allowed)
+            for a in allowed[:]:
+                if a is not None and issubclass(a, Serializable):
+                    allowed = tuple(set(allowed + tuple(a.__subclasses__())))
+        return allowed
+
+    def serialize(self, typed=False):
+        self.validate()
+        data = {}
+        if hasattr(self, '_serialize'):
+            data = self._serialize()
+        else:
             for c in self.__class__.__mro__:
-                if not hasattr(c, '_serialize'):
+                if not hasattr(c, '_validate'):
                     continue
-                more = c._serialize(self, (depth - 1 if depth is not None else None))
-                if not isinstance(more, dict):
-                    return more
-                serialized.update(more)
+
+                for name, allowed in c._validate().items():
+                    value = getattr(self, name)
+
+                    if allowed is None:
+                        n, v = c._serialize_custom(self, name)
+                        if v is not None:
+                            data[n] = v
+                        continue
+
+                    allowed = c._unfold_subclasses(allowed)
+
+                    if len(allowed) == 1:
+                        if isinstance(value, Serializable):
+                            value = value.serialize()
+                    else:
+                        if value is None:
+                            continue
+
+                        if isinstance(value, Serializable):
+                            t = len([a for a in allowed if a is not None and issubclass(a, Serializable)]) > 1
+                            value = value.serialize(typed=t)
+
+                    if isinstance(value, timedelta):
+                        value = value.total_seconds()
+                    data[name] = value
 
         if typed:
-            return self.__class__._serialized_name(), serialized
+            return self.__class__._serialized_name(), data
         else:
-            return serialized
+            return data
 
     @classmethod
     def _serialized_name(cls):
@@ -93,19 +121,47 @@ class Serializable:
         else:
             return cls.__name__
 
-    def _serialize(self, depth):
-        return {}
-
     @classmethod
     def unserialize(cls, data):
         obj = cls()
-        for c in cls.__mro__:
-            if hasattr(c, '_unserialize'):
-                c._unserialize(obj, data)
-        return obj
+        if hasattr(obj, '_unserialize'):
+            obj._unserialize(data)
+        else:
+            for c in cls.__mro__:
+                validate = {}
+                if hasattr(c, '_validate'):
+                    validate = c._validate()
 
-    def _unserialize(self, data):
-        pass
+                custom = hasattr(c, '_unserialize_custom')
+
+                if not validate and not custom:
+                    continue
+
+                for name, value in data.items():
+                    if name in validate and validate[name] is not None:
+                        allowed = validate[name]
+
+                        allowed = cls._unfold_subclasses(allowed)
+
+                        if len(allowed) == 1:
+                            if issubclass(allowed[0], timedelta):
+                                value = timedelta(seconds=value)
+                            elif issubclass(allowed[0], Serializable):
+                                value = allowed[0].unserialize(value)
+                        elif value is not None:
+                            serializables = [a for a in allowed if a is not None and issubclass(a, Serializable)]
+                            typed = len(serializables) > 1
+                            if typed:
+                                value = obj._unserialize_typed(value, serializables)
+                            elif serializables:
+                                value = serializables[0].unserialize(value)
+                        setattr(obj, name, value)
+
+                for name, value in data.items():
+                    if (name not in validate or validate[name] is None) and custom:
+                        c._unserialize_custom(obj, name, value)
+
+        return obj
 
     def _serial_add(self, data, name, force=False):
         val = getattr(self, name)
@@ -137,17 +193,6 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
     def __init__(self):
         self._ids = {}
 
-    def _serialize(self, depth):
-        data = {}
-        data['_ids'] = self._ids
-        return data
-
-    def _unserialize(self, data):
-        self._serial_get(data, '_ids')
-        for name, val in tuple(self._ids.items()):
-            if type(val) == list:
-                self._ids[name] = tuple(val)
-
     def matches(self, request):
         if not isinstance(request, ModelBase.Request):
             raise TypeError('not a request')
@@ -171,13 +216,27 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             else:
                 self.results = tuple((r, None) for r in results)
 
-        def _serialize(self, depth):
-            data = {}
-            data['results'] = [(r[0].serialize(), r[1]) for r in self.results]
-            return data
+        @classmethod
+        def _validate(self):
+            return {
+                'results': None
+            }
 
-        def _unserialize(self, data):
-            self.results = [(self.Model.unserialize(d[0]), d[1]) for d in data['results']]
+        def _validate_custom(self, name, value):
+            if name == 'results':
+                type_ = self.Model
+                for v in value:
+                    if type(v) != tuple or len(v) != 2 or not isinstance(v[0], type_):
+                        return False
+                return True
+
+        def _serialize_custom(self, name):
+            if name == 'results':
+                return 'results', [(r[0].serialize(), r[1]) for r in self.results]
+
+        def _unserialize_custom(self, name, data):
+            if name == 'results':
+                self.results = [(self.Model.unserialize(d[0]), d[1]) for d in data]
 
         def filter(self, request):
             if not self.results:

@@ -22,7 +22,7 @@ class RealtimeTime(Serializable):
             'delay': (None, timedelta)
         }
 
-    def _serialize(self, depth):
+    def _serialize(self):
         return [self.time.strftime('%Y-%m-%d %H:%M:%S'),
                 int(self.delay.total_seconds()) if self.delay is not None else None]
 

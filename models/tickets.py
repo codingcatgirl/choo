@@ -17,27 +17,25 @@ class TicketList(Serializable):
             'level_name': (None, str),
             'single': TicketData,
             'bike': (None, TicketData),
-            # 'other': ((Ticket, ), )
+            'other': None
         }
 
-    def _serialize(self, depth):
-        data = {}
-        data['currency'] = self.currency
-        self._serial_add(data, 'level_name')
-        data['single'] = self.single.serialize()
-        if self.bike:
-            data['bike'] = self.bike.serialize()
-        data['other'] = {name: t.serialize() for name, t in self.other.items()}
-        return data
+    def _validate_custom(self, name, value):
+        if name == 'other':
+            if not isinstance(value, dict):
+                return False
+            for k, v in value.items():
+                if not isinstance(k, str) or not isinstance(v, TicketData):
+                    return False
+            return True
 
-    def _unserialize(self, data):
-        self.currency = data['currency']
-        self._serial_get(data, 'level_name')
-        self.single = TicketData.unserialize(data['single'])
-        if 'bike' in data:
-            self.bike = TicketData.unserialize(data['bike'])
-        if 'other' in data:
-            self.other = {name: TicketData.unserialize(t) for name, t in data['other'].items()}
+    def _serialize_custom(self, name):
+        if name == 'other':
+            return 'other', {name: t.serialize() for name, t in self.other.items()}
+
+    def _unserialize_custom(self, name, data):
+        if name == 'other':
+            self.other = {name: TicketData.unserialize(t) for name, t in data.items()}
 
 
 class TicketData(Serializable):
@@ -55,15 +53,6 @@ class TicketData(Serializable):
             'price': float,
             'price_child': (None, float),
         }
-
-    def _serialize(self, depth):
-        data = {}
-        data['price'] = self.price
-        self._serial_add(data, 'authority')
-        self._serial_add(data, 'level')
-        if self.price_child:
-            data['price_child'] = self.price_child
-        return data
 
     def _unserialize(self, data):
         self.price = data['price']

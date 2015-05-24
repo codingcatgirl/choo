@@ -21,25 +21,6 @@ class TimeAndPlace(ModelBase):
             'passthrough': bool
         }
 
-    def _serialize(self, depth):
-        data = {}
-        data['platform'] = self.platform.serialize()
-        if self.arrival:
-            data['arrival'] = self.arrival.serialize()
-        if self.departure:
-            data['departure'] = self.departure.serialize()
-        data['passthrough'] = self.passthrough
-        return data
-
-    def _unserialize(self, data):
-        self.platform = Platform.unserialize(data['platform'])
-        if 'arrival' in data:
-            self.arrival = RealtimeTime.unserialize(data['arrival'])
-        if 'departure' in data:
-            self.departure = RealtimeTime.unserialize(data['departure'])
-        if 'passthrough' in data:
-            self.passthrough = data['passthrough']
-
     @property
     def stop(self):
         return self.platform.stop

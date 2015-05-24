@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable, TripPart
+from .base import ModelBase, TripPart, Serializable
 from .locations import Coordinates
 from .timeandplace import TimeAndPlace
 from .line import Line
 
 
 class Ride(ModelBase):
-    _serialize_depth = 3
-
     def __init__(self, line=None, number=None):
         super().__init__()
         self._stops = []
@@ -27,24 +25,51 @@ class Ride(ModelBase):
             'direction': (None, str),
             'canceled': (None, bool),
             'bike_friendly': (None, bool),
-            'infotexts': ((str, ), )
+            'infotexts': None,
+            '_stops': None,
+            '_paths': None,
         }
 
-    def _serialize(self, depth):
-        data = {}
-        self._serial_add(data, 'number')
-        self._serial_add(data, 'direction')
-        self._serial_add(data, 'canceled')
-        self._serial_add(data, 'bike_friendly')
-        if self.infotexts:
-            data['infotexts'] = self.infotexts
-        data['stops'] = []
-        for pointer, stop in self._stops:
-            data['stops'].append(stop.serialize(depth) if stop else None)
-        data['paths'] = {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
-        if self.line:
-            data['line'] = self.line.serialize(depth)
-        return data
+    def _validate_custom(self, name, value):
+        if name == 'infotexts':
+            for v in value:
+                if not isinstance(v, str):
+                    return False
+            return True
+        elif name == '_stops':
+            for v in value:
+                if type(v) != tuple or len(v) != 2:
+                    return False
+
+                if not isinstance(v[0], self.__class__.StopPointer):
+                    return False
+
+                if v[1] is not None and not isinstance(v[1], TimeAndPlace):
+                    return False
+            return True
+        elif name == '_paths':
+            if not isinstance(value, dict):
+                return False
+            for k, v in value.items():
+                if not isinstance(k, self.__class__.StopPointer):
+                    return False
+
+                try:
+                    v = list(v)
+                except:
+                    return False
+                for i in v:
+                    if not isinstance(i, Coordinates):
+                        return False
+            return True
+
+    def _serialize_custom(self, name):
+        if name == 'infotexts':
+            return 'infotexts', (self.infotexts if self.infotexts else None)
+        elif name == '_stops':
+            return 'stops', [(s.serialize() if s else None) for i, s in self._stops]
+        elif name == '_paths':
+            return 'paths', {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
 
     def _unserialize(self, data):
         self._serial_get(data, 'number')
@@ -131,6 +156,15 @@ class Ride(ModelBase):
         def __init__(self, i: int):
             self._i = i
 
+        @classmethod
+        def _validate(cls):
+            return {
+                '_i': int
+            }
+
+        def _serialize(self):
+            return self._i
+
         def __int__(self):
             return self._i
 
@@ -151,28 +185,28 @@ class RideSegment(TripPart):
     def _validate(cls):
         return {
             'ride': Ride,
-            '_origin': (None, Ride.StopPointer),
-            '_destination': (None, Ride.StopPointer)
+            '_origin': None,
+            '_destination': None
         }
 
-    def _serialize(self, depth):
-        data = {}
-        data['ride'] = self.ride.serialize(depth)
-        if self._origin:
-            data['origin'] = int(self._origin)
-        if self._destination:
-            data['destination'] = int(self._destination)
-        return data
+    def _validate_custom(self, name, value):
+        if name in ('_origin', '_destination'):
+            return value is None or isinstance(value, Ride.StopPointer)
 
-    def _unserialize(self, data):
-        self.ride = Ride.unserialize(data['ride'])
-        if 'origin' in data:
-            self._origin = self.ride.pointer(data['origin'])
-        if 'destination' in data:
-            self._destination = self.ride.pointer(data['destination'])
+    def _serialize_custom(self, name):
+        if name == '_origin':
+            return 'origin', int(self._origin) if self._origin is not None else None
+        elif name == '_destination':
+            return 'destination', int(self._destination) if self._destination is not None else None
+
+    def _unserialize_custom(self, name, data):
+        if name == 'origin':
+            self._origin = self.ride.pointer(data)
+        elif name == 'destination':
+            self._destination = self.ride.pointer(data)
 
     def _stops(self):
-        return self.ride._stops[self._origin:int(self._destination)+1]
+        return self.ride._stops[self._origin:int(self._destination) + 1]
 
     @property
     def is_complete(self):
