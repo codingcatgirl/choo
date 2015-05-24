@@ -472,7 +472,7 @@ class EFA(API):
                 ride.append(TimeAndPlace(Platform(origin)))
             ride.append(None)
             mypoint = self._parse_trip_point(departure)
-            #mypoint.platform.stop = stop
+
             pointer = ride.append(mypoint)
             ride.append(None)
             if destination is not None:
@@ -496,7 +496,6 @@ class EFA(API):
                 trip.parts.append(part)
 
                 interchange = self._parse_interchange(routepart)
-                lastinterchange = interchange
                 if interchange is not None:
                     interchange.origin = part[-1].platform
                     trip.parts.append(interchange)
