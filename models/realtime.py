@@ -50,11 +50,11 @@ class RealtimeTime(Serializable):
 
     def __add__(self, other):
         assert isinstance(other, timedelta)
-        return RealtimeTime(self.time+other, self.delay)
+        return RealtimeTime(self.time + other, self.delay)
 
     def __sub__(self, other):
         assert isinstance(other, timedelta)
-        return RealtimeTime(self.time-other, self.delay)
+        return RealtimeTime(self.time - other, self.delay)
 
     def __eq__(self, other):
         assert isinstance(other, RealtimeTime) or isinstance(other, datetime)
