@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase, TripPart, Serializable
+from .base import ModelBase, TripPart
 from .locations import Coordinates
 from .timeandplace import TimeAndPlace
 from .line import Line
