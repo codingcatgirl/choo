@@ -142,7 +142,6 @@ class EFA(API):
         }
 
         # if use_realtime: post['useRealtime'] = 1
-        # if with_bike: post['bikeTakeAlong'] = 1
 
         if 'train' in linetypes:
             post['inclMOT_0'] = 'on'
