@@ -187,7 +187,7 @@ class EFA(API):
         if triprequest.wayduration_origin or triprequest.wayduration_destination:
             post['useProxFootSearch'] = 1
 
-        waytypes = {'walk': 100, 'bike': 104, 'car': 104, 'taxi': 105}
+        waytypes = {'walk': 100, 'bike': 101, 'car': 104, 'taxi': 105}
         post['trITDepMOT'] = waytypes[str(triprequest.waytype_origin)]
         post['trITArrMOT'] = waytypes[str(triprequest.waytype_destination)]
 
