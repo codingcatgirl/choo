@@ -11,8 +11,8 @@ class VRR(EFA):
     ifopt_platforms = True
     ifopt_stopid_digits = 5
     train_station_suffixes = {
-        ' S': '',
-        ' Bf': '',
+        ' S ': ' ',
+        ' Bf ': ' ',
         'Hauptbahnhof': 'Hbf',
         ' Bahnhof': '',
         'Hbf': 'Hbf',
