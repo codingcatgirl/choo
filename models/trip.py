@@ -198,5 +198,8 @@ class Trip(ModelBase):
         r.bike_friendly = self.bike_friendly
         return r
 
+    def __repr__(self):
+        return '<Trip %s %s - %s %s>' % (repr(self.origin), str(self.departure), repr(self.origin), str(self.arrival))
+
     def __iter__(self):
         yield from self.parts

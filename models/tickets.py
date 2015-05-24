@@ -37,6 +37,9 @@ class TicketList(Serializable):
         if name == 'other':
             self.other = {name: TicketData.unserialize(t) for name, t in data.items()}
 
+    def __repr__(self):
+        return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))
+
 
 class TicketData(Serializable):
     def __init__(self, authority=None, level=None, price=None, price_child=None):
@@ -60,3 +63,9 @@ class TicketData(Serializable):
         self._serial_get(data, 'level')
         if 'price_child' in data:
             self.price_child = data['price_child']
+
+    def __repr__(self):
+        childprice = ''
+        if self.price_child is not None:
+            childprice = ' %.2f' % self.price_child
+        return '<TicketData %s %s %.2f%s>' % (self.authority, self.level, self.price, childprice)

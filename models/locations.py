@@ -25,7 +25,7 @@ class Coordinates(Serializable):
         return other.lat == self.lat and other.lon == self.lon
 
     def __repr__(self):
-        return '<Coordinates %.6f %.6f>' % (self.lat, self.lon)
+        return 'Coordinates(%.6f, %.6f)' % (self.lat, self.lon)
 
 
 class AbstractLocation(ModelBase):
@@ -38,6 +38,9 @@ class AbstractLocation(ModelBase):
         return {
             'coords': (None, Coordinates),
         }
+
+    def __repr__(self):
+        return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
 
 
 class Platform(AbstractLocation):
@@ -56,7 +59,7 @@ class Platform(AbstractLocation):
         }
 
     def __repr__(self):
-        return '<Platform %s %s>' % (repr(self.stop), repr(self.full_name))
+        return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
 
 
 class Location(AbstractLocation):
@@ -149,7 +152,7 @@ class Stop(Location):
             self.lines = [Line.unserialize(line) for line in data]
 
     def __repr__(self):
-        return '<%s %s, %s>' % ('Stop', self.city, self.name)
+        return '<Stop %s>' % repr(self.full_name)
 
     def __eq__(self, other):
         assert isinstance(other, Stop)
