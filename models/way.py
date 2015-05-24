@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable
+from .base import ModelBase, Serializable, TripPart
 from .locations import Coordinates, AbstractLocation, Location, Platform, Stop, POI, Address
 from datetime import timedelta
 
 
-class Way(ModelBase):
+class Way(TripPart):
     def __init__(self, waytype=None, origin=None, destination=None, distance=None):
         super().__init__()
         self.waytype = WayType('walk') if waytype is None else waytype

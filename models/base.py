@@ -201,3 +201,7 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
 
         def __getitem__(self, key):
             return self.results[key]
+
+
+class TripPart(Serializable):
+    pass

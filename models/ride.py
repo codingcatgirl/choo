@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable
+from .base import ModelBase, Serializable, TripPart
 from .locations import Coordinates
 from .timeandplace import TimeAndPlace
 from .line import Line
@@ -141,7 +141,7 @@ class Ride(ModelBase):
             return 'p:%d' % self._i
 
 
-class RideSegment(Serializable):
+class RideSegment(TripPart):
     def __init__(self, ride=None, origin=None, destination=None):
         self.ride = ride
         self._origin = origin
