@@ -47,6 +47,12 @@ class Way(TripPart):
         return (self.origin == other.origin and
                 self.destination == other.destination)
 
+    def __repr__(self):
+        distance = ''
+        if self.distance:
+            distance = ' %dm' % self.distance
+        return '<Way %s %dmin%s %s %s>' % (str(self.waytype), self.duration.total_seconds() / 60, distance, repr(self.origin), repr(self.destination))
+
 
 class WayType(Serializable):
     _known = ('walk', 'bike', 'car', 'taxi')

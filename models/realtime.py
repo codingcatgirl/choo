@@ -32,10 +32,13 @@ class RealtimeTime(Serializable):
             self.delay = timedelta(seconds=data[1])
 
     def __repr__(self):
-        delay = ''
+        return '<RealtimeTime %s>' % (str(self))
+
+    def __str__(self):
+        out = self.time.strftime('%Y-%m-%d %H:%M')
         if self.delay is not None:
-            delay = ' +%d' % (self.delay.total_seconds() / 60)
-        return '<RealtimeTime %s%s>' % (str(self.time), delay)
+            out += ' %+d' % (self.delay.total_seconds() / 60)
+        return out
 
     @property
     def is_live(self):

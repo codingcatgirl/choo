@@ -32,5 +32,4 @@ class TimeAndPlace(ModelBase):
                 self.departure == other.departure)
 
     def __repr__(self):
-        return ('<TimeAndPlace %s %s %s>' %
-                (self.arrival, self.departure, self.platform))
+        return ('<TimeAndPlace %s %s %s>' % (self.arrival, self.departure, self.platform))

@@ -31,6 +31,9 @@ class Line(ModelBase):
         self.network = None
         self.operator = None
 
+    def __repr__(self):
+        return '<Line %s %s (%s)>' % (str(self.linetype), repr(self.name))
+
 
 class LineType(Serializable):
     _known = (

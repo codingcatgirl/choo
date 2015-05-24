@@ -149,6 +149,9 @@ class Ride(ModelBase):
     def __eq__(self, other):
         pass  # todo
 
+    def __repr__(self):
+        return '<Ride %s %s>' % (self.number, repr(self.line))
+
     class StopPointer():
         def __init__(self, i: int):
             self._i = i
@@ -270,3 +273,6 @@ class RideSegment(TripPart):
         return (self.ride == other.ride and
                 self._origin == other._origin and
                 self._destination == other._destination)
+
+    def __repr__(self):
+        return '<RideSegment %s %s %s>' % (repr(self.origin), repr(self.destination), repr(self.ride))
