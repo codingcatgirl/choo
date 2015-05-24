@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import Serializable, TripPart
-from .locations import Coordinates, AbstractLocation, Location, Platform, Stop, POI, Address
+from .locations import AbstractLocation, Coordinates
 from datetime import timedelta
 
 
