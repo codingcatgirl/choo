@@ -31,37 +31,6 @@ class Line(ModelBase):
         self.network = None
         self.operator = None
 
-    def _serialize(self, depth):
-        data = {}
-        self._serial_add(data, 'product')
-        self._serial_add(data, 'name')
-        self._serial_add(data, 'shortname')
-        self._serial_add(data, 'route')
-        self._serial_add(data, 'network')
-        self._serial_add(data, 'operator')
-        if self.linetype:
-            data['linetype'] = self.linetype.serialize()
-        if self.first_stop:
-            data['first_stop'] = self.first_stop.serialize(depth)
-        if self.last_stop:
-            data['last_stop'] = self.last_stop.serialize(depth)
-        return data
-
-    def _unserialize(self, data):
-        from .locations import Stop
-        self._serial_get(data, 'product')
-        self._serial_get(data, 'name')
-        self._serial_get(data, 'shortname')
-        self._serial_get(data, 'route')
-        self._serial_get(data, 'network')
-        self._serial_get(data, 'operator')
-        if 'linetype' in data:
-            self.linetype = LineType.unserialize(data['linetype'])
-        if 'first_stop' in data:
-            self.first_stop = Stop.unserialize(data['first_stop'])
-        if 'last_stop' in data:
-            self.last_stop = Stop.unserialize(data['last_stop'])
-
 
 class LineType(Serializable):
     _known = (
@@ -85,7 +54,7 @@ class LineType(Serializable):
             cls._created[value] = self
             return self
 
-    def _serialize(self, depth):
+    def _serialize(self):
         return self._value
 
     @classmethod
@@ -110,11 +79,33 @@ class LineTypes(Serializable):
         self._included = set([LineType(s) for s in include])
         self._excluded = set([LineType(s) for s in exclude])
 
-    def _serialize(self, depth):
-        data = {}
-        data['include'] = [str(s) for s in self._include]
-        if self._exclude:
-            data['exclude'] = [str(s) for s in self._exclude]
+    @classmethod
+    def _validate(cls):
+        return {
+            '_included': None,
+            '_excluded': None
+        }
+
+    def _validate_custom(self, name, value):
+        if name in ('_included', '_excluded'):
+            if not isinstance(value, set):
+                return False
+            for v in value:
+                if not isinstance(v, LineType):
+                    return False
+            return True
+
+    def _serialize_custom(self, name, value):
+        if name == '_included':
+            return 'included', ([str(s) for s in self._included])
+        elif name == '_excluded':
+            return 'excluded', ([str(s) for s in self._excluded])
+
+    def _unserialize_custom(self, name, data):
+        if name == 'included':
+            self._included = set([LineType(s) for s in data])
+        elif name == 'excluded':
+            self._excluded = set([LineType(s) for s in data])
 
     def _unserialize(self, data):
         if 'include' in data:

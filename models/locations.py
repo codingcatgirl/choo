@@ -14,7 +14,7 @@ class Coordinates(Serializable):
             'lon': float
         }
 
-    def _serialize(self, depth):
+    def _serialize(self):
         return [self.lat, self.lon]
 
     def _unserialize(self, data):
@@ -39,16 +39,6 @@ class AbstractLocation(ModelBase):
             'coords': (None, Coordinates),
         }
 
-    def _serialize(self, depth):
-        data = {}
-        if self.coords:
-            data['coords'] = self.coords.serialize()
-        return data
-
-    def _unserialize(self, data):
-        if 'coords' in data:
-            self.coords = Coordinates.unserialize(data['coords'])
-
 
 class Platform(AbstractLocation):
     def __init__(self, stop=None, name=None, full_name=None):
@@ -64,22 +54,6 @@ class Platform(AbstractLocation):
             'name': (str, None),
             'full_name': (str, None),
         }
-
-    def _serialize(self, depth):
-        data = {}
-        data['stop'] = self.stop.serialize()
-        if self.name is not None:
-            data['name'] = self.name
-        if self.full_name is not None:
-            data['full_name'] = self.full_name
-        return data
-
-    def _unserialize(self, data):
-        self.stop = Stop.unserialize(data['stop'])
-        if 'name' in data:
-            self.name = data['name']
-        if 'full_name' in data:
-            self.full_name = data['full_name']
 
     def __repr__(self):
         return '<Platform %s %s>' % (repr(self.stop), repr(self.full_name))
@@ -99,29 +73,26 @@ class Location(AbstractLocation):
             'country': (None, str),
             'city': (None, str),
             'name': str,
-            'near_stops': ((Location, ), )
+            'near_stops': None
         }
 
-    def _serialize(self, depth):
-        data = {}
-        self._serial_add(data, 'country')
-        self._serial_add(data, 'city')
-        data['name'] = self.name
-        if self.near_stops:
-            data['near_stops'] = [s.serialize() for s in self.near_stops]
-        return data
+    def _validate_custom(self, name, value):
+        if name == 'near_stops':
+            for v in value:
+                if not isinstance(v, Location):
+                    return False
+            return True
 
-    def _unserialize(self, data):
-        self._serial_get(data, 'country')
-        self._serial_get(data, 'city')
-        self._serial_get(data, 'name')
-        if 'near_stops' in data:
-            self.near_stops = [Stop.unserialize(s) for s in data['near_stops']]
+    def _serialize_custom(self, name):
+        if name == 'near_stops':
+            return 'near_stops', [s.serialize() for s in self.near_stops]
+
+    def _unserialize_custom(self, name, data):
+        if name == 'near_stops':
+            self.near_stops = [Stop.unserialize(s) for s in data]
 
 
 class Stop(Location):
-    _serialize_depth = 5
-
     def __init__(self, country=None, city=None, name=None, coords=None):
         super().__init__()
         Location.__init__(self, country, city, name, coords)
@@ -131,13 +102,25 @@ class Stop(Location):
 
     @classmethod
     def _validate(cls):
-        from .ride import RideSegment
-        from .line import Line
         return {
-            'rides': (None, (RideSegment, )),
-            'lines': (None, (Line, )),
+            'rides': None,
+            'lines': None,
             'train_station_name': (None, str)
         }
+
+    def _validate_custom(self, name, value):
+        from .ride import RideSegment
+        from .line import Line
+        if name == 'rides':
+            for v in value:
+                if not isinstance(v, RideSegment):
+                    return False
+            return True
+        elif name == 'lines':
+            for v in value:
+                if not isinstance(v, Line):
+                    return False
+            return True
 
     @property
     def full_name(self):
@@ -148,24 +131,19 @@ class Stop(Location):
         else:
             return '%s, %s' % (self.city, self.name)
 
-    def _serialize(self, depth):
-        data = {}
-        if depth:
-            if self.rides is not None:
-                data['rides'] = [ride.serialize(depth) for ride in self.rides]
-            if self.lines is not None:
-                data['lines'] = [line.serialize(depth) for line in self.lines]
-        self._serial_add(data, 'train_station_name')
-        return data
+    def _serialize_custom(self, name):
+        if name == 'rides':
+            return 'rides', [ride.serialize() for ride in self.rides]
+        elif name == 'lines':
+            return 'lines', [line.serialize() for line in self.lines]
 
-    def _unserialize(self, data):
+    def _unserialize_custom(self, name, data):
         from .ride import RideSegment
         from .line import Line
-        if 'rides' in data:
-            self.rides = [RideSegment.unserialize(r) for r in data['rides']]
-        if 'lines' in data:
-            self.lines = [Line.unserialize(line) for line in data['lines']]
-        self._serial_get(data, 'train_station_name')
+        if name == 'rides':
+            self.rides = [RideSegment.unserialize(r) for r in data]
+        elif name == 'lines':
+            self.lines = [Line.unserialize(line) for line in data]
 
     def __repr__(self):
         return '<%s %s, %s>' % ('Stop', self.city, self.name)

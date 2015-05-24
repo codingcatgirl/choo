@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable, TripPart
+from .base import Serializable, TripPart
 from .locations import Coordinates, AbstractLocation, Location, Platform, Stop, POI, Address
 from datetime import timedelta
 
@@ -22,29 +22,25 @@ class Way(TripPart):
             'destination': AbstractLocation,
             'distance': (None, int, float),
             'duration': timedelta,
-            'path': (None, (Coordinates, ))
+            'path': None,
         }
 
-    def _serialize(self, depth):
-        data = {}
-        self._serial_add(data, 'distance')
-        data['waytype'] = self.waytype.serialize()
-        data['duration'] = int(self.duration.total_seconds())
-        data['origin'] = self.origin.serialize(depth, True)
-        data['destination'] = self.destination.serialize(depth, True)
-        if self.path is not None:
-            data['path'] = [p.serialize() for p in self.path]
-        return data
+    def _validate_custom(self, name, value):
+        if name == 'path':
+            if value is None:
+                return True
+            for v in value:
+                if not isinstance(v, Coordinates):
+                    return False
+            return True
 
-    def _unserialize(self, data):
-        types = (AbstractLocation, Location, Stop, Platform, POI, Address)
-        self._serial_get(data, 'distance')
-        self.duration = timedelta(seconds=data['duration'])
-        self.waytype = WayType.unserialize(data.get('waytype', 'walk'))
-        self.origin = self._unserialize_typed(data['origin'], types)
-        self.destination = self._unserialize_typed(data['destination'], types)
-        if 'path' in data:
-            self.path = [Coordinates.unserialize(p) for p in data['path']]
+    def _serialize_custom(self, name):
+        if name == 'path':
+            return 'path', [p.serialize() for p in self.path]
+
+    def _unserialize_custom(self, name, data):
+        if name == 'path':
+            self.path = [Coordinates.unserialize(p) for p in data]
 
     def __eq__(self, other):
         assert isinstance(other, Way)
@@ -69,7 +65,7 @@ class WayType(Serializable):
             cls._created[value] = self
             return self
 
-    def _serialize(self, depth):
+    def _serialize(self):
         return self._value
 
     @classmethod

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase
+from .base import ModelBase, TripPart
 from .way import Way, WayType
 from .locations import Coordinates, AbstractLocation, Platform, Location, Stop, POI, Address
 from .ride import RideSegment
@@ -17,22 +17,24 @@ class Trip(ModelBase):
     @classmethod
     def _validate(cls):
         return {
-            'parts': ((RideSegment, Way), ),
+            'parts': None,
             'tickets': (None, TicketList)
         }
 
-    def _serialize(self, depth):
-        data = {}
-        data['parts'] = [p.serialize(depth, True) for p in self.parts]
-        if self.tickets:
-            data['tickets'] = self.tickets.serialize()
-        return data
+    def _validate_custom(self, name, value):
+        if name == 'parts':
+            for v in value:
+                if not isinstance(v, TripPart):
+                    return False
+            return True
 
-    def _unserialize(self, data):
-        self.parts = [self._unserialize_typed(part, (RideSegment, Way))
-                      for part in data['parts']]
-        if 'tickets' in data:
-            self.tickets = TicketList.unserialize(data['tickets'])
+    def _serialize_custom(self, name):
+        if name == 'parts':
+            return 'parts', [p.serialize(True) for p in self.parts]
+
+    def _unserialize_custom(self, name, data):
+        if name == 'parts':
+            self.parts = [self._unserialize_typed(part, (RideSegment, Way)) for part in data]
 
     class Request(ModelBase.Request):
         def __init__(self):
@@ -119,17 +121,6 @@ class Trip(ModelBase):
                 'via': (None, Location),
                 'destination': Location
             }
-
-        def _unserialize(self, data):
-            types = (Location, AbstractLocation, Platform, Stop, POI, Address, Coordinates)
-            self.origin = self._unserialize_typed(data['origin'], types)
-            self.destination = self._unserialize_typed(data['destination'], types)
-
-        def _serialize(self, depth):
-            data = {}
-            data['origin'] = self.origin.serialize(depth, True)
-            data['destination'] = self.destination.serialize(depth, True)
-            return data
 
     @property
     def origin(self):
