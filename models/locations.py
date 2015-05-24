@@ -79,6 +79,13 @@ class Location(AbstractLocation):
             'near_stops': None
         }
 
+    @property
+    def full_name(self):
+        if self.city is None:
+            return self.name
+        else:
+            return '%s, %s' % (self.city, self.name)
+
     def _validate_custom(self, name, value):
         if name == 'near_stops':
             for v in value:
