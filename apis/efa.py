@@ -701,6 +701,9 @@ class EFA(API):
                 if pointi[j] is None or (pointi[j][1] == 2 and pointi[j][2] > d):
                     pointi[j] = (i, 2, d)
 
+        if None in pointi:
+            return []
+
         pointitest = [p[0] for p in pointi]
         if sorted(pointitest) != pointitest:
             # We found the points in the wrong order – so this is bullshit, return nothing
