@@ -137,8 +137,7 @@ class EFA(API):
             'sessionID': 0,
             'type_via': 'stop',
             'useRealtime': 1,
-            'outputFormat': 'XML',
-            'debug': 1,
+            'outputFormat': 'XML'
         }
 
         # if use_realtime: post['useRealtime'] = 1
@@ -253,6 +252,7 @@ class EFA(API):
         post = {
             'command': '',
             'coordOutputFormat': 'WGS84',
+            'imparedOptionsActive': 1,
             'itdDateDay': time.day,
             'itdDateMonth': time.month,
             'itdDateYear': time.year,
@@ -262,11 +262,13 @@ class EFA(API):
             'lsShowTrainsExplicit': 1,
             'mode': 'direct',
             'outputFormat': 'XML',
+            'locationServerActive': 1,
             'itOptionsActive': 1,
             'ptOptionsActive': 1,
             'includeCompleteStopSeq': 1,
             'depType': 'stopEvents',
             'useRealtime': 1,
+            'stateless': 1,
             'requestID': 0,
             'sessionID': 0
         }
