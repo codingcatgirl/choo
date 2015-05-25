@@ -319,7 +319,7 @@ class EFA(API):
             else:
                 return
 
-        name = stop.name+' '
+        name = stop.name + ' '
         for suffix, replacement in self.train_station_suffixes.items():
             name = name.replace(suffix, replacement)
         name = name[:-1]
