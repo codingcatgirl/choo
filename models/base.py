@@ -187,11 +187,33 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
     @classmethod
     def _validate(cls):
         return {
-            '_ids': dict
+            '_ids': None
         }
 
     def __init__(self):
         self._ids = {}
+
+    def _validate_custom(self, name, value):
+        if name == '_ids':
+            if not isinstance(value, dict):
+                return False
+
+            for name, data in value.items():
+                if not isinstance(name, str):
+                    return False
+
+                if not isinstance(data, (int, str, tuple)):
+                    return False
+            return True
+
+    def _serialize_custom(self, name):
+        if name == '_ids':
+            return 'ids', self._ids
+
+    def _unserialize_custom(self, name, data):
+        if name == 'ids':
+            for name, value in data.items():
+                self._ids[name] = tuple(value) if isinstance(value, list) else value
 
     def matches(self, request):
         if not isinstance(request, ModelBase.Request):
