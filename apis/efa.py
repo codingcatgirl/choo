@@ -334,6 +334,11 @@ class EFA(API):
         stop = Stop(self._get_country(data.attrib['stopID']), city, name)
         stop._ids[self.name] = int(data.attrib['stopID'])
 
+        gid = data.attrib.get('gid', '').split(':')
+        if len(gid) == 3 and min(len(s) for s in gid):
+            stop.country = 'de'
+            stop.ifopt = (gid[1], gid[2])
+
         self._make_train_station(stop)
 
         if 'x' in data.attrib:
