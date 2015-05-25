@@ -264,7 +264,8 @@ class EFA(API):
             'outputFormat': 'XML',
             'itOptionsActive': 1,
             'ptOptionsActive': 1,
-            # 'includeCompleteStopSeq': 1,
+            'includeCompleteStopSeq': 1,
+            'depType': 'stopEvents',
             'useRealtime': 1,
             'requestID': 0,
             'sessionID': 0
