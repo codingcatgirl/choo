@@ -296,7 +296,7 @@ class EFA(API):
                 stop.lines.append(line)
 
         departureslist = data.find('./itdDepartureList')
-        stop.rides = self._parse_departures(departureslist, stop)
+        stop.rides = self._parse_departures(departureslist, stop, servernow)
 
         train_station = False
         for line in stop.lines:
@@ -455,8 +455,9 @@ class EFA(API):
 
         return location, score
 
-    def _parse_departures(self, data, stop=None):
+    def _parse_departures(self, data, stop, servernow):
         """ Parses itdDeparture into a List of RideSegment """
+        servernow.replace(second=0, microsecond=0)
         results = []
         departures = data.findall('./itdDeparture')
         for departure in departures:
@@ -466,7 +467,7 @@ class EFA(API):
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
                 line.linetype = LineType('train.longdistance.highspeed')
             elif departure.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAINS"]') is not None:
-                line.linetype = LineType('train.longdistance')
+                line.linetype = LineType('tdrain.longdistance')
 
             # if ridenum is None:
             #     ridedata = departure.find('./itdServingTrip')
@@ -485,10 +486,34 @@ class EFA(API):
             # todo: take delay and add it to next stops
             mypoint = self._parse_trip_point(departure, train_line=train_line)
 
+            before_delay = None
+            if mypoint.arrival:
+                before_delay = mypoint.arrival.delay
+            after_delay = None
+            if mypoint.departure:
+                after_delay = mypoint.departure.delay
+
+            delay = None
+            if departure.find('./itdServingLine/itdNoTrain'):
+                delay = departure.find('./itdServingLine/itdNoTrain').attrib.get('delay', None)
+                if delay is not None:
+                    delay = timedelta(minutes=delay)
+
+            if delay is not None:
+                if (mypoint.arrival and servernow < mypoint.arrival.livetime) or (mypoint.departure and servernow < mypoint.departure.livetime):
+                    before_delay = delay
+                else:
+                    after_delay = delay
+
             prevs = False
             for pointdata in departure.findall('./itdPrevStopSeq/itdPoint'):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
+                    if before_delay is not None:
+                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time+before_delay >= servernow:
+                            point.arrival.delay = before_delay
+                        if point.departure is not None and point.departure.delay is None and point.departure.time+before_delay >= servernow:
+                            point.departure.delay = before_delay
                     prevs = True
                     ride.append(point)
 
@@ -498,6 +523,11 @@ class EFA(API):
             for pointdata in departure.findall('./itdOnwardStopSeq/itdPoint'):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
+                    if after_delay is not None:
+                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time+after_delay >= servernow:
+                            point.arrival.delay = after_delay
+                        if point.departure is not None and point.departure.delay is None and point.departure.time+after_delay >= servernow:
+                            point.departure.delay = after_delay
                     onwards = True
                     ride.append(point)
 
