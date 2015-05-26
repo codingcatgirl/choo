@@ -868,6 +868,8 @@ class EFA(API):
 
         if city is None:
             tmp = data.attrib.get('stopName', '')
+            if not tmp:
+                tmp = data.attrib.get('name', '')
             if tmp.endswith(name):
                 tmp = tmp[:-len(name)].strip()
                 if tmp:
