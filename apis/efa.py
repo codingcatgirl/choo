@@ -476,15 +476,36 @@ class EFA(API):
             ride = Ride(line, ridenum)
             ride.direction = ridedir
             ride.canceled = canceled
-            if origin is not None:
-                ride.append(TimeAndPlace(Platform(origin)))
-            ride.append(None)
-            mypoint = self._parse_trip_point(departure)
+
+            train_line = line.linetype in self.train_station_lines
+
+            # todo: take delay and add it to next stops
+            mypoint = self._parse_trip_point(departure, train_line=train_line)
+
+            prevs = False
+            for pointdata in departure.findall('./itdPrevStopSeq/itdPoint'):
+                point = self._parse_trip_point(pointdata, train_line=train_line)
+                if point is not None:
+                    prevs = True
+                    ride.append(point)
 
             pointer = ride.append(mypoint)
-            ride.append(None)
-            if destination is not None:
-                ride.append(TimeAndPlace(Platform(destination)))
+
+            onwards = False
+            for pointdata in departure.findall('./itdOnwardStopSeq/itdPoint'):
+                point = self._parse_trip_point(pointdata, train_line=train_line)
+                if point is not None:
+                    onwards = True
+                    ride.append(point)
+
+            if not prevs and not onwards:
+                ride.prepend(None)
+                if origin is not None:
+                    ride.prepend(TimeAndPlace(Platform(origin)))
+
+                ride.append(None)
+                if destination is not None:
+                    ride.append(TimeAndPlace(Platform(destination)))
 
             # Return RideSegment from the Station we depart from on
             results.append(ride[pointer:])
@@ -851,6 +872,9 @@ class EFA(API):
                 tmp = tmp[:-len(name)].strip()
                 if tmp:
                     city = tmp
+
+        if data.attrib['area'] == '' and data.attrib['stopID'] == '0':
+            return None
 
         # todo – what kind of location is this?
         if walk and data.attrib['area'] == '0':
