@@ -275,6 +275,9 @@ class EFA(API):
         post.update(self._convert_location(stop, '%s_dm'))
 
         xml = self._post('XSLT_DM_REQUEST', post)
+
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
+
         data = xml.find('./itdDepartureMonitorRequest')
 
         stop = self._parse_odv(data.find('./itdOdv'))
