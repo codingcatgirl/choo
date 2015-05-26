@@ -131,7 +131,7 @@ class Ride(ModelBase):
     def prepend(self, item):
         assert isinstance(item, TimeAndPlace) or item is None
         pointer = Ride.StopPointer(0)
-        self._stops.prepend((pointer, item))
+        self._stops.insert(0, (pointer, item))
         self._alter_pointers_after(0, 1)
         return pointer
 
