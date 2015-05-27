@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from .base import ModelBase, TripPart
+from .base import Collectable, TripPart
 from .locations import Coordinates
 from .timeandplace import TimeAndPlace
 from .line import Line
 
 
-class Ride(ModelBase):
+class Ride(Collectable):
     def __init__(self, line=None, number=None):
         super().__init__()
         self._stops = []

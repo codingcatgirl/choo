@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from .base import ModelBase
+from .base import Serializable
 from .locations import Platform
 from .realtime import RealtimeTime
 
 
-class TimeAndPlace(ModelBase):
+class TimeAndPlace(Serializable):
     def __init__(self, platform=None, arrival=None, departure=None):
         super().__init__()
         self.platform = platform

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase, TripPart
+from .base import Searchable, TripPart
 from .way import Way, WayType
 from .locations import Location
 from .ride import RideSegment
@@ -8,7 +8,7 @@ from .tickets import TicketList
 from datetime import timedelta
 
 
-class Trip(ModelBase):
+class Trip(Searchable):
     def __init__(self):
         super().__init__()
         self.parts = []
@@ -36,7 +36,7 @@ class Trip(ModelBase):
         if name == 'parts':
             self.parts = [self._unserialize_typed(part, (RideSegment, Way)) for part in data]
 
-    class Request(ModelBase.Request):
+    class Request(Searchable.Request):
         def __init__(self):
             super().__init__()
             self.parts = []
@@ -107,7 +107,7 @@ class Trip(ModelBase):
 
             return True
 
-    class Results(ModelBase.Results):
+    class Results(Searchable.Results):
         def __init__(self, *args):
             super().__init__(*args)
             self.origin = None
