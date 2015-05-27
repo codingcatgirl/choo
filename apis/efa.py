@@ -510,9 +510,9 @@ class EFA(API):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
                     if before_delay is not None:
-                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time+before_delay >= servernow:
+                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time + before_delay >= servernow:
                             point.arrival.delay = before_delay
-                        if point.departure is not None and point.departure.delay is None and point.departure.time+before_delay >= servernow:
+                        if point.departure is not None and point.departure.delay is None and point.departure.time + before_delay >= servernow:
                             point.departure.delay = before_delay
                     prevs = True
                     ride.append(point)
@@ -524,9 +524,9 @@ class EFA(API):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
                     if after_delay is not None:
-                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time+after_delay >= servernow:
+                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time + after_delay >= servernow:
                             point.arrival.delay = after_delay
-                        if point.departure is not None and point.departure.delay is None and point.departure.time+after_delay >= servernow:
+                        if point.departure is not None and point.departure.delay is None and point.departure.time + after_delay >= servernow:
                             point.departure.delay = after_delay
                     onwards = True
                     ride.append(point)
