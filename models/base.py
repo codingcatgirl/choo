@@ -163,19 +163,6 @@ class Serializable:
 
         return obj
 
-    def _serial_add(self, data, name, force=False):
-        val = getattr(self, name)
-        if force or val is not None:
-            data[name] = val
-
-    def _serial_get(self, data, name, types=None):
-        if name in data:
-            if types is None:
-                setattr(self, name, data[name])
-            else:
-                if isinstance(types, ModelBase):
-                    types = (types, )
-
 
 class MetaSearchable(type):
     def __init__(cls, a, b, c):

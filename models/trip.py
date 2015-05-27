@@ -64,19 +64,6 @@ class Trip(Searchable):
             self.wayduration_via = timedelta(minutes=10)
             self.wayduration_destination = timedelta(minutes=10)
 
-        def _load(self, data):
-            super()._load(data)
-            self._serial_get(data, 'walk_speed')
-            self._serial_get(data, 'parts')
-            self.parts = [ModelBase.unserialize(part) for part in self.parts]
-
-        def _serialize(self, ids):
-            data = {}
-            parts = [part.serialize() for part in self.parts]
-            self._serial_add(data, 'parts', ids, val=parts)
-            self._serial_add(data, 'walk_speed', ids)
-            return data
-
         def _matches(self, obj):
             if self.origin != obj.origin or self.destination != obj.destination:
                 return False
