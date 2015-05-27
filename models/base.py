@@ -177,46 +177,15 @@ class Serializable:
                     types = (types, )
 
 
-class MetaModelBase(type):
+class MetaSearchable(type):
     def __init__(cls, a, b, c):
         cls.Request.Model = cls
         cls.Results.Model = cls
 
 
-class ModelBase(Serializable, metaclass=MetaModelBase):
-    @classmethod
-    def _validate(cls):
-        return {
-            '_ids': None
-        }
-
-    def __init__(self):
-        self._ids = {}
-
-    def _validate_custom(self, name, value):
-        if name == '_ids':
-            if not isinstance(value, dict):
-                return False
-
-            for name, data in value.items():
-                if not isinstance(name, str):
-                    return False
-
-                if not isinstance(data, (int, str, tuple)):
-                    return False
-            return True
-
-    def _serialize_custom(self, name):
-        if name == '_ids':
-            return 'ids', self._ids
-
-    def _unserialize_custom(self, name, data):
-        if name == 'ids':
-            for name, value in data.items():
-                self._ids[name] = tuple(value) if isinstance(value, list) else value
-
+class Searchable(Serializable, metaclass=MetaSearchable):
     def matches(self, request):
-        if not isinstance(request, ModelBase.Request):
+        if not isinstance(request, Searchable.Request):
             raise TypeError('not a request')
         return request.matches(self)
 
@@ -284,5 +253,38 @@ class ModelBase(Serializable, metaclass=MetaModelBase):
             return self.results[key]
 
 
-class TripPart(Serializable):
+class Collectable(Searchable):
+    @classmethod
+    def _validate(cls):
+        return {
+            '_ids': None
+        }
+
+    def __init__(self):
+        self._ids = {}
+
+    def _validate_custom(self, name, value):
+        if name == '_ids':
+            if not isinstance(value, dict):
+                return False
+
+            for name, data in value.items():
+                if not isinstance(name, str):
+                    return False
+
+                if not isinstance(data, (int, str, tuple)):
+                    return False
+            return True
+
+    def _serialize_custom(self, name):
+        if name == '_ids':
+            return 'ids', self._ids
+
+    def _unserialize_custom(self, name, data):
+        if name == 'ids':
+            for name, value in data.items():
+                self._ids[name] = tuple(value) if isinstance(value, list) else value
+
+
+class TripPart(Searchable):
     pass

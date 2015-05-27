@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable
+from .base import Collectable, Serializable
 
 
-class Line(ModelBase):
+class Line(Collectable):
     @classmethod
     def _validate(cls):
         from .locations import Stop

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import ModelBase, Serializable
+from .base import Serializable, Searchable, Collectable
 
 
 class Coordinates(Serializable):
@@ -28,7 +28,7 @@ class Coordinates(Serializable):
         return 'Coordinates(%.6f, %.6f)' % (self.lat, self.lon)
 
 
-class AbstractLocation(ModelBase):
+class AbstractLocation(Collectable):
     def __init__(self, coords=None):
         super().__init__()
         self.coords = coords
