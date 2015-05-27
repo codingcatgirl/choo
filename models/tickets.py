@@ -57,13 +57,6 @@ class TicketData(Serializable):
             'price_child': (None, float),
         }
 
-    def _unserialize(self, data):
-        self.price = data['price']
-        self._serial_get(data, 'authority')
-        self._serial_get(data, 'level')
-        if 'price_child' in data:
-            self.price_child = data['price_child']
-
     def __repr__(self):
         childprice = ''
         if self.price_child is not None:
