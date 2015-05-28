@@ -18,10 +18,6 @@ class VRR(EFA):
         'Hbf': 'Hbf',
     }
 
-    def __init__(self):
-        self.ids = {}
-        self.raws = {}
-
 
 def network(name):
     global supported
