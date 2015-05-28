@@ -20,6 +20,9 @@ class EFA(API):
     train_station_suffixes = {}
     train_station_lines = LineTypes(('train', 'urban'))
 
+    def __init__(self):
+        self.cities = {}
+
     def get_stop(self, stop: Stop, must_get_departures=False):
         assert isinstance(stop, Stop)
         return self.get_stop_rides(stop)
@@ -304,8 +307,6 @@ class EFA(API):
                 train_station = True
                 break
 
-        self._make_train_station(stop, train_station)
-
         return stop
 
     def _get_country(self, i):
@@ -313,6 +314,23 @@ class EFA(API):
             if i.startswith(s):
                 return country
         return None
+
+    def _process_stop_city(self, stop, cityid):
+        if cityid in self.cities:
+            country, city = self.cities[cityid]
+            if stop.city is None:
+                stop.city = city
+            elif city is None:
+                self.cities[cityid] = (country, stop.city)
+                city = stop.city
+
+            if stop.country is None:
+                stop.country = country
+            elif country is None:
+                self.cities[cityid] = (stop.country, city)
+                country = stop.country
+        else:
+            self.cities[cityid] = (stop.country, stop.city)
 
     def _make_train_station(self, stop, force=False):
         if not isinstance(stop, Stop):
@@ -363,13 +381,14 @@ class EFA(API):
             city = None
         elif p.attrib['state'] != 'identified':
             if p.attrib['state'] == 'list':
-                pe = p.findall('./odvPlaceElem')
+                pe = p.find('./odvPlaceElem')
                 for item in pe:
                     location = Location(None, city=item.text)
                     results.append(location)
             return results
         else:
             pe = p.find('./odvPlaceElem')
+            cityid = pe.attrib.get('placeID')
             city = pe.text
 
         # Location.name
@@ -382,19 +401,19 @@ class EFA(API):
         elif n.attrib['state'] != 'identified':
             if n.attrib['state'] == 'list':
                 ne = n.findall('./odvNameElem')
-                results = [self._name_elem(item, city, odvtype) for item in ne]
+                results = [self._name_elem(item, city, cityid, odvtype) for item in ne]
                 results.sort(key=lambda odv: odv[1], reverse=True)
             return results
         else:
             ne = n.find('./odvNameElem')
-            result = self._name_elem(ne, city, odvtype)[0]
+            result = self._name_elem(ne, city, cityid, odvtype)[0]
             for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
                 stop = self._parse_stop_line(near_stop)
                 if stop != result:
                     result.near_stops.append(stop)
             return result
 
-    def _name_elem(self, data, city, odvtype):
+    def _name_elem(self, data, city, cityid, odvtype):
         """ Parses the odvNameElem of an ODV """
         # AnyTypes are used in some EFA instances instead of ODV types
         anytype = data.attrib.get('anyType', '')
@@ -452,6 +471,9 @@ class EFA(API):
             location.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         self._make_train_station(location)
+
+        if cityid:
+            self._process_stop_city(location, int(cityid))
 
         return location, score
 
@@ -918,6 +940,10 @@ class EFA(API):
             location = Stop(self._get_country(data.attrib['stopID']), city, name)
             location._ids[self.name] = int(data.attrib['stopID'])
             self._make_train_station(location, train_line)
+
+            cityid = data.attrib.get('placeID')
+            if cityid :
+                self._process_stop_city(location, int(cityid))
 
             if self.ifopt_stopid_digits:
                 location._ids['ifopt'] = (None, str(int(data.attrib['stopID'][-self.ifopt_stopid_digits:])))
