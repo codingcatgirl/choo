@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from models import Location, Stop, POI, Address
-from models import TimeAndPlace, Platform, RealtimeTime
+from models import TimeAndPlace, Platform, DelayHistory, RealtimeTime
 from models import Trip, Coordinates, TicketList, TicketData
 from models import Ride, Line, LineType, LineTypes, Way, WayType
 from datetime import datetime, timedelta
@@ -222,8 +222,9 @@ class EFA(API):
 
         xml = self._post('XSLT_TRIP_REQUEST2', post)
         data = xml.find('./itdTripRequest')
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
-        results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList')))
+        results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList'), servernow))
         results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
         results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
         return results
@@ -508,34 +509,17 @@ class EFA(API):
             # todo: take delay and add it to next stops
             mypoint = self._parse_trip_point(departure, train_line=train_line)
 
-            before_delay = None
-            if mypoint.arrival:
-                before_delay = mypoint.arrival.delay
-            after_delay = None
-            if mypoint.departure:
-                after_delay = mypoint.departure.delay
-
             delay = None
-            if departure.find('./itdServingLine/itdNoTrain'):
+            notrain = departure.find('./itdServingLine/itdNoTrain')
+            if notrain is not None:
                 delay = departure.find('./itdServingLine/itdNoTrain').attrib.get('delay', None)
                 if delay is not None:
-                    delay = timedelta(minutes=delay)
-
-            if delay is not None:
-                if (mypoint.arrival and servernow < mypoint.arrival.livetime) or (mypoint.departure and servernow < mypoint.departure.livetime):
-                    before_delay = delay
-                else:
-                    after_delay = delay
+                    ride.delay[servernow] = timedelta(minutes=int(delay))
 
             prevs = False
             for pointdata in departure.findall('./itdPrevStopSeq/itdPoint'):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
-                    if before_delay is not None:
-                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time + before_delay >= servernow:
-                            point.arrival.delay = before_delay
-                        if point.departure is not None and point.departure.delay is None and point.departure.time + before_delay >= servernow:
-                            point.departure.delay = before_delay
                     prevs = True
                     ride.append(point)
 
@@ -545,11 +529,6 @@ class EFA(API):
             for pointdata in departure.findall('./itdOnwardStopSeq/itdPoint'):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
-                    if after_delay is not None:
-                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time + after_delay >= servernow:
-                            point.arrival.delay = after_delay
-                        if point.departure is not None and point.departure.delay is None and point.departure.time + after_delay >= servernow:
-                            point.departure.delay = after_delay
                     onwards = True
                     ride.append(point)
 
@@ -566,7 +545,7 @@ class EFA(API):
             results.append(ride[pointer:])
         return results
 
-    def _parse_routes(self, data):
+    def _parse_routes(self, data, servernow):
         """ Parses itdRoute into a Trip """
         trips = []
         routes = data.findall('./itdRoute')
@@ -574,7 +553,7 @@ class EFA(API):
             trip = Trip()
             interchange = None
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
-                part = self._parse_routepart(routepart)
+                part = self._parse_routepart(routepart, servernow)
                 if interchange is not None:
                     interchange.destination = part[0].platform
                 trip.parts.append(part)
@@ -650,7 +629,7 @@ class EFA(API):
 
         return way
 
-    def _parse_routepart(self, data):
+    def _parse_routepart(self, data, servernow):
         """ Parses itdPartialRoute into a RideSegment or Way """
         points = [self._parse_trip_point(point) for point in data.findall('./itdPoint')]
 
@@ -689,6 +668,10 @@ class EFA(API):
             ride.direction = ridedir
             for infotext in data.findall('./infoTextList/infoTextListElem'):
                 ride.infotexts.append(infotext)
+
+            delay = data.find('./itdRBLControlled')
+            if delay is not None:
+                ride.delay[servernow] = timedelta(minutes=max(int(delay.attrib['delayMinutes']), int(delay.attrib['delayMinutesArr'])))
 
             first = None
             last = None
@@ -910,6 +893,9 @@ class EFA(API):
 
     def _parse_trip_point(self, data, walk=False, train_line=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
+        # Many relatime things are commented out in this function. This is
+        # because currently all efa instances seem to know the current ride
+        # delay, without forecasts for single trip points.
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
@@ -980,6 +966,8 @@ class EFA(API):
         if 'x' in data.attrib:
             result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
+        # delay = None
+
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):
             # Used for routes (only arrival or departure time)
@@ -993,13 +981,16 @@ class EFA(API):
             livetime = None
             if len(times) > 0:
                 plantime = times[0]
-            if len(times) == 2 and not walk:
-                livetime = times[1]
+            # if len(times) == 2 and not walk:
+            #     livetime = times[1]
+
+            # if livetime is not None:
+            #     delay = livetime-plantime
 
             if data.attrib['usage'] == 'departure':
-                result.departure = RealtimeTime(time=plantime, livetime=livetime)
+                result.departure = plantime  # RealtimeTime(time=plantime, livetime=livetime)
             elif data.attrib['usage'] == 'arival':
-                result.arrival = RealtimeTime(time=plantime, livetime=livetime)
+                result.arrival = plantime  # RealtimeTime(time=plantime, livetime=livetime)
 
         elif 'countdown' in data.attrib:
             # Used for departure lists
@@ -1010,12 +1001,16 @@ class EFA(API):
                 times.append(self._parse_datetime(data.find('./itdRTDateTime')))
 
             plantime = None
-            livetime = None
+            # livetime = None
             if len(times) > 0:
                 plantime = times[0]
-            if len(times) == 2 and not walk:
-                livetime = times[1]
-            result.departure = RealtimeTime(time=plantime, livetime=livetime)
+            # if len(times) == 2 and not walk:
+            #     livetime = times[1]
+
+            # if livetime is not None:
+            #     delay = livetime-plantime
+
+            result.departure = plantime  # RealtimeTime(time=plantime, livetime=livetime)
 
         else:
             # Also used for routes (arrival and departure time – most times)
@@ -1027,14 +1022,14 @@ class EFA(API):
                 result.passthrough = True
 
             if len(times) > 0 and times[0] is not None:
-                delay = int(data.attrib.get('arrDelay', '-1'))
-                delay = timedelta(minutes=delay) if delay >= 0 else None
-                result.arrival = RealtimeTime(time=times[0], delay=delay)
+                # delay = int(data.attrib.get('arrDelay', '-1'))
+                # delay = timedelta(minutes=delay) if delay >= 0 else None
+                result.arrival = times[0]  # RealtimeTime(time=times[0], delay=delay)
 
             if len(times) > 1 and times[1] is not None:
-                delay = int(data.attrib.get('depDelay', '-1'))
-                delay = timedelta(minutes=delay) if delay >= 0 else None
-                result.departure = RealtimeTime(time=times[1], delay=delay)
+                # delay = int(data.attrib.get('depDelay', '-1'))
+                # delay = timedelta(minutes=delay) if delay >= 0 else None
+                result.departure = times[1]  # RealtimeTime(time=times[1], delay=delay)
 
         # for genattr in data.findall('./genAttrList/genAttrElem'):
         #  	name = genattr.find('name').text
