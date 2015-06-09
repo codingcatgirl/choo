@@ -7,7 +7,7 @@ from .tickets import TicketList, TicketData
 from .ride import Ride, RideSegment
 from .way import Way, WayType
 from .timeandplace import TimeAndPlace
-from .realtime import RealtimeTime
+from .realtime import DelayHistory, RealtimeTime
 
 
 def unserialize_typed(data):
@@ -20,6 +20,6 @@ def unserialize_typed(data):
 
 __all__ = ['Serializable', 'Searchable', 'Collectable', 'TripPart',
            'Coordinates', 'AbstractLocation', 'Platform', 'Location', 'Stop',
-           'Address', 'POI', 'Line', 'LineType', 'LineTypes', 'RealtimeTime',
-           'TimeAndPlace', 'Platform', 'Ride', 'RideSegment', 'Trip', 'Way',
-           'WayType', 'TicketList', 'TicketData', 'unserialize_typed']
+           'Address', 'POI', 'Line', 'LineType', 'LineTypes', 'DelayHistory',
+           'RealtimeTime', 'TimeAndPlace', 'Platform', 'Ride', 'RideSegment',
+           'Trip', 'Way', 'WayType', 'TicketList', 'TicketData', 'unserialize_typed']
