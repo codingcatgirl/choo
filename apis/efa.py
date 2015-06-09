@@ -925,7 +925,7 @@ class EFA(API):
             tmp = data.attrib.get('stopName', '')
             if not tmp:
                 tmp = data.attrib.get('name', '')
-            if tmp.endswith(' '+name):
+            if tmp.endswith(' ' + name):
                 tmp = tmp[:-len(name)].strip()
                 if tmp:
                     city = tmp
@@ -942,7 +942,7 @@ class EFA(API):
             self._make_train_station(location, train_line)
 
             cityid = data.attrib.get('placeID')
-            if cityid :
+            if cityid:
                 self._process_stop_city(location, int(cityid))
 
             if self.ifopt_stopid_digits:
