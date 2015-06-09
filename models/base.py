@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from collections import Iterable
-from datetime import timedelta
+from datetime import datetime, timedelta
 import copy
 
 
@@ -97,6 +97,8 @@ class Serializable:
                     if len(allowed) == 1:
                         if isinstance(value, Serializable):
                             value = value.serialize()
+                        elif isinstance(value, datetime):
+                            value = value.strftime('%Y-%m-%d %H:%M:%S')
                     else:
                         if value is None:
                             continue
@@ -104,6 +106,8 @@ class Serializable:
                         if isinstance(value, Serializable):
                             t = len([a for a in allowed if a is not None and issubclass(a, Serializable)]) > 1
                             value = value.serialize(typed=t)
+                        elif isinstance(value, datetime):
+                            value = value.strftime('%Y-%m-%d %H:%M:%S')
 
                     if isinstance(value, timedelta):
                         value = value.total_seconds()
@@ -144,8 +148,11 @@ class Serializable:
                         allowed = cls._unfold_subclasses(allowed)
 
                         if len(allowed) == 1:
+                            # todo: serializable should be checked first
                             if issubclass(allowed[0], timedelta):
                                 value = timedelta(seconds=value)
+                            elif issubclass(allowed[0], datetime):
+                                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
                             elif issubclass(allowed[0], Serializable):
                                 value = allowed[0].unserialize(value)
                         elif value is not None:
@@ -155,6 +162,8 @@ class Serializable:
                                 value = obj._unserialize_typed(value, serializables)
                             elif serializables:
                                 value = serializables[0].unserialize(value)
+                            elif datetime in allowed:
+                                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
                         setattr(obj, name, value)
 
                 for name, value in data.items():
