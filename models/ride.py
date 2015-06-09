@@ -74,10 +74,10 @@ class Ride(Collectable):
     def _unserialize_custom(self, name, data):
         if name == 'infotexts':
             self.infotexts = data
-        if name == 'stops':
+        elif name == 'stops':
             for s in data:
                 self.append(TimeAndPlace.unserialize(s) if s is not None else None)
-        if name == 'paths':
+        elif name == 'paths':
             for i, path in data.items():
                 self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
 
