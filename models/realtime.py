@@ -94,10 +94,6 @@ class DelayHistory(Serializable):
         yield from zip(self._future_times, self._future_delays)
 
     @property
-    def now(self):
-        return self[datetime.now()]
-
-    @property
     def has_future(self):
         return len(self._future_times) > 0
 
