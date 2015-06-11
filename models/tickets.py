@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import Updateable
+from .base import Updateable, Serializable
 
 
 class TicketList(Updateable):
@@ -41,7 +41,7 @@ class TicketList(Updateable):
         return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))
 
 
-class TicketData(Updateable):
+class TicketData(Serializable):
     def __init__(self, authority=None, level=None, price=None, price_child=None):
         self.authority = authority
         self.level = level
