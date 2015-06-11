@@ -170,19 +170,34 @@ class Serializable:
         return obj
 
 
+class Updateable(Serializable):
+    @classmethod
+    def _validate(cls):
+        return {
+            'last_update': datetime
+        }
+
+    def __init__(self):
+        self.last_update = datetime.now()
+
+
 class MetaSearchable(type):
     def __init__(cls, a, b, c):
         cls.Request.Model = cls
         cls.Results.Model = cls
 
 
-class Searchable(Serializable, metaclass=MetaSearchable):
+class Searchable(Updateable, metaclass=MetaSearchable):
+    @classmethod
+    def _validate(cls):
+        return {}
+
     def matches(self, request):
         if not isinstance(request, Searchable.Request):
             raise TypeError('not a request')
         return request.matches(self)
 
-    class Request(Serializable):
+    class Request(Updateable):
         def matches(self, obj):
             if not isinstance(obj, self.Model):
                 raise TypeError('%s.Request can only match %s' % (self.Model.__name__, self.Model.__name__))
@@ -192,7 +207,7 @@ class Searchable(Serializable, metaclass=MetaSearchable):
         def _matches(self, obj):
             pass
 
-    class Results(Serializable):
+    class Results(Updateable):
         def __init__(self, results=[], scored=False):
             super().__init__()
             if scored:
@@ -254,6 +269,7 @@ class Collectable(Searchable):
         }
 
     def __init__(self):
+        super().__init__()
         self._ids = {}
 
     def _validate_custom(self, name, value):
