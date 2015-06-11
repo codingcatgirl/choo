@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from collections import Iterable
-from datetime import timedelta
+from datetime import timedelta, datetime
 import copy
 
 
@@ -97,6 +97,10 @@ class Serializable:
                     if len(allowed) == 1:
                         if isinstance(value, Serializable):
                             value = value.serialize()
+                        elif isinstance(value, datetime):
+                            value = value.strftime('%Y-%m-%d %H:%M:%S')
+                        elif isinstance(value, timedelta):
+                            value = value.total_seconds()
                     else:
                         if value is None:
                             continue
@@ -144,10 +148,12 @@ class Serializable:
                         allowed = cls._unfold_subclasses(allowed)
 
                         if len(allowed) == 1:
-                            if issubclass(allowed[0], timedelta):
-                                value = timedelta(seconds=value)
-                            elif issubclass(allowed[0], Serializable):
+                            if issubclass(allowed[0], Serializable):
                                 value = allowed[0].unserialize(value)
+                            elif issubclass(allowed[0], datetime):
+                                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                            elif issubclass(allowed[0], timedelta):
+                                value = timedelta(seconds=value)
                         elif value is not None:
                             serializables = [a for a in allowed if a is not None and issubclass(a, Serializable)]
                             typed = len(serializables) > 1
