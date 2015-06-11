@@ -221,11 +221,13 @@ class EFA(API):
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
 
         xml = self._post('XSLT_TRIP_REQUEST2', post)
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
         data = xml.find('./itdTripRequest')
 
-        results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList')))
-        results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
-        results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
+        results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList'), servernow=servernow))
+        results.last_update = servernow
+        results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'), servernow=servernow)
+        results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'), servernow=servernow)
         return results
 
     def _stop_finder_request(self, stop: Stop):
@@ -278,12 +280,11 @@ class EFA(API):
         post.update(self._convert_location(stop, '%s_dm'))
 
         xml = self._post('XSLT_DM_REQUEST', post)
-
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdDepartureMonitorRequest')
 
-        stop = self._parse_odv(data.find('./itdOdv'))
+        stop = self._parse_odv(data.find('./itdOdv'), servernow=servernow)
 
         if type(stop) == list:
             return Stop.Results(stop)
@@ -293,13 +294,13 @@ class EFA(API):
             stop.lines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
-                origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
+                origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line, servernow=servernow)
                 line.first_stop = origin
                 line.last_stop = destination
                 stop.lines.append(line)
 
         departureslist = data.find('./itdDepartureList')
-        stop.rides = self._parse_departures(departureslist, stop, servernow)
+        stop.rides = self._parse_departures(departureslist, stop, servernow=servernow)
 
         train_station = False
         for line in stop.lines:
@@ -349,7 +350,7 @@ class EFA(API):
         name = name[:-1]
         stop.train_station_name = ('%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)).strip()
 
-    def _parse_stop_line(self, data):
+    def _parse_stop_line(self, data, servernow=None):
         """ Parse an ODV line (for example an AssignedStop) """
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
@@ -357,6 +358,7 @@ class EFA(API):
         name = data.text
         stop = Stop(self._get_country(data.attrib['stopID']), city, name)
         stop._ids[self.name] = int(data.attrib['stopID'])
+        stop.last_update = servernow
 
         gid = data.attrib.get('gid', '').split(':')
         if len(gid) == 3 and min(len(s) for s in gid):
@@ -370,7 +372,7 @@ class EFA(API):
 
         return stop
 
-    def _parse_odv(self, data):
+    def _parse_odv(self, data, servernow=None):
         """ Parse an ODV (OriginDestinationVia) XML node """
         odvtype = data.attrib['type']
         results = []
@@ -384,6 +386,7 @@ class EFA(API):
                 pe = p.find('./odvPlaceElem')
                 for item in pe:
                     location = Location(None, city=item.text)
+                    location.last_update = servernow
                     results.append(location)
             return results
         else:
@@ -396,24 +399,25 @@ class EFA(API):
         if n.attrib['state'] == 'empty':
             if city is not None:
                 location = Location(None, city)
+                location.last_update = servernow
                 results.append(location)
             return results
         elif n.attrib['state'] != 'identified':
             if n.attrib['state'] == 'list':
                 ne = n.findall('./odvNameElem')
-                results = [self._name_elem(item, city, cityid, odvtype) for item in ne]
+                results = [self._name_elem(item, city, cityid, odvtype, servernow=servernow) for item in ne]
                 results.sort(key=lambda odv: odv[1], reverse=True)
             return results
         else:
             ne = n.find('./odvNameElem')
-            result = self._name_elem(ne, city, cityid, odvtype)[0]
+            result = self._name_elem(ne, city, cityid, odvtype, servernow=servernow)[0]
             for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
-                stop = self._parse_stop_line(near_stop)
+                stop = self._parse_stop_line(near_stop, servernow=servernow)
                 if stop != result:
                     result.near_stops.append(stop)
             return result
 
-    def _name_elem(self, data, city, cityid, odvtype):
+    def _name_elem(self, data, city, cityid, odvtype, servernow=None):
         """ Parses the odvNameElem of an ODV """
         # AnyTypes are used in some EFA instances instead of ODV types
         anytype = data.attrib.get('anyType', '')
@@ -475,6 +479,7 @@ class EFA(API):
         if cityid:
             self._process_stop_city(location, int(cityid))
 
+        location.last_update = servernow
         return location, score
 
     def _parse_departures(self, data, stop, servernow):
@@ -484,7 +489,7 @@ class EFA(API):
         departures = data.findall('./itdDeparture')
         for departure in departures:
             # Get Line Information
-            origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'))
+            origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'), servernow=servernow)
 
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
                 line.linetype = LineType('train.longdistance.highspeed')
@@ -500,13 +505,14 @@ class EFA(API):
 
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
+            ride.last_update = servernow
             ride.direction = ridedir
             ride.canceled = canceled
 
             train_line = line.linetype in self.train_station_lines
 
             # todo: take delay and add it to next stops
-            mypoint = self._parse_trip_point(departure, train_line=train_line)
+            mypoint = self._parse_trip_point(departure, train_line=train_line, servernow=servernow)
 
             before_delay = None
             if mypoint.arrival:
@@ -529,7 +535,7 @@ class EFA(API):
 
             prevs = False
             for pointdata in departure.findall('./itdPrevStopSeq/itdPoint'):
-                point = self._parse_trip_point(pointdata, train_line=train_line)
+                point = self._parse_trip_point(pointdata, train_line=train_line, servernow=servernow)
                 if point is not None:
                     if before_delay is not None:
                         if point.arrival is not None and point.arrival.delay is None and point.arrival.time + before_delay >= servernow:
@@ -543,7 +549,7 @@ class EFA(API):
 
             onwards = False
             for pointdata in departure.findall('./itdOnwardStopSeq/itdPoint'):
-                point = self._parse_trip_point(pointdata, train_line=train_line)
+                point = self._parse_trip_point(pointdata, train_line=train_line, servernow=servernow)
                 if point is not None:
                     if after_delay is not None:
                         if point.arrival is not None and point.arrival.delay is None and point.arrival.time + after_delay >= servernow:
@@ -566,25 +572,27 @@ class EFA(API):
             results.append(ride[pointer:])
         return results
 
-    def _parse_routes(self, data):
+    def _parse_routes(self, data, servernow=None):
         """ Parses itdRoute into a Trip """
         trips = []
         routes = data.findall('./itdRoute')
         for route in routes:
             trip = Trip()
+            trip.last_update = servernow
             interchange = None
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
-                part = self._parse_routepart(routepart)
+                part = self._parse_routepart(routepart, servernow=servernow)
                 if interchange is not None:
                     interchange.destination = part[0].platform
                 trip.parts.append(part)
 
-                interchange = self._parse_interchange(routepart)
+                interchange = self._parse_interchange(routepart, servernow=servernow)
                 if interchange is not None:
                     interchange.origin = part[-1].platform
                     trip.parts.append(interchange)
 
             ticketlist = TicketList()
+            ticketlist.last_update = servernow
             tickets = route.find('./itdFare/itdSingleTicket')
             if tickets:
                 authority = tickets.attrib['net']
@@ -632,13 +640,14 @@ class EFA(API):
 
         return trips
 
-    def _parse_interchange(self, data):
+    def _parse_interchange(self, data, servernow=None):
         """ Parses an optional interchange path of a itdPartialRoute into a Way """
         info = data.find('./itdFootPathInfo')
         if info is None:
             return None
 
         way = Way()
+        way.last_update = servernow
         way.duration = timedelta(minutes=int(info.attrib.get('duration')))
 
         path = []
@@ -650,7 +659,7 @@ class EFA(API):
 
         return way
 
-    def _parse_routepart(self, data):
+    def _parse_routepart(self, data, servernow=None):
         """ Parses itdPartialRoute into a RideSegment or Way """
         points = [self._parse_trip_point(point) for point in data.findall('./itdPoint')]
 
@@ -658,11 +667,12 @@ class EFA(API):
         for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
             path.append(Coordinates(int(coords.find('y').text) / 1000000, int(coords.find('x').text) / 1000000))
 
-        motdata = self._parse_mot(data.find('./itdMeansOfTransport'))
+        motdata = self._parse_mot(data.find('./itdMeansOfTransport'), servernow=servernow)
 
         if motdata is None or data.attrib['type'] == 'IT':
             waytype = {'100': 'walk', '101': 'bike', '104': 'car', '105': 'taxi'}[data.find('./itdMeansOfTransport').attrib['type']]
             way = Way(WayType(waytype), points[0].stop, points[1].stop)
+            way.last_update = servernow
             way.distance = data.attrib.get('distance')
             if way.distance is not None:
                 way.distance = float(way.distance)
@@ -685,6 +695,7 @@ class EFA(API):
 
             # Build Ride Objekt with known stops
             ride = Ride(line, ridenum)
+            ride.last_update = servernow
             ride.canceled = canceled
             ride.direction = ridedir
             for infotext in data.findall('./infoTextList/infoTextListElem'):
@@ -693,7 +704,7 @@ class EFA(API):
             first = None
             last = None
             if data.find('./itdStopSeq'):
-                waypoints = [self._parse_trip_point(point, train_line=train_line) for point in data.findall('./itdStopSeq/itdPoint')]
+                waypoints = [self._parse_trip_point(point, train_line=train_line, servernow=servernow) for point in data.findall('./itdStopSeq/itdPoint')]
                 if not waypoints or waypoints[0].stop != points[0].stop:
                     waypoints.insert(0, points[0])
                 if waypoints[-1].stop != points[1].stop:
@@ -702,7 +713,10 @@ class EFA(API):
                     if first is None:
                         if origin is not None:
                             if origin != p.stop:
-                                ride.append(TimeAndPlace(Platform(origin)))
+                                tp = TimeAndPlace(Platform(origin))
+                                tp.last_update = servernow
+                                tp.platform.last_update = servernow
+                                ride.append(tp)
                                 ride.append(None)
                         else:
                             ride.append(None)
@@ -714,7 +728,10 @@ class EFA(API):
                 if destination is not None:
                     if destination != p.stop:
                         ride.append(None)
-                        ride.append(TimeAndPlace(Platform(destination)))
+                        tp = TimeAndPlace(Platform(destination))
+                        tp.last_update = servernow
+                        tp.platform.last_update = servernow
+                        ride.append(tp)
                 else:
                     ride.append(None)
             else:
@@ -722,7 +739,10 @@ class EFA(API):
                     if first is None:
                         if origin is not None:
                             if origin != p.stop:
-                                ride.append(TimeAndPlace(Platform(origin)))
+                                tp = TimeAndPlace(Platform(origin))
+                                tp.last_update = servernow
+                                tp.platform.last_update = servernow
+                                ride.append(tp)
                                 ride.append(None)
                         else:
                             ride.append(None)
@@ -735,7 +755,10 @@ class EFA(API):
                 if destination is not None:
                     if destination != p.stop:
                         ride.append(None)
-                        ride.append(TimeAndPlace(Platform(destination)))
+                        tp = TimeAndPlace(Platform(destination))
+                        tp.last_update = servernow
+                        tp.platform.last_update = servernow
+                        ride.append(tp)
                 else:
                     ride.append(None)
 
@@ -814,9 +837,10 @@ class EFA(API):
             result += timedelta(1)
         return result
 
-    def _parse_mot(self, data):
+    def _parse_mot(self, data, servernow=None):
         """ Parse a itdServingLine Node into something nicer """
         line = Line()
+        line.last_update = servernow
 
         if 'motType' not in data.attrib:
             return None
@@ -889,8 +913,10 @@ class EFA(API):
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
-        origin = Stop(None, None, origin) if origin else None
-        self._make_train_station(origin, train_line)
+        if origin:
+            origin = Stop(None, None, origin) if origin else None
+            origin.last_update = servernow
+            self._make_train_station(origin, train_line)
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
         destination = Stop(None, None, destination) if destination else None
@@ -899,6 +925,8 @@ class EFA(API):
             destination._ids[self.name] = int(data.attrib['destID'])
             if self.ifopt_stopid_digits:
                 destination._ids['ifopt'] = (None, str(int(data.attrib['destID'][-self.ifopt_stopid_digits:])))
+        if destination:
+            destination.last_update = servernow
         self._make_train_station(destination, train_line)
 
         # route description
@@ -908,7 +936,7 @@ class EFA(API):
 
         return origin, destination, line, ridenum, ridedir, canceled
 
-    def _parse_trip_point(self, data, walk=False, train_line=False):
+    def _parse_trip_point(self, data, walk=False, train_line=False, servernow=None):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
@@ -947,6 +975,7 @@ class EFA(API):
 
             if self.ifopt_stopid_digits:
                 location._ids['ifopt'] = (None, str(int(data.attrib['stopID'][-self.ifopt_stopid_digits:])))
+        location.last_update = servernow
 
         # get and clean the platform
         platform = data.attrib['platform']
@@ -966,6 +995,7 @@ class EFA(API):
             full_platform = None
 
         platform = Platform(location, platform, full_platform)
+        platform.last_update = servernow
         if full_platform is not None:
             platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
 
@@ -976,6 +1006,7 @@ class EFA(API):
             platform._ids['ifopt'] = (ifopt[3], ifopt[4])
 
         result = TimeAndPlace(platform)
+        result.last_update = servernow
 
         if 'x' in data.attrib:
             result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
@@ -998,8 +1029,10 @@ class EFA(API):
 
             if data.attrib['usage'] == 'departure':
                 result.departure = RealtimeTime(time=plantime, livetime=livetime)
+                result.departure.last_update = servernow
             elif data.attrib['usage'] == 'arival':
                 result.arrival = RealtimeTime(time=plantime, livetime=livetime)
+                result.arrival.last_update = servernow
 
         elif 'countdown' in data.attrib:
             # Used for departure lists
@@ -1016,6 +1049,7 @@ class EFA(API):
             if len(times) == 2 and not walk:
                 livetime = times[1]
             result.departure = RealtimeTime(time=plantime, livetime=livetime)
+            result.departure.last_update = servernow
 
         else:
             # Also used for routes (arrival and departure time – most times)
@@ -1030,11 +1064,13 @@ class EFA(API):
                 delay = int(data.attrib.get('arrDelay', '-1'))
                 delay = timedelta(minutes=delay) if delay >= 0 else None
                 result.arrival = RealtimeTime(time=times[0], delay=delay)
+                result.arrival.last_update = servernow
 
             if len(times) > 1 and times[1] is not None:
                 delay = int(data.attrib.get('depDelay', '-1'))
                 delay = timedelta(minutes=delay) if delay >= 0 else None
                 result.departure = RealtimeTime(time=times[1], delay=delay)
+                result.departure.last_update = servernow
 
         # for genattr in data.findall('./genAttrList/genAttrElem'):
         #  	name = genattr.find('name').text
