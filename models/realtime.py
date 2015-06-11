@@ -17,24 +17,6 @@ class DelayHistory(Serializable):
             self._times.append(time)
             self._delays.append(delay)
 
-    def _serialize(self):
-        if not self:
-            return None
-        r = {time.strftime('%Y-%m-%d %H:%M:%S'): int(delay.total_seconds()) for time, delay in self.items()}
-        if self._future_times:
-            r['future'] = {time.strftime('%Y-%m-%d %H:%M:%S'): int(delay.total_seconds()) for time, delay in self.future_items()}
-        return r
-
-    def _unserialize(self, data):
-        if data is None:
-            return
-        for time, delay in data.items():
-            if time != 'future':
-                self[datetime.strptime(time, '%Y-%m-%d %H:%M:%S')] = timedelta(seconds=delay)
-        if 'future' in data:
-            for time, delay in data['future'].items():
-                self[datetime.strptime(time, '%Y-%m-%d %H:%M:%S')] = timedelta(seconds=delay)
-
     def __nonzero__(self):
         return len(self._times) > 0
 
