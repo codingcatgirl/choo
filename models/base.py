@@ -6,21 +6,22 @@ import copy
 
 class Serializable:
     def validate(self):
+        myname = self.__class__._serialized_name()
         for c in self.__class__.__mro__:
             if not hasattr(c, '_validate'):
                 continue
 
             for name, allowed in c._validate().items():
                 if not hasattr(self, name):
-                    raise AttributeError('%s.%s is missing' % (c._serialized_name(), name))
+                    raise AttributeError('%s(%s).%s is missing' % (myname, c._serialized_name(), name))
 
                 val = getattr(self, name)
 
                 if allowed is None:
                     if not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
-                        raise ValueError('%s.%s has non-iterable value: %s' % (c._serialized_name(), name, repr(getattr(self, name))))
+                        raise ValueError('%s(%s).%s has non-iterable value: %s' % (myname, c._serialized_name(), name, repr(getattr(self, name))))
                     if not c._validate_custom(self, name, val):
-                        raise ValueError('%s.%s has invalid complex value: %s' % (c._serialized_name(), name, repr(getattr(self, name))))
+                        raise ValueError('%s(%s).%s has invalid complex value: %s' % (myname, c._serialized_name(), name, repr(getattr(self, name))))
                     continue
 
                 if type(allowed) != tuple:
@@ -33,7 +34,7 @@ class Serializable:
                     elif isinstance(val, a):
                         break
                 else:
-                    raise ValueError('%s.%s has to be %s, not %s' % (c._serialized_name(), name, self._validate_or(allowed), repr(getattr(self, name))))
+                    raise ValueError('%s(%s).%s has to be %s, not %s' % (myname, c._serialized_name(), name, self._validate_or(allowed), repr(getattr(self, name))))
         return True
 
     def _validate_or(self, items):
