@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from .base import Serializable
 from .locations import Platform
-from datetime import datetime
+from .realtime import RealtimeTime
 
 
 class TimeAndPlace(Serializable):
@@ -16,8 +16,8 @@ class TimeAndPlace(Serializable):
     def _validate(cls):
         return {
             'platform': (None, Platform),
-            'arrival': (None, datetime),
-            'departure': (None, datetime),
+            'arrival': (None, RealtimeTime),
+            'departure': (None, RealtimeTime),
             'passthrough': bool
         }
 
