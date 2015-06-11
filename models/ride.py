@@ -2,7 +2,6 @@
 from .base import Collectable, TripPart
 from .locations import Coordinates
 from .timeandplace import TimeAndPlace
-from .realtime import DelayHistory
 from .line import Line
 
 
@@ -13,7 +12,6 @@ class Ride(Collectable):
         self._paths = {}
         self.line = line
         self.number = number
-        self.delay = DelayHistory()
         self.direction = None
         self.canceled = None
         self.bike_friendly = None
@@ -27,7 +25,6 @@ class Ride(Collectable):
             'direction': (None, str),
             'canceled': (None, bool),
             'bike_friendly': (None, bool),
-            'delay': DelayHistory,
             'infotexts': None,
             '_stops': None,
             '_paths': None,
