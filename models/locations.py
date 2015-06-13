@@ -42,6 +42,12 @@ class AbstractLocation(Collectable):
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
 
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
+
 
 class Platform(AbstractLocation):
     def __init__(self, stop=None, name=None, full_name=None):
@@ -60,6 +66,12 @@ class Platform(AbstractLocation):
 
     def __repr__(self):
         return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
+
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
 
 
 class Location(AbstractLocation):

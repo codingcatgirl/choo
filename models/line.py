@@ -34,6 +34,12 @@ class Line(Collectable):
     def __repr__(self):
         return '<Line %s %s>' % (str(self.linetype), repr(self.name))
 
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
+
 
 class LineType(Serializable):
     _known = (
