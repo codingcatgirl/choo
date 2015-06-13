@@ -110,6 +110,12 @@ class Location(AbstractLocation):
     def __repr__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))
 
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
+
 
 class Stop(Location):
     def __init__(self, country=None, city=None, name=None):
@@ -186,11 +192,23 @@ class Stop(Location):
         return (self.name is not None and self.name == other.name and
                 self.city == other.city and self.country == other.country)
 
+    class Request(Location.Request):
+        pass
+
+    class Results(Location.Results):
+        pass
+
 
 class POI(Location):
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
+
+    class Request(Location.Request):
+        pass
+
+    class Results(Location.Results):
+        pass
 
 
 class Address(Location):
@@ -206,3 +224,9 @@ class Address(Location):
             'street': (None, str),
             'number': (None, str),
         }
+
+    class Request(Location.Request):
+        pass
+
+    class Results(Location.Results):
+        pass
