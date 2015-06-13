@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
-from models import Trip, Coordinates, TicketList, TicketData
-from models import Ride, Line, LineType, LineTypes, Way, WayType
+from models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
+from models import Line, LineType, LineTypes, Way, WayType, WayEvent
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
@@ -587,13 +587,20 @@ class EFA(API):
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
                 part = self._parse_routepart(routepart)
                 if interchange is not None:
-                    interchange.destination = part[0].platform
+                    if isinstance(part, RideSegment):
+                        interchange.destination = part[0].platform
+                    else:
+                        interchange.destination = part[0].origin
                 trip._parts.append(part)
 
                 interchange = self._parse_interchange(routepart)
-                if interchange is not None:
-                    interchange.origin = part[-1].platform
-                    trip._parts.append(interchange)
+                if isinstance(part, RideSegment):
+                    if interchange is not None:
+                        interchange.origin = part[-1].platform
+                        trip._parts.append(interchange)
+                else:
+                    part.events = interchange.events
+                    interchange = None
 
             ticketlist = TicketList()
             tickets = route.find('./itdFare/itdSingleTicket')
