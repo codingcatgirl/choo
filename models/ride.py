@@ -182,10 +182,10 @@ class Ride(Collectable):
         def __repr__(self):
             return 'p:%d' % self._i
 
-    class Request(Searchable.Request):
+    class Request(Collectable.Request):
         pass
 
-    class Results(Searchable.Results):
+    class Results(Collectable.Results):
         pass
 
 

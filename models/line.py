@@ -34,10 +34,10 @@ class Line(Collectable):
     def __repr__(self):
         return '<Line %s %s>' % (str(self.linetype), repr(self.name))
 
-    class Request(Searchable.Request):
+    class Request(Collectable.Request):
         pass
 
-    class Results(Searchable.Results):
+    class Results(Collectable.Results):
         pass
 
 
