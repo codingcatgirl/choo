@@ -30,6 +30,12 @@ class Ride(Collectable):
             '_paths': None,
         }
 
+    _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
+
+    def _update(self, other, better):
+        # todo: stops, paths
+        pass
+
     def _validate_custom(self, name, value):
         if name == 'infotexts':
             for v in value:

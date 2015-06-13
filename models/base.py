@@ -208,10 +208,23 @@ class Updateable(Serializable):
         self.last_update = None
 
     def update(self, other):
-        for name, value in other._ids.items():
-            if type(value) == tuple and None in value:
-                continue
+        better = other.last_update and self.last_update and other.last_update > self.last_update
 
+        if not self.last_update or better:
+            self.last_update = other.last_update
+
+        for c in self.__class__.__mro__:
+            if hasattr(c, '_update_default'):
+                for name in c._update_default:
+                    if getattr(self, name) is None or (better and getattr(other, name) is not None):
+                        setattr(self, name, getattr(other, name))
+
+            if hasattr(c, '_update'):
+                c._update(self, other, better)
+
+        for name, value in other._ids.items():
+            if name in self._ids and type(value) == tuple and None in value:
+                continue
             self._ids[name] = value
 
 
@@ -259,8 +272,13 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         def _collect_children(self, collection, last_update=None):
             super()._collect_children(collection, last_update)
 
-            for r in self.results:
-                r[0]._update_collect(collection, last_update)
+            if issubclass(self.Model, Collectable):
+                for i in range(len(self.results)):
+                    r = self.results[i]
+                    self.results[i] = (collection.add(r[0]), r[1])
+            else:
+                for r in self:
+                    r._update_collect(collection, last_update)
 
         def _validate_custom(self, name, value):
             if name == 'results':
@@ -300,6 +318,15 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
         def append(self, obj, score=None):
             self.results.append((obj, score))
+
+        def _update(self, obj, better):
+            for o in obj:
+                for myo in self:
+                    if o == myo:
+                        myo.update(o)
+                        break
+                else:
+                    self.append(myo)
 
         def __getitem__(self, key):
             return self.results[key]

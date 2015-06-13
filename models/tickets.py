@@ -21,6 +21,14 @@ class TicketList(Updateable):
             'other': None
         }
 
+    _update_default = ('currency', 'level_name', 'single', 'bike')
+
+    def _update(self, other, better):
+        if self.other is None:
+            self.other = other.other
+        else:
+            self.other.update(other.other)
+
     def _validate_custom(self, name, value):
         if name == 'other':
             if not isinstance(value, dict):

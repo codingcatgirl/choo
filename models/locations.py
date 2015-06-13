@@ -41,6 +41,8 @@ class AbstractLocation(Collectable):
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
 
+    _update_default = ('coords', )
+
     class Request(Searchable.Request):
         pass
 
@@ -62,6 +64,11 @@ class Platform(AbstractLocation):
             'name': (str, None),
             'full_name': (str, None),
         }
+
+    _update_default = ('name', 'full_name')
+
+    def _update(self, other, better):
+        self.stop.update(other.stop)
 
     def __repr__(self):
         return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
@@ -89,6 +96,8 @@ class Location(AbstractLocation):
             'name': str,
             'near_stops': (None, Stop.Results)
         }
+
+    _update_default = ('country', 'city', 'name')
 
     @property
     def full_name(self):
@@ -124,6 +133,10 @@ class Stop(Location):
             'lines': (None, Line.Results),
             'train_station_name': (None, str)
         }
+
+    def _update(self, other, better):
+        if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
+            self.train_station_name = other.train_station_name
 
     @property
     def full_name(self):
@@ -170,6 +183,8 @@ class Address(Location):
         Location.__init__(self, country, city, name)
         self.street = None
         self.number = None
+
+    _update_default = ('street', 'number')
 
     @classmethod
     def _validate(cls):
