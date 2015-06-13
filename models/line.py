@@ -31,8 +31,20 @@ class Line(Collectable):
         self.network = None
         self.operator = None
 
+    _update_default = ('product', 'name', 'shortname', 'route', 'network', 'operator')
+
+    def _update(self, other, better):
+        if other.linetype in self.linetype:
+            self.linetype = other.linetype
+
     def __repr__(self):
-        return '<Line %s %s (%s)>' % (str(self.linetype), repr(self.name))
+        return '<Line %s %s>' % (str(self.linetype), repr(self.name))
+
+    class Request(Collectable.Request):
+        pass
+
+    class Results(Collectable.Results):
+        pass
 
 
 class LineType(Serializable):
@@ -100,9 +112,9 @@ class LineTypes(Serializable):
 
     def _serialize_custom(self, name, value):
         if name == '_included':
-            return 'included', ([str(s) for s in self._included])
+            return 'included', [str(s) for s in self._included]
         elif name == '_excluded':
-            return 'excluded', ([str(s) for s in self._excluded])
+            return 'excluded', [str(s) for s in self._excluded]
 
     def _unserialize_custom(self, name, data):
         if name == 'included':

@@ -1,26 +1,29 @@
 #!/usr/bin/env python3
 from collections import Iterable
-from datetime import timedelta
+from datetime import timedelta, datetime
 import copy
 
 
 class Serializable:
     def validate(self):
+        myname = self.__class__._serialized_name()
         for c in self.__class__.__mro__:
             if not hasattr(c, '_validate'):
                 continue
 
+            added = ('(%s)' % c._serialized_name()) if c != self.__class__ else ''
+
             for name, allowed in c._validate().items():
                 if not hasattr(self, name):
-                    raise AttributeError('%s.%s is missing' % (c._serialized_name(), name))
+                    raise AttributeError('%s%s.%s is missing' % (myname, added, name))
 
                 val = getattr(self, name)
 
                 if allowed is None:
-                    if not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
-                        raise ValueError('%s.%s has non-iterable value: %s' % (c._serialized_name(), name, repr(getattr(self, name))))
+                    if val is not None and not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
+                        raise ValueError('%s%s.%s has non-iterable value: %s' % (myname, added, name, repr(getattr(self, name))))
                     if not c._validate_custom(self, name, val):
-                        raise ValueError('%s.%s has invalid complex value: %s' % (c._serialized_name(), name, repr(getattr(self, name))))
+                        raise ValueError('%s%s.%s has invalid complex value: %s' % (myname, added, name, repr(getattr(self, name))))
                     continue
 
                 if type(allowed) != tuple:
@@ -33,7 +36,7 @@ class Serializable:
                     elif isinstance(val, a):
                         break
                 else:
-                    raise ValueError('%s.%s has to be %s, not %s' % (c._serialized_name(), name, self._validate_or(allowed), repr(getattr(self, name))))
+                    raise ValueError('%s%s.%s has to be %s, not %s' % (myname, added, name, self._validate_or(allowed), repr(getattr(self, name))))
         return True
 
     def _validate_or(self, items):
@@ -97,6 +100,10 @@ class Serializable:
                     if len(allowed) == 1:
                         if isinstance(value, Serializable):
                             value = value.serialize()
+                        elif isinstance(value, datetime):
+                            value = value.strftime('%Y-%m-%d %H:%M:%S')
+                        elif isinstance(value, timedelta):
+                            value = value.total_seconds()
                     else:
                         if value is None:
                             continue
@@ -104,6 +111,8 @@ class Serializable:
                         if isinstance(value, Serializable):
                             t = len([a for a in allowed if a is not None and issubclass(a, Serializable)]) > 1
                             value = value.serialize(typed=t)
+                        elif isinstance(value, datetime):
+                            value = value.strftime('%Y-%m-%d %H:%M:%S')
 
                     if isinstance(value, timedelta):
                         value = value.total_seconds()
@@ -144,10 +153,12 @@ class Serializable:
                         allowed = cls._unfold_subclasses(allowed)
 
                         if len(allowed) == 1:
-                            if issubclass(allowed[0], timedelta):
-                                value = timedelta(seconds=value)
-                            elif issubclass(allowed[0], Serializable):
+                            if issubclass(allowed[0], Serializable):
                                 value = allowed[0].unserialize(value)
+                            elif issubclass(allowed[0], datetime):
+                                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                            elif issubclass(allowed[0], timedelta):
+                                value = timedelta(seconds=value)
                         elif value is not None:
                             serializables = [a for a in allowed if a is not None and issubclass(a, Serializable)]
                             typed = len(serializables) > 1
@@ -163,20 +174,78 @@ class Serializable:
 
         return obj
 
+    def _update_collect(self, collection, last_update=None):
+        if last_update is not None and isinstance(self, Updateable):
+            self.last_update = last_update
+
+        self._collect_children(collection, last_update)
+
+    def _collect_children(self, collection, last_update=None):
+        for c in self.__class__.__mro__:
+            if not hasattr(c, '_validate'):
+                continue
+
+            for name in c._validate():
+                value = getattr(self, name)
+                if isinstance(value, Collectable):
+                    newvalue = collection.add(value)
+                    if newvalue is not value:
+                        setattr(self, name, newvalue)
+                    value = newvalue
+
+                if isinstance(value, Serializable):
+                    value._update_collect(collection, last_update)
+
+
+class Updateable(Serializable):
+    @classmethod
+    def _validate(cls):
+        return {
+            'last_update': (datetime, None)
+        }
+
+    def __init__(self):
+        self.last_update = None
+
+    def update(self, other):
+        better = other.last_update and self.last_update and other.last_update > self.last_update
+
+        if not self.last_update or better:
+            self.last_update = other.last_update
+
+        for c in self.__class__.__mro__:
+            if hasattr(c, '_update_default'):
+                for name in c._update_default:
+                    if getattr(self, name) is None or (better and getattr(other, name) is not None):
+                        setattr(self, name, getattr(other, name))
+
+            if hasattr(c, '_update'):
+                c._update(self, other, better)
+
+        for name, value in other._ids.items():
+            if name in self._ids and type(value) == tuple and None in value:
+                continue
+            self._ids[name] = value
+
 
 class MetaSearchable(type):
     def __init__(cls, a, b, c):
         cls.Request.Model = cls
         cls.Results.Model = cls
+        cls.Results.content = cls
 
 
-class Searchable(Serializable, metaclass=MetaSearchable):
+class Searchable(Updateable, metaclass=MetaSearchable):
+    @classmethod
+    def _validate(cls):
+        return {}
+
     def matches(self, request):
         if not isinstance(request, Searchable.Request):
             raise TypeError('not a request')
         return request.matches(self)
 
-    class Request(Serializable):
+    class Request(Updateable):
         def matches(self, obj):
             if not isinstance(obj, self.Model):
                 raise TypeError('%s.Request can only match %s' % (self.Model.__name__, self.Model.__name__))
@@ -186,13 +255,13 @@ class Searchable(Serializable, metaclass=MetaSearchable):
         def _matches(self, obj):
             pass
 
-    class Results(Serializable):
+    class Results(Updateable):
         def __init__(self, results=[], scored=False):
             super().__init__()
             if scored:
-                self.results = tuple(results)
+                self.results = list(results)
             else:
-                self.results = tuple((r, None) for r in results)
+                self.results = [(r, None) for r in results]
 
         @classmethod
         def _validate(self):
@@ -200,9 +269,20 @@ class Searchable(Serializable, metaclass=MetaSearchable):
                 'results': None
             }
 
+        def _collect_children(self, collection, last_update=None):
+            super()._collect_children(collection, last_update)
+
+            if issubclass(self.Model, Collectable):
+                for i in range(len(self.results)):
+                    r = self.results[i]
+                    self.results[i] = (collection.add(r[0]), r[1])
+            else:
+                for r in self:
+                    r._update_collect(collection, last_update)
+
         def _validate_custom(self, name, value):
             if name == 'results':
-                type_ = self.Model
+                type_ = self.content
                 for v in value:
                     if type(v) != tuple or len(v) != 2 or not isinstance(v[0], type_):
                         return False
@@ -223,7 +303,7 @@ class Searchable(Serializable, metaclass=MetaSearchable):
             if not isinstance(request, self.Model.Request):
                 raise TypeError('%s.Results can be filtered with %s' % (self.Model.__name__, self.Model.__name__))
 
-            self.results = tuple(r for r in self.results if request.matches(r))
+            self.results = [r for r in self.results if request.matches(r)]
 
         def filtered(self, request):
             obj = copy.copy(self)
@@ -235,6 +315,18 @@ class Searchable(Serializable, metaclass=MetaSearchable):
 
         def scored(self):
             yield from self.results
+
+        def append(self, obj, score=None):
+            self.results.append((obj, score))
+
+        def _update(self, obj, better):
+            for o in obj:
+                for myo in self:
+                    if o == myo:
+                        myo.update(o)
+                        break
+                else:
+                    self.append(myo)
 
         def __getitem__(self, key):
             return self.results[key]
@@ -248,6 +340,7 @@ class Collectable(Searchable):
         }
 
     def __init__(self):
+        super().__init__()
         self._ids = {}
 
     def _validate_custom(self, name, value):
@@ -273,5 +366,5 @@ class Collectable(Searchable):
                 self._ids[name] = tuple(value) if isinstance(value, list) else value
 
 
-class TripPart(Searchable):
+class TripPart(Serializable):
     pass

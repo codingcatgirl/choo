@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
-from models import Trip, Coordinates, TicketList, TicketData
-from models import Ride, Line, LineType, LineTypes, Way, WayType
+from models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
+from models import Line, LineType, LineTypes, Way, WayType, WayEvent
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
@@ -21,6 +21,7 @@ class EFA(API):
     train_station_lines = LineTypes(('train', 'urban'))
 
     def __init__(self):
+        super().__init__()
         self.cities = {}
 
     def get_stop(self, stop: Stop, must_get_departures=False):
@@ -221,11 +222,15 @@ class EFA(API):
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
 
         xml = self._post('XSLT_TRIP_REQUEST2', post)
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
+
         data = xml.find('./itdTripRequest')
 
         results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList')))
         results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
         results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
+
+        results._update_collect(self.collection, servernow)
         return results
 
     def _stop_finder_request(self, stop: Stop):
@@ -278,7 +283,6 @@ class EFA(API):
         post.update(self._convert_location(stop, '%s_dm'))
 
         xml = self._post('XSLT_DM_REQUEST', post)
-
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdDepartureMonitorRequest')
@@ -289,14 +293,16 @@ class EFA(API):
             return Stop.Results(stop)
 
         lineslist = data.find('./itdServingLines')
+
         if lineslist is not None:
-            stop.lines = []
+            rlines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
                 origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
                 line.first_stop = origin
                 line.last_stop = destination
-                stop.lines.append(line)
+                rlines.append(line)
+            stop.lines = Line.Results(rlines)
 
         departureslist = data.find('./itdDepartureList')
         stop.rides = self._parse_departures(departureslist, stop, servernow)
@@ -306,6 +312,9 @@ class EFA(API):
             if line.linetype in self.train_station_lines:
                 train_station = True
                 break
+
+        self._make_train_station(stop, train_station)
+        stop._update_collect(self.collection, servernow)
 
         return stop
 
@@ -407,10 +416,12 @@ class EFA(API):
         else:
             ne = n.find('./odvNameElem')
             result = self._name_elem(ne, city, cityid, odvtype)[0]
+            near_stops = []
             for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
                 stop = self._parse_stop_line(near_stop)
                 if stop != result:
-                    result.near_stops.append(stop)
+                    near_stops.append(stop)
+            result.near_stops = Stop.Results(near_stops)
             return result
 
     def _name_elem(self, data, city, cityid, odvtype):
@@ -564,7 +575,7 @@ class EFA(API):
 
             # Return RideSegment from the Station we depart from on
             results.append(ride[pointer:])
-        return results
+        return Ride.Results(results)
 
     def _parse_routes(self, data):
         """ Parses itdRoute into a Trip """
@@ -576,13 +587,20 @@ class EFA(API):
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
                 part = self._parse_routepart(routepart)
                 if interchange is not None:
-                    interchange.destination = part[0].platform
-                trip.parts.append(part)
+                    if isinstance(part, RideSegment):
+                        interchange.destination = part[0].platform
+                    else:
+                        interchange.destination = part[0].origin
+                trip._parts.append(part)
 
                 interchange = self._parse_interchange(routepart)
-                if interchange is not None:
-                    interchange.origin = part[-1].platform
-                    trip.parts.append(interchange)
+                if isinstance(part, RideSegment):
+                    if interchange is not None:
+                        interchange.origin = part[-1].platform
+                        trip._parts.append(interchange)
+                else:
+                    part.events = interchange.events
+                    interchange = None
 
             ticketlist = TicketList()
             tickets = route.find('./itdFare/itdSingleTicket')
@@ -647,6 +665,14 @@ class EFA(API):
 
         if path:
             way.path = path
+
+        events = []
+        for event in data.findall('./itdFootPathInfo/itdFootPathElem'):
+            name = event.attrib['type'].lower()
+            direction = event.attrib['level'].lower()
+            if name in ('elevator', 'escalator', 'stairs') and direction in ('up', 'down'):
+                events.append(WayEvent(name, direction))
+        way.events = events
 
         return way
 
@@ -740,7 +766,7 @@ class EFA(API):
                     ride.append(None)
 
             segment = ride[first:last]
-            paths = self._split_path(path, [p.coords for p in segment])[:-1]
+            paths = self._split_path(path, [p.platform.coords for p in segment])[:-1]
             for i, point in segment.items():
                 if not paths:
                     break
@@ -925,7 +951,7 @@ class EFA(API):
             tmp = data.attrib.get('stopName', '')
             if not tmp:
                 tmp = data.attrib.get('name', '')
-            if tmp.endswith(' '+name):
+            if tmp.endswith(' ' + name):
                 tmp = tmp[:-len(name)].strip()
                 if tmp:
                     city = tmp
@@ -942,7 +968,7 @@ class EFA(API):
             self._make_train_station(location, train_line)
 
             cityid = data.attrib.get('placeID')
-            if cityid :
+            if cityid:
                 self._process_stop_city(location, int(cityid))
 
             if self.ifopt_stopid_digits:
@@ -978,7 +1004,7 @@ class EFA(API):
         result = TimeAndPlace(platform)
 
         if 'x' in data.attrib:
-            result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
+            platform.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):

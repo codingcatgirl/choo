@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-from .base import Serializable
+from .base import Updateable, Serializable
 
 
-class TicketList(Serializable):
+class TicketList(Updateable):
     def __init__(self):
+        super().__init__()
         self.currency = None
         self.level_name = None
         self.single = None
@@ -19,6 +20,14 @@ class TicketList(Serializable):
             'bike': (None, TicketData),
             'other': None
         }
+
+    _update_default = ('currency', 'level_name', 'single', 'bike')
+
+    def _update(self, other, better):
+        if self.other is None:
+            self.other = other.other
+        else:
+            self.other.update(other.other)
 
     def _validate_custom(self, name, value):
         if name == 'other':
