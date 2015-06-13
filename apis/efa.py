@@ -659,6 +659,14 @@ class EFA(API):
         if path:
             way.path = path
 
+        events = []
+        for event in data.findall('./itdFootPathInfo/itdFootPathElem'):
+            name = event.attrib['type'].lower()
+            direction = event.attrib['level'].lower()
+            if name in ('elevator', 'escalator', 'stairs') and direction in ('up', 'down'):
+                events.append(WayEvent(name, direction))
+        way.events = events
+
         return way
 
     def _parse_routepart(self, data):
