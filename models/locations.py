@@ -112,40 +112,19 @@ class Stop(Location):
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
-        self.rides = []
-        self.lines = []
+        self.rides = None
+        self.lines = None
         self.train_station_name = None
 
     @classmethod
     def _validate(cls):
+        from .ride import Ride
+        from .line import Line
         return {
-            'rides': None,
-            'lines': None,
+            'rides': (None, Ride.Results),
+            'lines': (None, Line.Results),
             'train_station_name': (None, str)
         }
-
-    def _collect_children(self, collection, last_update):
-        super()._collect_children(collection, last_update)
-
-        for ride in self.rides:
-            ride._update_collect(collection, last_update)
-
-        for line in self.lines:
-            line._update_collect(collection, last_update)
-
-    def _validate_custom(self, name, value):
-        from .ride import RideSegment
-        from .line import Line
-        if name == 'rides':
-            for v in value:
-                if not isinstance(v, RideSegment):
-                    return False
-            return True
-        elif name == 'lines':
-            for v in value:
-                if not isinstance(v, Line):
-                    return False
-            return True
 
     @property
     def full_name(self):
@@ -155,20 +134,6 @@ class Stop(Location):
             return self.name
         else:
             return '%s, %s' % (self.city, self.name)
-
-    def _serialize_custom(self, name):
-        if name == 'rides':
-            return 'rides', [ride.serialize() for ride in self.rides]
-        elif name == 'lines':
-            return 'lines', [line.serialize() for line in self.lines]
-
-    def _unserialize_custom(self, name, data):
-        from .ride import RideSegment
-        from .line import Line
-        if name == 'rides':
-            self.rides = [RideSegment.unserialize(r) for r in data]
-        elif name == 'lines':
-            self.lines = [Line.unserialize(line) for line in data]
 
     def __repr__(self):
         return '<Stop %s>' % repr(self.full_name)
