@@ -27,6 +27,8 @@ class Collection(Serializable):
         for name, value in obj._ids.items():
             found = by_id.get(name, {}).get(value)
             if found is not None:
+                if model == 'Platform' and found.stop != obj.stop:
+                    continue
                 return found
 
         for item in self.known.get(model):
