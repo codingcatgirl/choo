@@ -186,7 +186,9 @@ class Ride(Collectable):
         pass
 
     class Results(Collectable.Results):
-        pass
+        def __init__(self, results=[], scored=False):
+            self.content = RideSegment
+            super().__init__(results, scored)
 
 
 class RideSegment(TripPart):
