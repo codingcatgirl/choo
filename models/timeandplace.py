@@ -21,6 +21,19 @@ class TimeAndPlace(Updateable):
             'passthrough': bool
         }
 
+    _update_default = ('platform', 'passthrough')
+
+    def _update(self, other, better):
+        if self.arrival is None:
+            self.arrival = other.arrival
+        else:
+            self.arrival.update(other.arrival)
+
+        if self.departure is None:
+            self.departure = other.departure
+        else:
+            self.departure.update(other.departure)
+
     @property
     def stop(self):
         return self.platform.stop

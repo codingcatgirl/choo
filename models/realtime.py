@@ -15,6 +15,8 @@ class RealtimeTime(Updateable):
         self.time = time
         self.delay = delay
 
+    _update_default = ('delay', )
+
     @classmethod
     def _validate(cls):
         return {

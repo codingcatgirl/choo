@@ -31,6 +31,12 @@ class Line(Collectable):
         self.network = None
         self.operator = None
 
+    _update_default = ('product', 'name', 'shortname', 'route', 'network', 'operator')
+
+    def _update(self, other, better):
+        if other.linetype in self.linetype:
+            self.linetype = other.linetype
+
     def __repr__(self):
         return '<Line %s %s>' % (str(self.linetype), repr(self.name))
 
