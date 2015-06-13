@@ -588,12 +588,12 @@ class EFA(API):
                 part = self._parse_routepart(routepart)
                 if interchange is not None:
                     interchange.destination = part[0].platform
-                trip.parts.append(part)
+                trip._parts.append(part)
 
                 interchange = self._parse_interchange(routepart)
                 if interchange is not None:
                     interchange.origin = part[-1].platform
-                    trip.parts.append(interchange)
+                    trip._parts.append(interchange)
 
             ticketlist = TicketList()
             tickets = route.find('./itdFare/itdSingleTicket')
