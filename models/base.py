@@ -187,6 +187,12 @@ class Serializable:
 
             for name in c._validate():
                 value = getattr(self, name)
+                if isinstance(value, Collectable):
+                    newvalue = collection.add(value)
+                    if newvalue is not value:
+                        setattr(self, name, newvalue)
+                    value = newvalue
+
                 if isinstance(value, Serializable):
                     value._update_collect(collection, last_update)
 
