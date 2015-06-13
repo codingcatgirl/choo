@@ -233,9 +233,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         def __init__(self, results=[], scored=False):
             super().__init__()
             if scored:
-                self.results = tuple(results)
+                self.results = list(results)
             else:
-                self.results = tuple((r, None) for r in results)
+                self.results = [(r, None) for r in results]
 
         @classmethod
         def _validate(self):
@@ -272,7 +272,7 @@ class Searchable(Updateable, metaclass=MetaSearchable):
             if not isinstance(request, self.Model.Request):
                 raise TypeError('%s.Results can be filtered with %s' % (self.Model.__name__, self.Model.__name__))
 
-            self.results = tuple(r for r in self.results if request.matches(r))
+            self.results = [r for r in self.results if request.matches(r)]
 
         def filtered(self, request):
             obj = copy.copy(self)
@@ -284,6 +284,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
         def scored(self):
             yield from self.results
+
+        def append(self, obj, score=None):
+            self.results.append((obj, score))
 
         def __getitem__(self, key):
             return self.results[key]
