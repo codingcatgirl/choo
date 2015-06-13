@@ -293,14 +293,16 @@ class EFA(API):
             return Stop.Results(stop)
 
         lineslist = data.find('./itdServingLines')
+
         if lineslist is not None:
-            stop.lines = []
+            rlines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
                 origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
                 line.first_stop = origin
                 line.last_stop = destination
-                stop.lines.append(line)
+                rlines.append(line)
+            stop.lines = Line.Results(rlines)
 
         departureslist = data.find('./itdDepartureList')
         stop.rides = self._parse_departures(departureslist, stop, servernow)
@@ -573,7 +575,7 @@ class EFA(API):
 
             # Return RideSegment from the Station we depart from on
             results.append(ride[pointer:])
-        return results
+        return Ride.Results(results)
 
     def _parse_routes(self, data):
         """ Parses itdRoute into a Trip """
