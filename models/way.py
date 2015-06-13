@@ -86,3 +86,42 @@ class WayType(Serializable):
 
     def __equals__(self, other):
         return other._value == self._value
+
+
+class WayEvent(Serializable):
+    _created = {}
+
+    def __new__(cls, name='', direction=''):
+        if isinstance(name, cls):
+            return name
+        assert name in ('stairs', 'elevator', 'escalator')
+        assert direction in ('up', 'down')
+        value = (name, direction)
+        if value in cls._created:
+            return cls._created[value]
+        else:
+            self = super().__new__(cls)
+            self._value = value
+            cls._created[value] = self
+            return self
+
+    def _serialize(self):
+        return self._value
+
+    @classmethod
+    def unserialize(cls, data):
+        return cls(*data)
+
+    def __repr__(self):
+        return 'WayEvent%s' % repr(self._value)
+
+    def __iter__(self):
+        return self._value
+
+    @property
+    def name(self):
+        return self._value[0]
+
+    @property
+    def direction(self):
+        return self._value[1]
