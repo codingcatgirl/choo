@@ -138,10 +138,8 @@ class Stop(Location):
         return '<Stop %s>' % repr(self.full_name)
 
     def __eq__(self, other):
-        assert isinstance(other, Stop)
-        for k, id_ in self._ids.items():
-            if id_ is not None and other._ids.get(k) == id_:
-                return True
+        if not isinstance(other, Stop):
+            return False
         if self.coords is not None and self.coords == other.coords:
             return True
         return (self.name is not None and self.name == other.name and
