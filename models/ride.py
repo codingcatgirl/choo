@@ -81,6 +81,14 @@ class Ride(Collectable):
             for i, path in data.items():
                 self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
 
+    def _collect_children(self, collection, last_update=None):
+        if self.line is not None:
+            self.line._update_collect(collection, last_update)
+
+        for stop in self._stops:
+            if stop[1] is not None:
+                stop[1]._update_collect(collection, last_update)
+
     @property
     def is_complete(self):
         return None not in self._stops

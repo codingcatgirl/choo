@@ -36,6 +36,13 @@ class Trip(Searchable):
         if name == 'parts':
             self.parts = [self._unserialize_typed(part, (RideSegment, Way)) for part in data]
 
+    def _collect_children(self, collection, last_update=None):
+        if self.tickets is not None:
+            self.tickets._update_collect(collection, last_update)
+
+        for part in self.parts:
+            part._update_collect(collection, last_update)
+
     class Request(Searchable.Request):
         def __init__(self):
             super().__init__()

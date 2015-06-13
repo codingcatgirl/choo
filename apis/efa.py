@@ -222,11 +222,15 @@ class EFA(API):
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
 
         xml = self._post('XSLT_TRIP_REQUEST2', post)
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
+
         data = xml.find('./itdTripRequest')
 
         results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList')))
         results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
         results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
+
+        results._update_collect(self.collection, servernow)
         return results
 
     def _stop_finder_request(self, stop: Stop):
@@ -279,7 +283,6 @@ class EFA(API):
         post.update(self._convert_location(stop, '%s_dm'))
 
         xml = self._post('XSLT_DM_REQUEST', post)
-
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdDepartureMonitorRequest')
@@ -307,6 +310,9 @@ class EFA(API):
             if line.linetype in self.train_station_lines:
                 train_station = True
                 break
+
+        self._make_train_station(stop, train_station)
+        stop._update_collect(self.collection, servernow)
 
         return stop
 

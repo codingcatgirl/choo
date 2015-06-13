@@ -172,6 +172,22 @@ class Serializable:
 
         return obj
 
+    def _update_collect(self, collection, last_update=None):
+        if last_update is not None and isinstance(self, Updateable):
+            self.last_update = last_update
+
+        self._collect_children(collection, last_update)
+
+    def _collect_children(self, collection, last_update=None):
+        for c in self.__class__.__mro__:
+            if not hasattr(c, '_validate'):
+                continue
+
+            for name in c._validate():
+                value = getattr(self, name)
+                if isinstance(value, Serializable):
+                    value._update_collect(collection, last_update)
+
 
 class Updateable(Serializable):
     @classmethod
@@ -223,6 +239,12 @@ class Searchable(Updateable, metaclass=MetaSearchable):
             return {
                 'results': None
             }
+
+        def _collect_children(self, collection, last_update=None):
+            super()._collect_children(collection, last_update)
+
+            for r in self.results:
+                r[0]._update_collect(collection, last_update)
 
         def _validate_custom(self, name, value):
             if name == 'results':
