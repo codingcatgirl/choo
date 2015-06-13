@@ -766,7 +766,7 @@ class EFA(API):
                     ride.append(None)
 
             segment = ride[first:last]
-            paths = self._split_path(path, [p.coords for p in segment])[:-1]
+            paths = self._split_path(path, [p.platform.coords for p in segment])[:-1]
             for i, point in segment.items():
                 if not paths:
                     break
@@ -1004,7 +1004,7 @@ class EFA(API):
         result = TimeAndPlace(platform)
 
         if 'x' in data.attrib:
-            result.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
+            platform.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):
