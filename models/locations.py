@@ -68,7 +68,7 @@ class Location(AbstractLocation):
         self.country = country
         self.city = city
         self.name = name
-        self.near_stops = []
+        self.near_stops = None
 
     @classmethod
     def _validate(cls):
@@ -76,7 +76,7 @@ class Location(AbstractLocation):
             'country': (None, str),
             'city': (None, str),
             'name': str,
-            'near_stops': None
+            'near_stops': (None, Stop.Results)
         }
 
     @property
@@ -85,27 +85,6 @@ class Location(AbstractLocation):
             return self.name
         else:
             return '%s, %s' % (self.city, self.name)
-
-    def _collect_children(self, collection, last_update=None):
-        super()._collect_children(collection, last_update)
-
-        for stop in self.near_stops:
-            stop._update_collect(collection, last_update)
-
-    def _validate_custom(self, name, value):
-        if name == 'near_stops':
-            for v in value:
-                if not isinstance(v, Location):
-                    return False
-            return True
-
-    def _serialize_custom(self, name):
-        if name == 'near_stops':
-            return 'near_stops', [s.serialize() for s in self.near_stops]
-
-    def _unserialize_custom(self, name, data):
-        if name == 'near_stops':
-            self.near_stops = [Stop.unserialize(s) for s in data]
 
     def __repr__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))

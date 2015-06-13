@@ -414,10 +414,12 @@ class EFA(API):
         else:
             ne = n.find('./odvNameElem')
             result = self._name_elem(ne, city, cityid, odvtype)[0]
+            near_stops = []
             for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
                 stop = self._parse_stop_line(near_stop)
                 if stop != result:
-                    result.near_stops.append(stop)
+                    near_stops.append(stop)
+            result.near_stops = Stop.Results(near_stops)
             return result
 
     def _name_elem(self, data, city, cityid, odvtype):
