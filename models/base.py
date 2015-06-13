@@ -323,5 +323,5 @@ class Collectable(Searchable):
                 self._ids[name] = tuple(value) if isinstance(value, list) else value
 
 
-class TripPart(Searchable):
+class TripPart(Serializable):
     pass
