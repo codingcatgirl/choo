@@ -109,6 +109,8 @@ class Serializable:
                         if isinstance(value, Serializable):
                             t = len([a for a in allowed if a is not None and issubclass(a, Serializable)]) > 1
                             value = value.serialize(typed=t)
+                        elif isinstance(value, datetime):
+                            value = value.strftime('%Y-%m-%d %H:%M:%S')
 
                     if isinstance(value, timedelta):
                         value = value.total_seconds()
