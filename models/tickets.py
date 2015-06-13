@@ -4,6 +4,7 @@ from .base import Updateable, Serializable
 
 class TicketList(Updateable):
     def __init__(self):
+        super().__init__()
         self.currency = None
         self.level_name = None
         self.single = None
