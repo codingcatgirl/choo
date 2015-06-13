@@ -206,7 +206,10 @@ class RideSegment(TripPart):
             self._destination = self.ride.pointer(data)
 
     def _stops(self):
-        return self.ride._stops[self._origin:int(self._destination) + 1]
+        if self._destination is None:
+            return self.ride._stops[self._origin:None]
+        else:
+            return self.ride._stops[self._origin:int(self._destination) + 1]
 
     @property
     def is_complete(self):
