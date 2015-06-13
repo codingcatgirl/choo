@@ -21,6 +21,7 @@ class EFA(API):
     train_station_lines = LineTypes(('train', 'urban'))
 
     def __init__(self):
+        super().__init__()
         self.cities = {}
 
     def get_stop(self, stop: Stop, must_get_departures=False):
