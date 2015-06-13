@@ -193,11 +193,11 @@ class Updateable(Serializable):
     @classmethod
     def _validate(cls):
         return {
-            'last_update': datetime
+            'last_update': (datetime, None)
         }
 
     def __init__(self):
-        self.last_update = datetime.now()
+        self.last_update = None
 
 
 class MetaSearchable(type):
