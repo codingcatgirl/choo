@@ -11,26 +11,26 @@ from datetime import timedelta
 class Trip(Searchable):
     def __init__(self):
         super().__init__()
-        self.parts = []
+        self._parts = []
         self.tickets = None
 
     @classmethod
     def _validate(cls):
         return {
-            'parts': None,
+            '_parts': None,
             'tickets': (None, TicketList)
         }
 
     def _validate_custom(self, name, value):
-        if name == 'parts':
+        if name == '_parts':
             for v in value:
                 if not isinstance(v, TripPart):
                     return False
             return True
 
     def _serialize_custom(self, name):
-        if name == 'parts':
-            return 'parts', [p.serialize(True) for p in self.parts]
+        if name == '_parts':
+            return 'parts', [p.serialize(True) for p in self._parts]
 
     def _unserialize_custom(self, name, data):
         if name == 'parts':
@@ -40,7 +40,7 @@ class Trip(Searchable):
         if self.tickets is not None:
             self.tickets._update_collect(collection, last_update)
 
-        for part in self.parts:
+        for part in self._parts:
             part._update_collect(collection, last_update)
 
     class Request(Searchable.Request):
@@ -118,16 +118,16 @@ class Trip(Searchable):
 
     @property
     def origin(self):
-        return self.parts[0].origin
+        return self._parts[0].origin
 
     @property
     def destination(self):
-        return self.parts[-1].destination
+        return self._parts[-1].destination
 
     @property
     def departure(self):
         delta = timedelta(0)
-        for part in self.parts:
+        for part in self._parts:
             if isinstance(part, RideSegment):
                 return (part.departure - delta) if part.departure else None
             elif part.duration is None:
@@ -138,7 +138,7 @@ class Trip(Searchable):
     @property
     def arrival(self):
         delta = timedelta(0)
-        for part in reversed(self.parts):
+        for part in reversed(self._parts):
             if isinstance(part, RideSegment):
                 return (part.arrival + delta) if part.arrival else None
             elif part.duration is None:
@@ -156,7 +156,7 @@ class Trip(Searchable):
     @property
     def linetypes(self):
         types = LineTypes(())
-        for part in self.parts:
+        for part in self._parts:
             if isinstance(part, RideSegment):
                 types.include(part.line.linetype)
         return types
@@ -164,14 +164,14 @@ class Trip(Searchable):
     @property
     def changes(self):
         changes = -1
-        for part in self.parts:
+        for part in self._parts:
             if isinstance(part, RideSegment):
                 changes += 1
         return max(0, changes)
 
     @property
     def bike_friendly(self):
-        for part in self.parts:
+        for part in self._parts:
             if not isinstance(part, RideSegment):
                 continue
             if part.bike_friendly is None:
@@ -196,4 +196,4 @@ class Trip(Searchable):
         return '<Trip %s %s - %s %s>' % (repr(self.origin), str(self.departure), repr(self.origin), str(self.arrival))
 
     def __iter__(self):
-        yield from self.parts
+        yield from self._parts
