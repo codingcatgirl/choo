@@ -204,6 +204,7 @@ class MetaSearchable(type):
     def __init__(cls, a, b, c):
         cls.Request.Model = cls
         cls.Results.Model = cls
+        cls.Results.content = cls
 
 
 class Searchable(Updateable, metaclass=MetaSearchable):
@@ -248,7 +249,7 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
         def _validate_custom(self, name, value):
             if name == 'results':
-                type_ = self.Model
+                type_ = self.content
                 for v in value:
                     if type(v) != tuple or len(v) != 2 or not isinstance(v[0], type_):
                         return False
