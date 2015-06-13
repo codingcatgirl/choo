@@ -30,6 +30,12 @@ class Ride(Collectable):
             '_paths': None,
         }
 
+    _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
+
+    def _update(self, other, better):
+        # todo: stops, paths
+        pass
+
     def _validate_custom(self, name, value):
         if name == 'infotexts':
             for v in value:
@@ -74,12 +80,20 @@ class Ride(Collectable):
     def _unserialize_custom(self, name, data):
         if name == 'infotexts':
             self.infotexts = data
-        if name == 'stops':
+        elif name == 'stops':
             for s in data:
                 self.append(TimeAndPlace.unserialize(s) if s is not None else None)
-        if name == 'paths':
+        elif name == 'paths':
             for i, path in data.items():
                 self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
+
+    def _collect_children(self, collection, last_update=None):
+        if self.line is not None:
+            self.line._update_collect(collection, last_update)
+
+        for stop in self._stops:
+            if stop[1] is not None:
+                stop[1]._update_collect(collection, last_update)
 
     @property
     def is_complete(self):
@@ -174,6 +188,14 @@ class Ride(Collectable):
         def __repr__(self):
             return 'p:%d' % self._i
 
+    class Request(Collectable.Request):
+        pass
+
+    class Results(Collectable.Results):
+        def __init__(self, results=[], scored=False):
+            self.content = RideSegment
+            super().__init__(results, scored)
+
 
 class RideSegment(TripPart):
     def __init__(self, ride=None, origin=None, destination=None):
@@ -206,7 +228,10 @@ class RideSegment(TripPart):
             self._destination = self.ride.pointer(data)
 
     def _stops(self):
-        return self.ride._stops[self._origin:int(self._destination) + 1]
+        if self._destination is None:
+            return self.ride._stops[self._origin:None]
+        else:
+            return self.ride._stops[self._origin:int(self._destination) + 1]
 
     @property
     def is_complete(self):

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from .base import Serializable
+from .base import Updateable
 from datetime import datetime, timedelta
 
 
-class RealtimeTime(Serializable):
+class RealtimeTime(Updateable):
     def __init__(self, time=None, delay=None, livetime=None):
         super().__init__()
         if time is not None and livetime is not None:
@@ -15,21 +15,14 @@ class RealtimeTime(Serializable):
         self.time = time
         self.delay = delay
 
+    _update_default = ('delay', )
+
     @classmethod
     def _validate(cls):
         return {
             'time': datetime,
             'delay': (None, timedelta)
         }
-
-    def _serialize(self):
-        return [self.time.strftime('%Y-%m-%d %H:%M:%S'),
-                int(self.delay.total_seconds()) if self.delay is not None else None]
-
-    def _unserialize(self, data):
-        self.time = datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')
-        if data[1] is not None:
-            self.delay = timedelta(seconds=data[1])
 
     def __repr__(self):
         return '<RealtimeTime %s>' % (str(self))

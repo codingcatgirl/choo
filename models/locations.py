@@ -21,8 +21,7 @@ class Coordinates(Serializable):
         self.lat, self.lon = data
 
     def __eq__(self, other):
-        assert isinstance(other, Coordinates)
-        return other.lat == self.lat and other.lon == self.lon
+        return isinstance(other, Coordinates) and other.lat == self.lat and other.lon == self.lon
 
     def __repr__(self):
         return 'Coordinates(%.6f, %.6f)' % (self.lat, self.lon)
@@ -42,6 +41,14 @@ class AbstractLocation(Collectable):
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
 
+    _update_default = ('coords', )
+
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
+
 
 class Platform(AbstractLocation):
     def __init__(self, stop=None, name=None, full_name=None):
@@ -58,8 +65,19 @@ class Platform(AbstractLocation):
             'full_name': (str, None),
         }
 
+    _update_default = ('name', 'full_name')
+
+    def _update(self, other, better):
+        self.stop.update(other.stop)
+
     def __repr__(self):
         return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
+
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
 
 
 class Location(AbstractLocation):
@@ -68,7 +86,7 @@ class Location(AbstractLocation):
         self.country = country
         self.city = city
         self.name = name
-        self.near_stops = []
+        self.near_stops = None
 
     @classmethod
     def _validate(cls):
@@ -76,8 +94,10 @@ class Location(AbstractLocation):
             'country': (None, str),
             'city': (None, str),
             'name': str,
-            'near_stops': None
+            'near_stops': (None, Stop.Results)
         }
+
+    _update_default = ('country', 'city', 'name')
 
     @property
     def full_name(self):
@@ -86,54 +106,37 @@ class Location(AbstractLocation):
         else:
             return '%s, %s' % (self.city, self.name)
 
-    def _validate_custom(self, name, value):
-        if name == 'near_stops':
-            for v in value:
-                if not isinstance(v, Location):
-                    return False
-            return True
-
-    def _serialize_custom(self, name):
-        if name == 'near_stops':
-            return 'near_stops', [s.serialize() for s in self.near_stops]
-
-    def _unserialize_custom(self, name, data):
-        if name == 'near_stops':
-            self.near_stops = [Stop.unserialize(s) for s in data]
-
     def __repr__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))
+
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
 
 
 class Stop(Location):
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
-        self.rides = []
-        self.lines = []
+        self.rides = None
+        self.lines = None
         self.train_station_name = None
 
     @classmethod
     def _validate(cls):
+        from .ride import Ride
+        from .line import Line
         return {
-            'rides': None,
-            'lines': None,
+            'rides': (None, Ride.Results),
+            'lines': (None, Line.Results),
             'train_station_name': (None, str)
         }
 
-    def _validate_custom(self, name, value):
-        from .ride import RideSegment
-        from .line import Line
-        if name == 'rides':
-            for v in value:
-                if not isinstance(v, RideSegment):
-                    return False
-            return True
-        elif name == 'lines':
-            for v in value:
-                if not isinstance(v, Line):
-                    return False
-            return True
+    def _update(self, other, better):
+        if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
+            self.train_station_name = other.train_station_name
 
     @property
     def full_name(self):
@@ -144,38 +147,34 @@ class Stop(Location):
         else:
             return '%s, %s' % (self.city, self.name)
 
-    def _serialize_custom(self, name):
-        if name == 'rides':
-            return 'rides', [ride.serialize() for ride in self.rides]
-        elif name == 'lines':
-            return 'lines', [line.serialize() for line in self.lines]
-
-    def _unserialize_custom(self, name, data):
-        from .ride import RideSegment
-        from .line import Line
-        if name == 'rides':
-            self.rides = [RideSegment.unserialize(r) for r in data]
-        elif name == 'lines':
-            self.lines = [Line.unserialize(line) for line in data]
-
     def __repr__(self):
         return '<Stop %s>' % repr(self.full_name)
 
     def __eq__(self, other):
-        assert isinstance(other, Stop)
-        for k, id_ in self._ids.items():
-            if id_ is not None and other._ids.get(k) == id_:
-                return True
+        if not isinstance(other, Stop):
+            return False
         if self.coords is not None and self.coords == other.coords:
             return True
         return (self.name is not None and self.name == other.name and
                 self.city == other.city and self.country == other.country)
+
+    class Request(Location.Request):
+        pass
+
+    class Results(Location.Results):
+        pass
 
 
 class POI(Location):
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
+
+    class Request(Location.Request):
+        pass
+
+    class Results(Location.Results):
+        pass
 
 
 class Address(Location):
@@ -185,9 +184,17 @@ class Address(Location):
         self.street = None
         self.number = None
 
+    _update_default = ('street', 'number')
+
     @classmethod
     def _validate(cls):
         return {
             'street': (None, str),
             'number': (None, str),
         }
+
+    class Request(Location.Request):
+        pass
+
+    class Results(Location.Results):
+        pass
