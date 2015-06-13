@@ -182,6 +182,12 @@ class Ride(Collectable):
         def __repr__(self):
             return 'p:%d' % self._i
 
+    class Request(Searchable.Request):
+        pass
+
+    class Results(Searchable.Results):
+        pass
+
 
 class RideSegment(TripPart):
     def __init__(self, ride=None, origin=None, destination=None):
