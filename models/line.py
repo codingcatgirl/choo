@@ -32,7 +32,7 @@ class Line(Collectable):
         self.operator = None
 
     def __repr__(self):
-        return '<Line %s %s (%s)>' % (str(self.linetype), repr(self.name))
+        return '<Line %s %s>' % (str(self.linetype), repr(self.name))
 
 
 class LineType(Serializable):
