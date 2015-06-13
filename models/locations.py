@@ -86,6 +86,12 @@ class Location(AbstractLocation):
         else:
             return '%s, %s' % (self.city, self.name)
 
+    def _collect_children(self, collection, last_update=None):
+        super()._collect_children(collection, last_update)
+
+        for stop in self.near_stops:
+            stop._update_collect(collection, last_update)
+
     def _validate_custom(self, name, value):
         if name == 'near_stops':
             for v in value:
@@ -120,6 +126,15 @@ class Stop(Location):
             'lines': None,
             'train_station_name': (None, str)
         }
+
+    def _collect_children(self, collection, last_update):
+        super()._collect_children(collection, last_update)
+
+        for ride in self.rides:
+            ride._update_collect(collection, last_update)
+
+        for line in self.lines:
+            line._update_collect(collection, last_update)
 
     def _validate_custom(self, name, value):
         from .ride import RideSegment
