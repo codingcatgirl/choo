@@ -201,6 +201,13 @@ class Updateable(Serializable):
     def __init__(self):
         self.last_update = None
 
+    def update(self, other):
+        for name, value in other._ids.items():
+            if type(value) == tuple and None in value:
+                continue
+
+            self._ids[name] = value
+
 
 class MetaSearchable(type):
     def __init__(cls, a, b, c):
