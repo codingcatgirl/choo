@@ -21,8 +21,7 @@ class Coordinates(Serializable):
         self.lat, self.lon = data
 
     def __eq__(self, other):
-        assert isinstance(other, Coordinates)
-        return other.lat == self.lat and other.lon == self.lon
+        return isinstance(other, Coordinates) and other.lat == self.lat and other.lon == self.lon
 
     def __repr__(self):
         return 'Coordinates(%.6f, %.6f)' % (self.lat, self.lon)
