@@ -8,6 +8,7 @@ from .ride import Ride, RideSegment
 from .way import Way, WayType
 from .timeandplace import TimeAndPlace
 from .realtime import RealtimeTime
+from .collection import Collection
 
 
 def unserialize_typed(data):
@@ -18,8 +19,9 @@ def unserialize_typed(data):
     else:
         return globals()[model].unserialize(data)
 
-__all__ = ['Serializable', 'Searchable', 'Collectable', 'TripPart',
-           'Coordinates', 'AbstractLocation', 'Platform', 'Location', 'Stop',
-           'Address', 'POI', 'Line', 'LineType', 'LineTypes', 'RealtimeTime',
-           'TimeAndPlace', 'Platform', 'Ride', 'RideSegment', 'Trip', 'Way',
-           'WayType', 'TicketList', 'TicketData', 'unserialize_typed']
+__all__ = ['Serializable', 'Searchable', 'Collectable', 'Updateable',
+           'Collection', 'TripPart', 'Coordinates', 'AbstractLocation',
+           'Platform', 'Location', 'Stop', 'Address', 'POI', 'Line', 'LineType',
+           'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Platform', 'Ride',
+           'RideSegment', 'Trip', 'Way', 'WayType', 'TicketList', 'TicketData',
+           'unserialize_typed']
