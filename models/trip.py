@@ -2,8 +2,8 @@
 from .base import Searchable, TripPart
 from .way import Way, WayType
 from .locations import Location
-from .ride import RideSegment
-from .line import LineTypes
+from .ride import Ride, RideSegment
+from .line import Line, LineType, LineTypes
 from .tickets import TicketList
 from datetime import timedelta
 
@@ -191,6 +191,37 @@ class Trip(Searchable):
         r.max_changtes = self.max_changes
         r.bike_friendly = self.bike_friendly
         return r
+
+    def __len__(self):
+        return len(self._parts)
+
+    def __getitem__(self, key):
+        return self._parts[key]
+
+    def __contains__(self, obj):
+        if isinstance(obj, RideSegment):
+            return obj in self._parts
+
+        if isinstance(obj, Ride):
+            compare = lambda part, obj: part.ride == obj
+        elif isinstance(obj, Ride.Request):
+            compare = lambda part, obj: part.ride.matches(obj)
+        elif isinstance(obj, Line):
+            compare = lambda part, obj: part.line == obj
+        elif isinstance(obj, Line.Request):
+            compare = lambda part, obj: part.line.matches(obj)
+        elif isinstance(obj, LineType):
+            compare = lambda part, obj: part.line.linetype == obj
+        elif isinstance(obj, LineTypes):
+            compare = lambda part, obj: part.line.linetype in obj
+        else:
+            # todo: here be more, Way, Stop, Platform, …
+            raise NotImplementedError()
+
+        for part in self.parts:
+            if isinstance(part, RideSegment) and compare(part, obj):
+                return True
+        return False
 
     def __repr__(self):
         return '<Trip %s %s - %s %s>' % (repr(self.origin), str(self.departure), repr(self.origin), str(self.arrival))
