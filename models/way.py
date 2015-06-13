@@ -12,6 +12,7 @@ class Way(TripPart):
         self.destination = destination
         self.distance = None
         self.duration = None
+        self.events = None
         self.path = None
 
     @classmethod
@@ -22,6 +23,7 @@ class Way(TripPart):
             'destination': AbstractLocation,
             'distance': (None, int, float),
             'duration': timedelta,
+            'events': None,
             'path': None,
         }
 
@@ -33,14 +35,25 @@ class Way(TripPart):
                 if not isinstance(v, Coordinates):
                     return False
             return True
+        elif name == 'events':
+            if value is None:
+                return True
+            for v in value:
+                if not isinstance(v, WayEvent):
+                    return False
+            return True
 
     def _serialize_custom(self, name):
         if name == 'path':
-            return 'path', [p.serialize() for p in self.path]
+            return 'path', [p.serialize() for p in self.path] if self.path is not None else None
+        elif name == 'events':
+            return 'events', [e.serialize() for e in self.events] if self.events is not None else None
 
     def _unserialize_custom(self, name, data):
         if name == 'path':
             self.path = [Coordinates.unserialize(p) for p in data]
+        if name == 'events':
+            self.events = [WayEvent.unserialize(e) for e in data]
 
     def __eq__(self, other):
         assert isinstance(other, Way)

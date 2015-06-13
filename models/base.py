@@ -20,7 +20,7 @@ class Serializable:
                 val = getattr(self, name)
 
                 if allowed is None:
-                    if not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
+                    if val is not None and not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
                         raise ValueError('%s%s.%s has non-iterable value: %s' % (myname, added, name, repr(getattr(self, name))))
                     if not c._validate_custom(self, name, val):
                         raise ValueError('%s%s.%s has invalid complex value: %s' % (myname, added, name, repr(getattr(self, name))))
