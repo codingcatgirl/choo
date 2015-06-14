@@ -79,6 +79,25 @@ class Platform(AbstractLocation):
     def __repr__(self):
         return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
 
+    def __eq__(self, other):
+        if not isinstance(other, Platform):
+            return False
+
+        if self.stop != other.stop:
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        if self.name is not None and self.name == other.name:
+            return True
+
+        if self.full_name is not None and self.full_name == other.full_name:
+            return True
+
+        return False
+
     class Request(Searchable.Request):
         pass
 

@@ -37,6 +37,28 @@ class Line(Collectable):
         if other.linetype in self.linetype:
             self.linetype = other.linetype
 
+    def __eq__(self, other):
+        if not isinstance(other, Line):
+            return False
+
+        if self.linetype not in other.linetype and other.linetype not in self.linetype:
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        if self.route == other.route and self.name == other.name:
+            return True
+
+        if (self.shortname is not None and other.shortname is not None and
+            len([s for s in self.shortname if s.isdigit()]) and
+            self.operator is not None and self.operator == other.operator and
+            self.network is not None and self.network == other.network):
+            return True
+
+        return False
+
     def __repr__(self):
         return '<Line %s %s>' % (str(self.linetype), repr(self.name))
 
