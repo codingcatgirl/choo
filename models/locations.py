@@ -41,6 +41,12 @@ class AbstractLocation(Collectable):
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
 
+    def _near(self, other):
+        return self.coords is not None and other.coords is not None and abs(self.coords.lat - other.coords.lat) < 0.02 and abs(self.coords.lon - other.coords.lon) < 0.02
+
+    def __eq__(self, other):
+        return self.coords == other.coords
+
     _update_default = ('coords', )
 
     class Request(Searchable.Request):
@@ -97,7 +103,7 @@ class Location(AbstractLocation):
             'near_stops': (None, Stop.Results)
         }
 
-    _update_default = ('country', 'city', 'name')
+    _update_default = ('country', )
 
     @property
     def full_name(self):
@@ -106,8 +112,60 @@ class Location(AbstractLocation):
         else:
             return '%s, %s' % (self.city, self.name)
 
+    def _update(self, other, better):
+        if better or (self.city is None and other.city is not None):
+            if other.city is not None:
+                self.city = other.city
+            self.name = other.name
+
     def __repr__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))
+
+    def __eq__(self, other):
+        if not isinstance(other, Location):
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        return self._location_eq(other)
+
+    def _location_eq(self, other):
+        if self.coords == other.coords and self.coords is not None:
+            return True
+
+        if self.country is not None and other.country is not None and self.country != other.country:
+            return False
+
+        near = self._near(other)
+
+        if self.city is None:
+            if other.city is None:
+                return self.name.replace(',', '').replace('  ', ' ') == other.name.replace(',', '').replace('  ', ' ') or near
+
+            else:
+                if not self.name.endswith(other.name):
+                    return False
+
+                if self.name.startswith(other.city):
+                    return True
+
+                return near
+        else:
+            if other.city is None:
+                if not other.name.endswith(self.name):
+                    return False
+
+                if other.name.startswith(self.city):
+                    return True
+
+                return near
+            else:
+                if self.name != other.name:
+                    return False
+
+                return self.city == other.city or near
 
     class Request(Searchable.Request):
         pass
@@ -153,10 +211,22 @@ class Stop(Location):
     def __eq__(self, other):
         if not isinstance(other, Stop):
             return False
-        if self.coords is not None and self.coords == other.coords:
-            return True
-        return (self.name is not None and self.name == other.name and
-                self.city == other.city and self.country == other.country)
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        if self.country is not None and other.country is not None and self.country != other.country:
+            return False
+
+        if self.train_station_name is not None and other.train_station_name is not None:
+            if self.train_station_name.replace('-', ' ') == other.train_station_name.replace('-', ' '):
+                return True
+
+            if self._near(other) and (self.train_station_name.endswith(other.train_station_name) or other.train_station_name.endswith(self.train_station_name)):
+                return True
+
+        return self._location_eq(other)
 
     class Request(Location.Request):
         pass
@@ -176,6 +246,16 @@ class POI(Location):
     class Results(Location.Results):
         pass
 
+    def __eq__(self, other):
+        if not isinstance(other, POI):
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        return self._location_eq(other)
+
 
 class Address(Location):
     def __init__(self, country=None, city=None, name=None):
@@ -192,6 +272,16 @@ class Address(Location):
             'street': (None, str),
             'number': (None, str),
         }
+
+    def __eq__(self, other):
+        if not isinstance(other, POI):
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        return self._location_eq(other)
 
     class Request(Location.Request):
         pass

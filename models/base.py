@@ -356,6 +356,21 @@ class Collectable(Searchable):
                     return False
             return True
 
+    def _equal_by_id(self, other):
+        for name, value in self._ids.items():
+            other_id = other._ids.get(name)
+            if other_id is None:
+                continue
+            if type(value) == tuple and (None in value or None in other_id):
+                for i, v in enumerate(value):
+                    o = other_id[i]
+                    if v is None or o is None:
+                        continue
+                    if o != v:
+                        return False
+            else:
+                return value == other_id
+
     def _serialize_custom(self, name):
         if name == '_ids':
             return 'ids', self._ids
