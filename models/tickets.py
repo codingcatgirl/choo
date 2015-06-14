@@ -70,7 +70,7 @@ class TicketData(Serializable):
         if not isinstance(other, TicketData):
             return False
 
-        if self.authority == None or self.level == None:
+        if self.authority is None or self.level is None:
             return False
 
         if self.authority == other.authority and self.level == other.level:
