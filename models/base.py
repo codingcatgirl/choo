@@ -130,6 +130,9 @@ class Serializable:
         else:
             return cls.__name__
 
+    def __ne__(self, other):
+        return not (self == other)
+
     @classmethod
     def unserialize(cls, data):
         obj = cls()

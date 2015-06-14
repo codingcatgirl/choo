@@ -226,5 +226,14 @@ class Trip(Searchable):
     def __repr__(self):
         return '<Trip %s %s - %s %s>' % (repr(self.origin), str(self.departure), repr(self.origin), str(self.arrival))
 
+    def __eq__(self, other):
+        if not isinstance(other, Trip):
+            return False
+
+        for i, part in enumerate(self):
+            if part != other[i]:
+                return False
+        return True
+
     def __iter__(self):
         yield from self._parts

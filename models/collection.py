@@ -29,6 +29,8 @@ class Collection(Serializable):
             if found is not None:
                 if model == 'Platform' and found.stop != obj.stop:
                     continue
+                if model == 'Ride' and found != obj:
+                    continue
                 return found
 
         for item in self.known.get(model):

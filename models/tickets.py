@@ -66,6 +66,19 @@ class TicketData(Serializable):
             'price_child': (None, float),
         }
 
+    def __eq__(self, other):
+        if not isinstance(other, TicketData):
+            return False
+
+        if self.authority == None or self.level == None:
+            return False
+
+        if self.authority == other.authority and self.level == other.level:
+            if self.price == other.price and self.price_child == other.price_child:
+                return True
+
+        return False
+
     def __repr__(self):
         childprice = ''
         if self.price_child is not None:

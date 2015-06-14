@@ -15,7 +15,7 @@ class TimeAndPlace(Updateable):
     @classmethod
     def _validate(cls):
         return {
-            'platform': (None, Platform),
+            'platform': Platform,
             'arrival': (None, RealtimeTime),
             'departure': (None, RealtimeTime),
             'passthrough': bool
@@ -34,15 +34,26 @@ class TimeAndPlace(Updateable):
         else:
             self.departure.update(other.departure)
 
+        self.platform.update(other.platform)
+
     @property
     def stop(self):
         return self.platform.stop
 
     def __eq__(self, other):
-        assert isinstance(other, TimeAndPlace)
-        return (self.platform == other.platform and
-                self.arrival == other.arrival and
-                self.departure == other.departure)
+        if not isinstance(other, TimeAndPlace):
+            return False
+
+        if self.platform != other.platform:
+            return False
+
+        if self.arrival is None and self.arrival == other.arrival:
+            return True
+
+        if self.departure is None and self.departure == other.departure:
+            return True
+
+        return False
 
     def __repr__(self):
         return ('<TimeAndPlace %s %s %s>' % (self.arrival, self.departure, self.platform))
