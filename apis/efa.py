@@ -837,7 +837,7 @@ class EFA(API):
         # convert time – the EFA API likes to talk about 24:00, so we have to correct that.
         result = datetime(int(d['year']), int(d['month']), int(d['day']), min(int(t['hour']), 23), int(t['minute']))
         if int(t['hour']) == 24:
-            result += timedelta(1)
+            result += timedelta(hours=1)
         return result
 
     def _parse_mot(self, data):
