@@ -19,16 +19,16 @@ class Ride(Collectable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'line': (None, Line),
-            'number': (None, str),
-            'direction': (None, str),
-            'canceled': (None, bool),
-            'bike_friendly': (None, bool),
-            'infotexts': None,
-            '_stops': None,
-            '_paths': None,
-        }
+        return (
+            ('line', (None, Line)),
+            ('number', (None, str)),
+            ('direction', (None, str)),
+            ('canceled', (None, bool)),
+            ('bike_friendly', (None, bool)),
+            ('infotexts', None),
+            ('_stops', None),
+            ('_paths', None),
+        )
 
     _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
 
@@ -195,9 +195,9 @@ class Ride(Collectable):
 
         @classmethod
         def _validate(cls):
-            return {
-                '_i': int
-            }
+            return (
+                ('_i', int),
+            )
 
         def _serialize(self):
             return self._i
@@ -228,11 +228,11 @@ class RideSegment(TripPart):
 
     @classmethod
     def _validate(cls):
-        return {
-            'ride': Ride,
-            '_origin': None,
-            '_destination': None
-        }
+        return (
+            ('ride', Ride),
+            ('_origin', None),
+            ('_destination', None),
+        )
 
     def _validate_custom(self, name, value):
         if name in ('_origin', '_destination'):

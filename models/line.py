@@ -6,17 +6,17 @@ class Line(Collectable):
     @classmethod
     def _validate(cls):
         from .locations import Stop
-        return {
-            'linetype': (None, LineType),
-            'product': (None, str),
-            'name': (None, str),
-            'shortname': (None, str),
-            'route': (None, str),
-            'first_stop': (None, Stop),
-            'last_stop': (None, Stop),
-            'network': (None, str),
-            'operator': (None, str)
-        }
+        return (
+            ('linetype', (None, LineType)),
+            ('product', (None, str)),
+            ('name', (None, str)),
+            ('shortname', (None, str)),
+            ('route', (None, str)),
+            ('first_stop', (None, Stop)),
+            ('last_stop', (None, Stop)),
+            ('network', (None, str)),
+            ('operator', (None, str)),
+        )
 
     def __init__(self, linetype=None):
         super().__init__()
@@ -118,10 +118,10 @@ class LineTypes(Serializable):
 
     @classmethod
     def _validate(cls):
-        return {
-            '_included': None,
-            '_excluded': None
-        }
+        return (
+            ('_included', None),
+            ('_excluded', None),
+        )
 
     def _validate_custom(self, name, value):
         if name in ('_included', '_excluded'):

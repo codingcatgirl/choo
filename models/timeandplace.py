@@ -14,12 +14,12 @@ class TimeAndPlace(Updateable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'platform': Platform,
-            'arrival': (None, RealtimeTime),
-            'departure': (None, RealtimeTime),
-            'passthrough': bool
-        }
+        return (
+            ('platform', Platform),
+            ('arrival', (None, RealtimeTime)),
+            ('departure', (None, RealtimeTime)),
+            ('passthrough', bool),
+        )
 
     _update_default = ('platform', 'passthrough')
 
