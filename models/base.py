@@ -275,7 +275,7 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         def _collect_children(self, collection, last_update=None):
             super()._collect_children(collection, last_update)
 
-            if issubclass(self.Model, Collectable):
+            if issubclass(self.content, Collectable):
                 for i in range(len(self.results)):
                     r = self.results[i]
                     self.results[i] = (collection.add(r[0]), r[1])
