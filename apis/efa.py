@@ -868,7 +868,7 @@ class EFA(API):
         ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
-            line._ids[self.name] = (diva.attrib['project'], diva.attrib['line'], diva.attrib['supplement'])
+            line._ids[self.name] = (diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'], diva.attrib['direction'], diva.attrib['project'])
             ridedir = diva.attrib['direction'].strip()
             if not ridedir:
                 ridedir = None
