@@ -190,6 +190,7 @@ class Serializable:
 
             for name, allowed in c._validate():
                 value = getattr(self, name)
+
                 if isinstance(value, Collectable):
                     newvalue = collection.add(value)
                     if newvalue is not value:
@@ -205,16 +206,19 @@ class Updateable(Serializable):
     def _validate(cls):
         return (
             ('last_update', (datetime, None)),
+            ('low_quality', (bool, None)),
         )
 
     def __init__(self):
         self.last_update = None
+        self.low_quality = None
 
     def update(self, other):
-        better = other.last_update and self.last_update and other.last_update > self.last_update
+        better = (other.last_update and self.last_update and other.last_update > self.last_update and (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
 
         if not self.last_update or better:
             self.last_update = other.last_update
+            self.low_quality = other.low_quality
 
         for c in self.__class__.__mro__:
             if hasattr(c, '_update_default'):
