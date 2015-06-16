@@ -500,7 +500,7 @@ class EFA(API):
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
                 line.linetype = LineType('train.longdistance.highspeed')
             elif departure.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAINS"]') is not None:
-                line.linetype = LineType('tdrain.longdistance')
+                line.linetype = LineType('train.longdistance')
 
             # if ridenum is None:
             #     ridedata = departure.find('./itdServingTrip')
