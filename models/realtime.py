@@ -19,10 +19,10 @@ class RealtimeTime(Updateable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'time': datetime,
-            'delay': (None, timedelta)
-        }
+        return (
+            ('time', datetime),
+            ('delay', (None, timedelta))
+        )
 
     def __repr__(self):
         return '<RealtimeTime %s>' % (str(self))

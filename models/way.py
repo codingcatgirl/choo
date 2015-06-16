@@ -17,15 +17,15 @@ class Way(TripPart):
 
     @classmethod
     def _validate(cls):
-        return {
-            'waytype': WayType,
-            'origin': AbstractLocation,
-            'destination': AbstractLocation,
-            'distance': (None, int, float),
-            'duration': timedelta,
-            'events': None,
-            'path': None,
-        }
+        return (
+            ('waytype', WayType),
+            ('origin', AbstractLocation),
+            ('destination', AbstractLocation),
+            ('distance', (None, int, float)),
+            ('duration', timedelta),
+            ('events', None),
+            ('path', None),
+        )
 
     def _validate_custom(self, name, value):
         if name == 'path':

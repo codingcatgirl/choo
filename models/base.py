@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from collections import Iterable
+from collections import Iterable, OrderedDict
 from datetime import timedelta, datetime
 import copy
 
@@ -13,7 +13,7 @@ class Serializable:
 
             added = ('(%s)' % c._serialized_name()) if c != self.__class__ else ''
 
-            for name, allowed in c._validate().items():
+            for name, allowed in c._validate():
                 if not hasattr(self, name):
                     raise AttributeError('%s%s.%s is missing' % (myname, added, name))
 
@@ -78,7 +78,7 @@ class Serializable:
 
     def serialize(self, typed=False):
         self.validate()
-        data = {}
+        data = OrderedDict()
         if hasattr(self, '_serialize'):
             data = self._serialize()
         else:
@@ -86,7 +86,7 @@ class Serializable:
                 if not hasattr(c, '_validate'):
                     continue
 
-                for name, allowed in c._validate().items():
+                for name, allowed in c._validate():
                     value = getattr(self, name)
 
                     if allowed is None:
@@ -188,7 +188,7 @@ class Serializable:
             if not hasattr(c, '_validate'):
                 continue
 
-            for name in c._validate():
+            for name, allowed in c._validate():
                 value = getattr(self, name)
                 if isinstance(value, Collectable):
                     newvalue = collection.add(value)
@@ -203,9 +203,9 @@ class Serializable:
 class Updateable(Serializable):
     @classmethod
     def _validate(cls):
-        return {
-            'last_update': (datetime, None)
-        }
+        return (
+            ('last_update', (datetime, None)),
+        )
 
     def __init__(self):
         self.last_update = None
@@ -241,7 +241,7 @@ class MetaSearchable(type):
 class Searchable(Updateable, metaclass=MetaSearchable):
     @classmethod
     def _validate(cls):
-        return {}
+        return ()
 
     def matches(self, request):
         if not isinstance(request, Searchable.Request):
@@ -268,9 +268,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
         @classmethod
         def _validate(self):
-            return {
-                'results': None
-            }
+            return (
+                ('results', None),
+            )
 
         def _collect_children(self, collection, last_update=None):
             super()._collect_children(collection, last_update)
@@ -338,9 +338,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 class Collectable(Searchable):
     @classmethod
     def _validate(cls):
-        return {
-            '_ids': None
-        }
+        return (
+            ('_ids', None),
+        )
 
     def __init__(self):
         super().__init__()

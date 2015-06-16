@@ -9,10 +9,10 @@ class Coordinates(Serializable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'lat': float,
-            'lon': float
-        }
+        return (
+            ('lat', float),
+            ('lon', float),
+        )
 
     def _serialize(self):
         return [self.lat, self.lon]
@@ -34,9 +34,9 @@ class AbstractLocation(Collectable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'coords': (None, Coordinates),
-        }
+        return (
+            ('coords', (None, Coordinates)),
+        )
 
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
@@ -65,11 +65,11 @@ class Platform(AbstractLocation):
 
     @classmethod
     def _validate(cls):
-        return {
-            'stop': Stop,
-            'name': (str, None),
-            'full_name': (str, None),
-        }
+        return (
+            ('stop', Stop),
+            ('name', (str, None)),
+            ('full_name', (str, None)),
+        )
 
     _update_default = ('name', 'full_name')
 
@@ -115,12 +115,12 @@ class Location(AbstractLocation):
 
     @classmethod
     def _validate(cls):
-        return {
-            'country': (None, str),
-            'city': (None, str),
-            'name': str,
-            'near_stops': (None, Stop.Results)
-        }
+        return (
+            ('country', (None, str)),
+            ('city', (None, str)),
+            ('name', str),
+            ('near_stops', (None, Stop.Results)),
+        )
 
     _update_default = ('country', )
 
@@ -205,11 +205,11 @@ class Stop(Location):
     def _validate(cls):
         from .ride import Ride
         from .line import Line
-        return {
-            'rides': (None, Ride.Results),
-            'lines': (None, Line.Results),
-            'train_station_name': (None, str)
-        }
+        return (
+            ('rides', (None, Ride.Results)),
+            ('lines', (None, Line.Results)),
+            ('train_station_name', (None, str)),
+        )
 
     def _update(self, other, better):
         if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
@@ -287,10 +287,10 @@ class Address(Location):
 
     @classmethod
     def _validate(cls):
-        return {
-            'street': (None, str),
-            'number': (None, str),
-        }
+        return (
+            ('street', (None, str)),
+            ('number', (None, str)),
+        )
 
     def __eq__(self, other):
         if not isinstance(other, POI):

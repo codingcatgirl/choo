@@ -16,10 +16,10 @@ class Trip(Searchable):
 
     @classmethod
     def _validate(cls):
-        return {
-            '_parts': None,
-            'tickets': (None, TicketList)
-        }
+        return (
+            ('_parts', None),
+            ('tickets', (None, TicketList))
+        )
 
     def _validate_custom(self, name, value):
         if name == '_parts':
@@ -110,11 +110,11 @@ class Trip(Searchable):
 
         @classmethod
         def _validate(cls):
-            return {
-                'origin': Location,
-                'via': (None, Location),
-                'destination': Location
-            }
+            return (
+                ('origin', Location),
+                ('via', (None, Location)),
+                ('destination', Location),
+            )
 
     @property
     def origin(self):
