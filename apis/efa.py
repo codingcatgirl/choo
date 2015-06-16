@@ -301,6 +301,7 @@ class EFA(API):
                 origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
                 line.first_stop = origin
                 line.last_stop = destination
+                line.low_quality = True
                 rlines.append(line)
             stop.lines = Line.Results(rlines)
 

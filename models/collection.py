@@ -19,6 +19,7 @@ class Collection(Serializable):
 
     def retrieve(self, obj):
         assert isinstance(obj, Collectable)
+
         model = obj._serialized_name()
         by_id = self.by_id.get(model)
         if not by_id:
