@@ -1007,7 +1007,7 @@ class EFA(API):
 
         result = TimeAndPlace(platform)
 
-        if 'x' in data.attrib:
+        if data.attrib.get('x'):
             platform.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # There are three ways to describe the time
