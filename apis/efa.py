@@ -857,6 +857,10 @@ class EFA(API):
         if train is not None:
             line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
 
+        traintype = data.attrib.get('trainType')
+        if traintype is not None:
+            line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA') else 'train.longdistance')
+
         train_line = line.linetype in self.train_station_lines
 
         # general Line and Ride attributes
