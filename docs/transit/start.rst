@@ -27,8 +27,8 @@ Also, **Location** and **Platform** are subclasses of **AbstractLocation** which
 
 Those models are called **Searchables** because you can search for them with transit. You can…
 
- * provide an instance of them. transit will try to retrieve it and return a more complete version of it to you
- * use their ``Request`` submodel to specify what you are looking. transit will use the ``Result`` submodel to give you the search results.
+* provide an instance of them. transit will try to retrieve it and return a more complete version of it to you
+* use their ``Request`` submodel to specify what you are looking. transit will use the ``Result`` submodel to give you the search results.
 
 Other Models that are part of transit but can not be searched for include:
 
