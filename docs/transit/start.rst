@@ -1,6 +1,65 @@
 Getting Started
 ===============
 
+The Transit Data Model
+----------------------
+
+Before we start using transit, you have to understand its underlying Models.
+
+**Stop**
+    A Stop is a group of Platforms (e.g. Berlin Hbf).
+
+**Platform**
+    A Platform is a place where a rides stop. (e.g. Gleis 7) It belongs to one Stop.
+
+**Ride**
+    A Ride is the journey of a bus/train/etc. It only happens once. Even the “same” ride on the next day is handled as another Ride.
+
+**Line**
+    A Line is a name for a group of Rides (e.g. Bus Line 495). Every Ride belongs to one Line.
+
+**Trip**
+    A Trip is a connection between two Stops (or AbstractLocations to be precise, see below) with rides, interchanges and/or footpaths in between.
+
+The models **Stop**, **Adress** and **POI** (Point of Interest) are all subclasses of **Location** which describes a stand-alone Location with City and Name
+
+Also, **Location** and **Platform** are subclasses of **AbstractLocation** which describas anything that has a static position.
+
+Those models are called ``Searchables`` because you can search for them with transit. You can…
+ * provide an instance of them. transit will try to retrieve it and return a more complete version of it to you
+ * use their ``Request`` submodel to specify what you are looking. transit will use the ``Result`` submodel to give you the search results.
+
+Other Models that are part of transit but can not be searched for include:
+
+**Way**
+    A path between two AbstractLocation objects.
+
+**TimeAndPlace**
+    A time and place object describes the time, stop and platform and coordinates where a ride meets a stop.
+
+**RideSegment**
+    In most cases, we are only interested in a part of a Ride – from where you enter the train/bus/etc. to where you leave it.
+    That part is called a RideSegment – it consists of a Ride and the start and end point of the segment.
+
+**RealtimeTime**
+    Points in time are always given as a RealtimeTime object, which consists of a datetime and a delay (if known).
+
+**Coordinates**
+    Each ``AbstractLocation`` may have Coordinates. They consist of latitude and longitude.
+
+**WayType**
+    Each Way has a waytype. A WayType has one of the values ``walk``, ``bike``, ``car`` or ``taxi``
+
+**LineType**
+    Each Line has a linetype. A Linetype has one of the values `` `` (empty string), ``train``, ``train.local``, ``train.longdistance``, ``train.longdistance.highspeed``,
+    ``urban``, ``metro``, ``tram``, ``bus``, ``bus.regional``, ``bus.city``, ``bus.express``, ``suspended``, ``ship``, ``dialable``, or ``other``.
+
+    An empty string means that it can be anyone of the other linetypes, The linetype ``bus`` means that it could be any of the bus-subtypes. The reason for this is that
+    not all networks differentiate between some subtyes (e.g. bus types). See the network reference for which linetypes it may output.
+
+For more information, see `Model Reference`_.
+
+
 Command Line Interface
 ----------------------
 
@@ -11,37 +70,49 @@ To do so, we first have to describe Essen Hauptbahnhof as a ``Stop``:
 .. code-block:: json
 
     ["Stop", {
-        "name": "Essen Hauptbahnhof"
+      "name": "Essen Hauptbahnhof"
     }]
 
 The outer list describes the data type (``Stop``) and the data.
 
-Now we pass this data to the API.
+Now we pass this data to the API. If you set the filename to ``-`` you can pass the data via STDIN.
 
 .. code-block:: none
 
-    transit VRR get_stop essen.json
+    transit vrr --output prettyjson essen.json
 
-The API method ``get_stop`` tries to get as much information as possible about a given stop with only one request to the server.
+This sends the Stop to transit and it tries to get as much information as possible about that given stop with only one request to the server.
 
-.. code-block:: none
+.. code-block:: json
 
-    Stop
-      country: de
-      city: Essen
-      name: Hauptbahnhof
-      coords: (51.451139, 7.012937)
-      lines:
-        RB40 → Hagen Hauptbahnhof (by Abellio Zug in vrr)
-        RE 14 → Borken, Bahnhof (by None in owl)
-        […]
-      rides:
-        13:11 +4   4     107 → Essen Bredeney
-        13:13      3     SB16 → Bottrop Feldhausen Bf
-        13:13      3     U18 → Essen Berliner Platz
-        […]
+    ["Stop",
+      {
+        "train_station_name": "Essen Hbf",
+        "country": "de",
+        "city": "Essen",
+        "name": "Hauptbahnhof",
+        "near_stops": {
+          "results": [],
+          "last_update": "2015-06-17 15:49:12"
+        },
+        "coords": [
+          51.451137,
+          7.012941
+        ],
+        "ids": {
+          "ifopt": [
+            null,
+            "9289"
+          ],
+          "vrr": 20009289
+        },
+        "last_update": "2015-06-17 15:49:12",
+        "rides": {  },
+        "lines": {  }
+      }
+    ]
 
-As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not guaranteed by the ``get_stop`` method.
+As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not the case for all networks.
 
 For more information about the command line syntax and available methods, see `Command Line Usage`_ and `Network API`_.
 
@@ -60,98 +131,6 @@ If you want to process the data you want it in a easily parsable format and you 
 .. code-block::
 
     transit VRR get_stop --json-noraw essen.json
-
-The ``--json-noraw`` argument suppresses the raw data (XML or whatever the backend sends) in the JSON as it would make the output even larger. If you want to pass the json output back to the Interface, you should (but do not have to) use ``--json``.
-
-For more information about the command line syntax and available methods, see `Command Line Usage`_ and `Network API`_.
-
-If you set the filename to ``-`` you can pass the data via STDIN.
-
-.. code-block:: json
-
-    ["Stop", {
-        "_ids": {"vrr": 20009289},
-        "country": "de",
-        "city": "Essen",
-        "name": "Hauptbahnhof",
-        "coords": ["tuple", [51.451139, 7.012937]],
-        "lines": [
-            ["Line", {
-                "_ids": {},
-                "name": "RB40",
-                "product": "Abellio-Zug",
-                "shortname": "RB40",
-                "linetype": ["LineType", "localtrain"],
-                "last_stop": ["Stop", {
-                    "_ids": {"vrr": 20002007},
-                    "country": "de",
-                    "name": "Hagen Hauptbahnhof"
-                }],
-                "route": "Essen - Bochum - Witten - Hagen",
-                "operator": "Abellio Zug",
-                "network": "vrr"
-            }]
-        ],
-        "rides": [
-            ["RideSegment", {
-                "origin": 2,
-                "ride": ["Ride", {
-                    "_ids": {"vrr": "vrr:11106: :R:j14"},
-                    "number": "11106",
-                    "stops": [
-                        ["TimeAndPlace", {
-                            "_ids": {},
-                            "stop": ["Stop", {
-                                "_ids": {},
-                                "country": "de",
-                                "name": "Essen Helenenstr. Schleife"
-                            }]
-                        }],
-                        null,
-                        ["TimeAndPlace", {
-                            "_ids": {},
-                            "departure": ["RealtimeTime", {
-                                "_ids": {},
-                                "time": ["datetime", "2014-12-15 13:24"],
-                                "delay": ["timedelta", 120]
-                            }],
-                            "stop": ["Stop", {
-                                "_ids": {"vrr": 20009289},
-                                "lines": [],
-                                "rides": [],
-                                "coords": ["tuple", [51.451139, 7.012937]],
-                                "is_truncated": true,
-                                "city": "Essen",
-                                "country": "de",
-                                "name": "Hauptbahnhof"
-                            }],
-                            "platform": "1",
-                            "coords": ["tuple", [51.449839, 7.01262]]
-                        }],
-                        null,
-                        ["TimeAndPlace", {
-                            "_ids": {},
-                            "stop": ["Stop", {
-                                "_ids": {"vrr": 20009832},
-                                "country": "de",
-                                "name": "Essen Altenessen Bf Schleife"
-                            }]
-                        }]
-                    ],
-                    "line": ["Line", {
-                        "_ids": {},
-                        "name": "Stra\u00dfenbahn 106",
-                        "product": "Stra\u00dfenbahn",
-                        "operator": "EVAG Strab",
-                        "shortname": "106",
-                        "linetype": ["LineType", "tram"],
-                        "route": "Bergeborbeck - Helenenstr. - R\u00fcttenscheid - Essen Hbf - Altenessen",
-                        "network": "vrr"
-                    }]
-                }],
-            }]
-        ]
-    }]
 
 Although this is the same type of data it is much more detailed.
 First, we can see that the API returns a stop – the stop we gave as input – but with much more information.
