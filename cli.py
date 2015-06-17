@@ -11,8 +11,8 @@ supported = networks.supported
 parser = argparse.ArgumentParser()
 parser.add_argument('network', type=str, choices=('networks', ) + networks.supported, help='network/API to use. “networks” lists all available networks')
 parser.add_argument('query', nargs='?', type=str, help='representation of a Searchable or Searchable.Request')
-parser.add_argument('--input', type=str, choices=('json', 'msgpack'), default='json', help='input format')
-parser.add_argument('--output', type=str, choices=('json', 'prettyjson', 'msgpack'), default='json', help='output format')
+parser.add_argument('--input', type=str, choices=('json', 'msgpack'), default='json', help='input format (default: json)')
+parser.add_argument('--output', type=str, choices=('json', 'prettyjson', 'msgpack'), default='json', help='output format (default: json)')
 
 args = parser.parse_args()
 
