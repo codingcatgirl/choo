@@ -115,6 +115,8 @@ This sends the Stop to transit and it tries to get as much information as possib
 
 As you can see, the API returned a Stop with more information.
 
+The stop now is defined by it’s correct country, city and name attribute. Also, we have its coordinates now. In the _ids attribute you can find its ids. This ID would be enough to identify the stop. Our input JSON could also have been ``["Stop", {"ids": {"vrr": 20009289}}]`` with the same result.
+
 The ``rides`` and ``lines`` attributes were shortened in this example but will give you ``Ride.Results`` and ``Line.Results`` if the API provides this information. (If not, you can still use a ``Ride.Request`` oder ``Line.Request`` to request it explicitely.
 
 For more information about the command line syntax, see `Command Line Usage`_.
