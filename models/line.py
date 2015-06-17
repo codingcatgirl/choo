@@ -132,7 +132,7 @@ class LineTypes(Serializable):
                     return False
             return True
 
-    def _serialize_custom(self, name, value):
+    def _serialize_custom(self, name):
         if name == '_included':
             return 'included', [str(s) for s in self._included]
         elif name == '_excluded':
