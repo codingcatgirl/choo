@@ -5,14 +5,16 @@ from datetime import datetime
 import json
 
 vrr = VRR()
-bs = Stop(city='essen', name='borbeck süd bf')
+bs = Stop(city='essen', name='fliegenbusch')
 bo = Stop(city='essen', name='hbf')
 
 trip = Trip.Request()
 trip.origin = bs
 trip.destination = bo
 
-result = vrr.search_trips(trip)
+#result = vrr.search_trips(trip)
+
+result = vrr.query(trip)
 
 #for trip in result:
 #    print(trip)
@@ -28,3 +30,4 @@ serialized = result.serialize(typed=True)
 #open('out2.json', 'w').write(json.dumps(serialized2, indent=2, sort_keys=True))
 #print(serialized)
 print(json.dumps(serialized, indent=2))
+#print(json.dumps(vrr.collection.serialize(typed=True), indent=2))
