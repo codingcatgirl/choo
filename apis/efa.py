@@ -86,12 +86,9 @@ class EFA(API):
         linetypes = triprequest.linetypes
         if linetypes is None:
             linetypes = LineTypes()
-        assert isinstance(linetypes, LineTypes)
 
         departure = triprequest.departure
         arrival = triprequest.arrival
-        assert departure is None or isinstance(departure, RealtimeTime) or isinstance(departure, datetime)
-        assert arrival is None or isinstance(arrival, RealtimeTime) or isinstance(arrival, datetime)
 
         if isinstance(departure, datetime):
             departure = RealtimeTime(departure)
@@ -210,9 +207,6 @@ class EFA(API):
 
         if not triprequest.allow_elevators:
             post['noElevators'] = 1
-
-        assert isinstance(triprequest.origin, Location)
-        assert isinstance(triprequest.destination, Location)
 
         post.update(self._convert_location(triprequest.origin, '%s_origin'))
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
