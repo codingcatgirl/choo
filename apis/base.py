@@ -35,11 +35,10 @@ class API():
                 return self.get_platform(obj)
             elif isinstance(obj, Location):
                 return self.get_location(obj)
-                
+
         raise NotImplementedError()
 
     def search_trip(self, obj):
-        print('hahaaaa')
         assert isinstance(obj, Trip.Request)
         return self._search_trips(obj)
 
