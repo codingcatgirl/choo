@@ -52,7 +52,7 @@ Other Models that are part of transit but can not be searched for include:
     Each Way has a waytype. A WayType has one of the values ``walk``, ``bike``, ``car`` or ``taxi``
 
 **LineType**
-    Each Line has a linetype. A Linetype has one of the values `` `` (empty string), ``train``, ``train.local``, ``train.longdistance``, ``train.longdistance.highspeed``,
+    Each Line has a linetype. A Linetype has one of the values ``(empty string)``, ``train``, ``train.local``, ``train.longdistance``, ``train.longdistance.highspeed``,
     ``urban``, ``metro``, ``tram``, ``bus``, ``bus.regional``, ``bus.city``, ``bus.express``, ``suspended``, ``ship``, ``dialable``, or ``other``.
 
     An empty string means that it can be anyone of the other linetypes, The linetype ``bus`` means that it could be any of the bus-subtypes. The reason for this is that
