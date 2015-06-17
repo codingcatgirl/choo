@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from models import Serializable, unserialize_typed
+from models import unserialize_typed
 import sys
 import networks
 import json
