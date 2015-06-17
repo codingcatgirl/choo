@@ -590,8 +590,9 @@ class EFA(API):
                         interchange.origin = part[-1].platform
                         trip._parts.append(interchange)
                 else:
-                    part.events = interchange.events
-                    interchange = None
+                    if interchange is not None:
+                        part.events = interchange.events
+                        interchange = None
 
             ticketlist = TicketList()
             tickets = route.find('./itdFare/itdSingleTicket')
