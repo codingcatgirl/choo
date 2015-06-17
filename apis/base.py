@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from models import Collection
+from models import Collection, Searchable
+from models import Trip, Ride, Line, Platform, Location
 
 
 class API():
@@ -8,5 +9,101 @@ class API():
     def __init__(self):
         self.collection = Collection()
 
-    def _my_data(self, obj):
-        return obj._ids.get(self.name, None)
+    def query(self, obj):
+        if not isinstance(obj, (Searchable, Searchable.Request)):
+            raise TypeError('can only query Searchable or Searchable.Request')
+
+        if isinstance(obj, Searchable.Request):
+            if obj.Model == Trip:
+                return self.search_trip(obj)
+            elif obj.Model == Ride:
+                return self.search_ride(obj)
+            elif obj.Model == Line:
+                return self.search_line(obj)
+            elif obj.Model == Platform:
+                return self.search_platform(obj)
+            elif obj.Model == Location:
+                return self.search_location(obj)
+        else:
+            if isinstance(obj, Trip):
+                return self.get_trip(obj)
+            elif isinstance(obj, Ride):
+                return self.get_ride(obj)
+            elif isinstance(obj, Line):
+                return self.get_line(obj)
+            elif isinstance(obj, Platform):
+                return self.get_platform(obj)
+            elif isinstance(obj, Location):
+                return self.get_location(obj)
+
+        raise NotImplementedError()
+
+    def search_trip(self, obj):
+        assert isinstance(obj, Trip.Request)
+        return self._search_trips(obj)
+
+    def search_ride(self, obj):
+        assert isinstance(obj, Ride.Request)
+        return self._search_rides(obj)
+
+    def search_line(self, obj):
+        assert isinstance(obj, Line.Request)
+        return self._search_lines(obj)
+
+    def search_platform(self, obj):
+        assert isinstance(obj, Platform.Request)
+        return self._search_platforms(obj)
+
+    def search_location(self, obj):
+        assert isinstance(obj, Location.Request)
+        return self._search_locations(obj)
+
+    def get_trip(self, obj):
+        assert isinstance(obj, Trip)
+        return self._get_trip(obj)
+
+    def get_ride(self, obj):
+        assert isinstance(obj, Ride)
+        return self._get_ride(obj)
+
+    def get_line(self, obj):
+        assert isinstance(obj, Line)
+        return self._get_line(obj)
+
+    def get_platform(self, obj):
+        assert isinstance(obj, Platform)
+        return self._get_platform(obj)
+
+    def get_location(self, obj):
+        assert isinstance(obj, Location)
+        return self._get_location(obj)
+
+    def _search_trips(self, obj):
+        raise NotImplementedError()
+
+    def _search_rides(self, obj):
+        raise NotImplementedError()
+
+    def _search_lines(self, obj):
+        raise NotImplementedError()
+
+    def _search_platforms(self, obj):
+        raise NotImplementedError()
+
+    def _search_locations(self, obj):
+        raise NotImplementedError()
+
+    def _get_trip(self, obj):
+        raise NotImplementedError()
+
+    def _get_ride(self, obj):
+        raise NotImplementedError()
+
+    def _get_line(self, obj):
+        raise NotImplementedError()
+
+    def _get_platform(self, obj):
+        raise NotImplementedError()
+
+    def _get_location(self, obj):
+        raise NotImplementedError()

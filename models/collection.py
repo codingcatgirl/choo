@@ -19,6 +19,7 @@ class Collection(Serializable):
 
     def retrieve(self, obj):
         assert isinstance(obj, Collectable)
+
         model = obj._serialized_name()
         by_id = self.by_id.get(model)
         if not by_id:
@@ -28,6 +29,8 @@ class Collection(Serializable):
             found = by_id.get(name, {}).get(value)
             if found is not None:
                 if model == 'Platform' and found.stop != obj.stop:
+                    continue
+                if model == 'Ride' and found != obj:
                     continue
                 return found
 

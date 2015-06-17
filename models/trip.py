@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 from .base import Searchable, TripPart
 from .way import Way, WayType
-from .locations import Location
+from .locations import Location, AbstractLocation
 from .ride import Ride, RideSegment
 from .line import Line, LineType, LineTypes
 from .tickets import TicketList
-from datetime import timedelta
-
+from datetime import timedelta, datetime
 
 class Trip(Searchable):
     def __init__(self):
@@ -16,10 +15,10 @@ class Trip(Searchable):
 
     @classmethod
     def _validate(cls):
-        return {
-            '_parts': None,
-            'tickets': (None, TicketList)
-        }
+        return (
+            ('_parts', None),
+            ('tickets', (None, TicketList))
+        )
 
     def _validate_custom(self, name, value):
         if name == '_parts':
@@ -37,6 +36,8 @@ class Trip(Searchable):
             self.parts = [self._unserialize_typed(part, (RideSegment, Way)) for part in data]
 
     def _collect_children(self, collection, last_update=None):
+        super()._collect_children(collection, last_update)
+
         if self.tickets is not None:
             self.tickets._update_collect(collection, last_update)
 
@@ -46,7 +47,6 @@ class Trip(Searchable):
     class Request(Searchable.Request):
         def __init__(self):
             super().__init__()
-            self.parts = []
             self.walk_speed = 'normal'
             self.origin = None
             self.via = []
@@ -70,6 +70,34 @@ class Trip(Searchable):
             self.wayduration_origin = timedelta(minutes=10)
             self.wayduration_via = timedelta(minutes=10)
             self.wayduration_destination = timedelta(minutes=10)
+
+        @classmethod
+        def _validate(cls):
+            return (
+                # ('walk_speed', None),
+                ('origin', (None, AbstractLocation, Ride, Trip)),
+                # ('via', None),
+                ('destination', (None, AbstractLocation, Ride, Trip)),
+                ('departure', (None, datetime)),
+                ('arrival', (None, datetime)),
+                ('linetypes', LineTypes),
+                ('max_changes', (None, int)),
+
+                ('with_bike', bool),
+                ('wheelchair', bool),
+                ('low_floor_only', bool),
+                ('allow_solid_stairs', bool),
+                ('allow_escalators', bool),
+                ('allow_elevators', bool),
+
+                ('waytype_origin', WayType),
+                ('waytype_via', WayType),
+                ('waytype_destination', WayType),
+
+                ('wayduration_origin', timedelta),
+                ('wayduration_via', timedelta),
+                ('wayduration_destination', timedelta)
+            )
 
         def _matches(self, obj):
             if self.origin != obj.origin or self.destination != obj.destination:
@@ -110,11 +138,11 @@ class Trip(Searchable):
 
         @classmethod
         def _validate(cls):
-            return {
-                'origin': Location,
-                'via': (None, Location),
-                'destination': Location
-            }
+            return (
+                ('origin', Location),
+                ('via', (None, Location)),
+                ('destination', Location),
+            )
 
     @property
     def origin(self):
@@ -225,6 +253,15 @@ class Trip(Searchable):
 
     def __repr__(self):
         return '<Trip %s %s - %s %s>' % (repr(self.origin), str(self.departure), repr(self.origin), str(self.arrival))
+
+    def __eq__(self, other):
+        if not isinstance(other, Trip):
+            return False
+
+        for i, part in enumerate(self):
+            if part != other[i]:
+                return False
+        return True
 
     def __iter__(self):
         yield from self._parts

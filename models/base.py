@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from collections import Iterable
+from collections import Iterable, OrderedDict
 from datetime import timedelta, datetime
 import copy
 
@@ -13,7 +13,7 @@ class Serializable:
 
             added = ('(%s)' % c._serialized_name()) if c != self.__class__ else ''
 
-            for name, allowed in c._validate().items():
+            for name, allowed in c._validate():
                 if not hasattr(self, name):
                     raise AttributeError('%s%s.%s is missing' % (myname, added, name))
 
@@ -78,7 +78,7 @@ class Serializable:
 
     def serialize(self, typed=False):
         self.validate()
-        data = {}
+        data = OrderedDict()
         if hasattr(self, '_serialize'):
             data = self._serialize()
         else:
@@ -86,7 +86,7 @@ class Serializable:
                 if not hasattr(c, '_validate'):
                     continue
 
-                for name, allowed in c._validate().items():
+                for name, allowed in c._validate():
                     value = getattr(self, name)
 
                     if allowed is None:
@@ -103,7 +103,7 @@ class Serializable:
                         elif isinstance(value, datetime):
                             value = value.strftime('%Y-%m-%d %H:%M:%S')
                         elif isinstance(value, timedelta):
-                            value = value.total_seconds()
+                            value = int(value.total_seconds())
                     else:
                         if value is None:
                             continue
@@ -130,6 +130,9 @@ class Serializable:
         else:
             return cls.__name__
 
+    def __ne__(self, other):
+        return not (self == other)
+
     @classmethod
     def unserialize(cls, data):
         obj = cls()
@@ -139,7 +142,7 @@ class Serializable:
             for c in cls.__mro__:
                 validate = {}
                 if hasattr(c, '_validate'):
-                    validate = c._validate()
+                    validate = dict(c._validate())
 
                 custom = hasattr(c, '_unserialize_custom')
 
@@ -185,8 +188,9 @@ class Serializable:
             if not hasattr(c, '_validate'):
                 continue
 
-            for name in c._validate():
+            for name, allowed in c._validate():
                 value = getattr(self, name)
+
                 if isinstance(value, Collectable):
                     newvalue = collection.add(value)
                     if newvalue is not value:
@@ -200,18 +204,21 @@ class Serializable:
 class Updateable(Serializable):
     @classmethod
     def _validate(cls):
-        return {
-            'last_update': (datetime, None)
-        }
+        return (
+            ('last_update', (datetime, None)),
+            ('low_quality', (bool, None)),
+        )
 
     def __init__(self):
         self.last_update = None
+        self.low_quality = None
 
     def update(self, other):
-        better = other.last_update and self.last_update and other.last_update > self.last_update
+        better = (other.last_update and self.last_update and other.last_update > self.last_update and (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
 
         if not self.last_update or better:
             self.last_update = other.last_update
+            self.low_quality = other.low_quality
 
         for c in self.__class__.__mro__:
             if hasattr(c, '_update_default'):
@@ -238,7 +245,7 @@ class MetaSearchable(type):
 class Searchable(Updateable, metaclass=MetaSearchable):
     @classmethod
     def _validate(cls):
-        return {}
+        return ()
 
     def matches(self, request):
         if not isinstance(request, Searchable.Request):
@@ -265,14 +272,14 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
         @classmethod
         def _validate(self):
-            return {
-                'results': None
-            }
+            return (
+                ('results', None),
+            )
 
         def _collect_children(self, collection, last_update=None):
             super()._collect_children(collection, last_update)
 
-            if issubclass(self.Model, Collectable):
+            if issubclass(self.content, Collectable):
                 for i in range(len(self.results)):
                     r = self.results[i]
                     self.results[i] = (collection.add(r[0]), r[1])
@@ -335,9 +342,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 class Collectable(Searchable):
     @classmethod
     def _validate(cls):
-        return {
-            '_ids': None
-        }
+        return (
+            ('_ids', None),
+        )
 
     def __init__(self):
         super().__init__()
@@ -355,6 +362,21 @@ class Collectable(Searchable):
                 if not isinstance(data, (int, str, tuple)):
                     return False
             return True
+
+    def _equal_by_id(self, other):
+        for name, value in self._ids.items():
+            other_id = other._ids.get(name)
+            if other_id is None:
+                continue
+            if type(value) == tuple and (None in value or None in other_id):
+                for i, v in enumerate(value):
+                    o = other_id[i]
+                    if v is None or o is None:
+                        continue
+                    if o != v:
+                        return False
+            else:
+                return value == other_id
 
     def _serialize_custom(self, name):
         if name == '_ids':

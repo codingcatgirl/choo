@@ -13,13 +13,13 @@ class TicketList(Updateable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'currency': str,
-            'level_name': (None, str),
-            'single': TicketData,
-            'bike': (None, TicketData),
-            'other': None
-        }
+        return (
+            ('currency', str),
+            ('level_name', (None, str)),
+            ('single', TicketData),
+            ('bike', (None, TicketData)),
+            ('other', None),
+        )
 
     _update_default = ('currency', 'level_name', 'single', 'bike')
 
@@ -59,12 +59,25 @@ class TicketData(Serializable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'authority': (str, None),
-            'level': (str, None),
-            'price': float,
-            'price_child': (None, float),
-        }
+        return (
+            ('authority', (str, None)),
+            ('level', (str, None)),
+            ('price', float),
+            ('price_child', (None, float)),
+        )
+
+    def __eq__(self, other):
+        if not isinstance(other, TicketData):
+            return False
+
+        if self.authority is None or self.level is None:
+            return False
+
+        if self.authority == other.authority and self.level == other.level:
+            if self.price == other.price and self.price_child == other.price_child:
+                return True
+
+        return False
 
     def __repr__(self):
         childprice = ''

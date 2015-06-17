@@ -19,10 +19,10 @@ class RealtimeTime(Updateable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'time': datetime,
-            'delay': (None, timedelta)
-        }
+        return (
+            ('time', datetime),
+            ('delay', (None, timedelta))
+        )
 
     def __repr__(self):
         return '<RealtimeTime %s>' % (str(self))
@@ -53,11 +53,11 @@ class RealtimeTime(Updateable):
         return RealtimeTime(self.time - other, self.delay)
 
     def __eq__(self, other):
-        assert isinstance(other, RealtimeTime) or isinstance(other, datetime)
         if isinstance(other, datetime):
             return self.livetime == other
-        else:
-            return self.livetime == other.livetime
+        elif isinstance(other, RealtimeTime):
+            return self.time == other.time
+        return False
 
     def __lt__(self, other):
         assert isinstance(other, RealtimeTime) or isinstance(other, datetime)

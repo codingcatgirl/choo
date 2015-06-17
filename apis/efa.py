@@ -24,18 +24,14 @@ class EFA(API):
         super().__init__()
         self.cities = {}
 
-    def get_stop(self, stop: Stop, must_get_departures=False):
-        assert isinstance(stop, Stop)
+    def _get_stop(self, stop: Stop, must_get_departures=False):
         return self.get_stop_rides(stop)
 
-    def get_stop_rides(self, stop: Stop):
+    def _get_stop_rides(self, stop: Stop):
         return self._departure_monitor_request(stop)
 
-    def search_trips(self, triprequest: Trip.Request):
+    def _search_trips(self, triprequest: Trip.Request):
         return self._trip_request(triprequest)
-
-    def get_trip(self, trip: Stop):
-        pass
 
     # Internal methods start here
     def _post(self, endpoint, data):
@@ -45,7 +41,7 @@ class EFA(API):
 
     def _convert_location(self, location: Location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
-        myid = self._my_data(location)
+        myid = location._ids.get(self.name)
 
         city = location.city
 
@@ -90,12 +86,9 @@ class EFA(API):
         linetypes = triprequest.linetypes
         if linetypes is None:
             linetypes = LineTypes()
-        assert isinstance(linetypes, LineTypes)
 
         departure = triprequest.departure
         arrival = triprequest.arrival
-        assert departure is None or isinstance(departure, RealtimeTime) or isinstance(departure, datetime)
-        assert arrival is None or isinstance(arrival, RealtimeTime) or isinstance(arrival, datetime)
 
         if isinstance(departure, datetime):
             departure = RealtimeTime(departure)
@@ -215,9 +208,6 @@ class EFA(API):
         if not triprequest.allow_elevators:
             post['noElevators'] = 1
 
-        assert isinstance(triprequest.origin, Location)
-        assert isinstance(triprequest.destination, Location)
-
         post.update(self._convert_location(triprequest.origin, '%s_origin'))
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
 
@@ -301,6 +291,7 @@ class EFA(API):
                 origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
                 line.first_stop = origin
                 line.last_stop = destination
+                line.low_quality = True
                 rlines.append(line)
             stop.lines = Line.Results(rlines)
 
@@ -500,7 +491,7 @@ class EFA(API):
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
                 line.linetype = LineType('train.longdistance.highspeed')
             elif departure.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAINS"]') is not None:
-                line.linetype = LineType('tdrain.longdistance')
+                line.linetype = LineType('train.longdistance')
 
             # if ridenum is None:
             #     ridedata = departure.find('./itdServingTrip')
@@ -837,7 +828,7 @@ class EFA(API):
         # convert time – the EFA API likes to talk about 24:00, so we have to correct that.
         result = datetime(int(d['year']), int(d['month']), int(d['day']), min(int(t['hour']), 23), int(t['minute']))
         if int(t['hour']) == 24:
-            result += timedelta(1)
+            result += timedelta(hours=1)
         return result
 
     def _parse_mot(self, data):
@@ -857,6 +848,10 @@ class EFA(API):
         if train is not None:
             line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
 
+        traintype = data.attrib.get('trainType')
+        if traintype is not None:
+            line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA') else 'train.longdistance')
+
         train_line = line.linetype in self.train_station_lines
 
         # general Line and Ride attributes
@@ -864,7 +859,7 @@ class EFA(API):
         ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
-            line._ids[self.name] = (diva.attrib['project'], diva.attrib['line'], diva.attrib['supplement'])
+            line._ids[self.name] = (diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'], diva.attrib['direction'], diva.attrib['project'])
             ridedir = diva.attrib['direction'].strip()
             if not ridedir:
                 ridedir = None
@@ -1003,7 +998,7 @@ class EFA(API):
 
         result = TimeAndPlace(platform)
 
-        if 'x' in data.attrib:
+        if data.attrib.get('x'):
             platform.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
         # There are three ways to describe the time
