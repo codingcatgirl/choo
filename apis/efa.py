@@ -590,9 +590,8 @@ class EFA(API):
                         interchange.origin = part[-1].platform
                         trip._parts.append(interchange)
                 else:
-                    if interchange is not None:
-                        part.events = interchange.events
-                        interchange = None
+                    part.events = interchange.events
+                    interchange = None
 
             ticketlist = TicketList()
             tickets = route.find('./itdFare/itdSingleTicket')
@@ -680,8 +679,7 @@ class EFA(API):
 
         if motdata is None or data.attrib['type'] == 'IT':
             try:
-                waytype = {'98': 'walk', '100': 'walk', '101': 'bike', '104': 'car', '105': 'taxi'}[data.find('./itdMeansOfTransport').attrib['type']]
-                # 98 = gesichter anschluss
+                waytype = {'100': 'walk', '101': 'bike', '104': 'car', '105': 'taxi'}[data.find('./itdMeansOfTransport').attrib['type']]
             except KeyError:
                 waytype = "unknown:"+data.find('./itdMeansOfTransport').attrib['type']
             way = Way(WayType(waytype), points[0].stop, points[1].stop)
