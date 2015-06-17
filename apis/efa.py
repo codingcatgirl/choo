@@ -24,14 +24,17 @@ class EFA(API):
         super().__init__()
         self.cities = {}
 
-    def _get_stop(self, stop: Stop, must_get_departures=False):
-        return self.get_stop_rides(stop)
-
-    def _get_stop_rides(self, stop: Stop):
-        return self._departure_monitor_request(stop)
+    def _get_location(self, stop):
+        if not isinstance(stop, Stop):
+            raise NotImplementedError()
+        result = self._get_stop_rides(stop)
+        return result if isinstance(result, Stop) else None
 
     def _search_trips(self, triprequest: Trip.Request):
         return self._trip_request(triprequest)
+
+    def _get_stop_rides(self, stop: Stop):
+        return self._departure_monitor_request(stop)
 
     # Internal methods start here
     def _post(self, endpoint, data):
@@ -377,6 +380,7 @@ class EFA(API):
 
         # Place.city
         p = data.find('./itdOdvPlace')
+        cityid = None
         if p.attrib['state'] == 'empty':
             city = None
         elif p.attrib['state'] != 'identified':
