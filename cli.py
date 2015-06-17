@@ -49,7 +49,7 @@ else:
             query = f.read()
             f.close()
 
-        query = msgpack.unpackb(query)
+        query = msgpack.unpackb(query,encoding='utf-8')
 
     try:
         query = unserialize_typed(query)
