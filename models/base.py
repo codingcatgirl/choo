@@ -103,7 +103,7 @@ class Serializable:
                         elif isinstance(value, datetime):
                             value = value.strftime('%Y-%m-%d %H:%M:%S')
                         elif isinstance(value, timedelta):
-                            value = value.total_seconds()
+                            value = int(value.total_seconds())
                     else:
                         if value is None:
                             continue
@@ -142,7 +142,7 @@ class Serializable:
             for c in cls.__mro__:
                 validate = {}
                 if hasattr(c, '_validate'):
-                    validate = c._validate()
+                    validate = dict(c._validate())
 
                 custom = hasattr(c, '_unserialize_custom')
 
