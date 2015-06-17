@@ -45,7 +45,7 @@ class EFA(API):
 
     def _convert_location(self, location: Location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
-        myid = self._my_data(location)
+        myid = location._ids.get(self.name)
 
         city = location.city
 
