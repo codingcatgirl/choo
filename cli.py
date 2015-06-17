@@ -63,13 +63,15 @@ else:
         print('This network does not support this action.')
         sys.exit(4)
 
+serialized = None if result is None else result.serialize(typed=True)
+
 if args.output == 'json':
-    print(json.dumps(result.serialize(), separators=(',', ':')))
+    print(json.dumps(serialized, separators=(',', ':')))
 elif args.output == 'prettyjson':
-    print(json.dumps(result.serialize(), indent=2))
+    print(json.dumps(serialized, indent=2))
 elif args.output == 'mspack':
     try:
         import msgpack
     except:
         raise ImportError('Please install: pip install msgpack-python')
-    sys.stdout.buffer.write(msgpack.packb(result.serialize(), use_bin_type=True))
+    sys.stdout.buffer.write(msgpack.packb(serialized, use_bin_type=True))
