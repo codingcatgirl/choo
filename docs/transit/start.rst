@@ -113,9 +113,11 @@ This sends the Stop to transit and it tries to get as much information as possib
       }
     ]
 
-As you can see, the API returned a Stop with more information. Luckily for us, it even gave us the lines and rides attribute, which is not the case for all networks.
+As you can see, the API returned a Stop with more information.
 
-For more information about the command line syntax and available methods, see `Command Line Usage`_ and `Network API`_.
+The ``rides`` and ``lines`` attributes were shortened in this example but will give you ``Ride.Results`` and ``Line.Results`` if the API provides this information. (If not, you can still use a ``Ride.Request`` oder ``Line.Request`` to request it explicitely.
+
+For more information about the command line syntax, see `Command Line Usage`_.
 
 For more information about the JSON format, see `Model Reference`_ and `Model Serialization`_.
 
@@ -123,57 +125,6 @@ For more information about the JSON format, see `Model Reference`_ and `Model Se
 .. _`Network API`: api.html
 .. _`Model Reference`: models.html
 .. _`Model Serialization`: serializing.html
-
-JSON Interface
---------------
-
-If you want to process the data you want it in a easily parsable format and you want it complete. So let's do that and look at what we get.
-
-.. code-block::
-
-    transit VRR get_stop --json-noraw essen.json
-
-Although this is the same type of data it is much more detailed.
-First, we can see that the API returns a stop – the stop we gave as input – but with much more information.
-
-**Stop**
-    The stop now is defined by it's correct ``country``, ``city`` and ``name`` attribute.
-    Also, we have its coordinates now. In the ``_ids`` attribute you can find its ids.
-    This ID would be enough to identify the stop. Our input JSON could also have been ``["Stop", {"_ids": {"vrr": 20009289}}]`` with the same result.
-
-**Line**
-    In the ``lines`` attribute all lines that can be reached from this stop are listed. In this excerpt, only one line is listed.
-    Note that in its ``last_stop`` attribute the stop is not fully described: The ``city`` attribute is missing.
-    **Every attribute that has no data available will be missing.**
-    To get the full information about this Stop, you would also pass it to the ``get_stop`` method.
-
-In the ``rides`` attribute the next rides that pass this station are listed. To understand this, let's talk about how rides work:
-
-**RideSegment**
-    A ride is a journey of a train, bus, or similar from its first stop to its last stop.
-    In most cases, we are only interested in a part of this journey – from where you enter the train/bus/etc. to where you leave it.
-    That part is called a RideSegment – it consists of a ``ride`` and the start (``origin``) and end (``destination``) point of the segment.
-
-**Ride**
-    A ride primarily consists of a list of TimeAndPlace objects. Mosts of the time not all stops of the ride are known.
-    This is why the ride in this example only consists of 3 TimeAndPlace objects, the origin of the ride, our stop and the destination of the ride.
-    The ``null`` items in between them mean that there may be missing stops between.
-    If the TimeAndPlace object directly before and after the ``null`` items are about the same stop, they might be the same.
-    To get all information about a ride, use the ``get_ride`` method.
-
-    Our stop is also listed in the ride. Because it is listed as a indirect child of itself, it gets the ``"is_truncated": true`` parameter.
-    This means that objects that can lead to more children will not be listed. Here, the ``lines`` and ``rides`` attributes are empty lists.
-
-**TimeAndPlace**
-    A time and place object describes the time, stop and platform and coordinates where a ride meets a stop.
-
-**RealtimeTime**
-    Points in time are always given as a RealtimeTime object.
-    A real time time object consists of a ``time`` attribute, which is always a ``datetime`` object in the ``YYYY-MM-DD HH:MM`` format and an optional ``delay`` attribute, which is the currently expected delay as a ``timedelta`` object in seconds.
-
-    If the ``delay`` attribute is missing, no real time data is available. If the ride is on time the delay will be 0 seconds.
-
-For more information about the JSON format, see `Model Reference`_ and `Model Serialization`_.
 
 Python Interface
 ----------------
@@ -186,9 +137,9 @@ Let's see how you would access this via the Python interface. **Every attribute 
     import transit.networks
 
     essen = Stop(name='Essen Hauptbahnhof')
-    vrr = networks.network('VRR')
+    vrr = networks.network('vrr')
 
-    essen = vrr.get_stop_rides(essen)
+    essen = vrr.query(essen)
     print(essen.city)  # Essen
     print(essen.name)  # Hauptbahnhof
 
@@ -223,4 +174,4 @@ Let's see how you would access this via the Python interface. **Every attribute 
         # you can also slice a ride or ride segment to get another ride segment
         newsegment = ridesegment.ride[1:]
 
-For more information, see `Network API`_ and `Model Reference`_.
+For more information, see `Model Reference`_.
