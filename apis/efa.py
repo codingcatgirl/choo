@@ -24,18 +24,14 @@ class EFA(API):
         super().__init__()
         self.cities = {}
 
-    def get_stop(self, stop: Stop, must_get_departures=False):
-        assert isinstance(stop, Stop)
+    def _get_stop(self, stop: Stop, must_get_departures=False):
         return self.get_stop_rides(stop)
 
-    def get_stop_rides(self, stop: Stop):
+    def _get_stop_rides(self, stop: Stop):
         return self._departure_monitor_request(stop)
 
-    def search_trips(self, triprequest: Trip.Request):
+    def _search_trips(self, triprequest: Trip.Request):
         return self._trip_request(triprequest)
-
-    def get_trip(self, trip: Stop):
-        pass
 
     # Internal methods start here
     def _post(self, endpoint, data):
