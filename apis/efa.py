@@ -679,8 +679,16 @@ class EFA(API):
         motdata = self._parse_mot(data.find('./itdMeansOfTransport'))
 
         if motdata is None or data.attrib['type'] == 'IT':
-            waytype = {'98': 'walk', '100': 'walk', '101': 'bike', '104': 'car', '105': 'taxi'}[data.find('./itdMeansOfTransport').attrib['type']]
+            waytype = {
+                '98': 'walk',
+                '99': 'walk',
+                '100': 'walk',
+                '101': 'bike',
+                '104': 'car',
+                '105': 'taxi'
+            }[data.find('./itdMeansOfTransport').attrib['type']]
             # 98 = gesichter anschluss
+
             way = Way(WayType(waytype), points[0].stop, points[1].stop)
             way.distance = data.attrib.get('distance')
             if way.distance is not None:
