@@ -6,17 +6,17 @@ class Line(Collectable):
     @classmethod
     def _validate(cls):
         from .locations import Stop
-        return {
-            'linetype': (None, LineType),
-            'product': (None, str),
-            'name': (None, str),
-            'shortname': (None, str),
-            'route': (None, str),
-            'first_stop': (None, Stop),
-            'last_stop': (None, Stop),
-            'network': (None, str),
-            'operator': (None, str)
-        }
+        return (
+            ('linetype', (None, LineType)),
+            ('product', (None, str)),
+            ('name', (None, str)),
+            ('shortname', (None, str)),
+            ('route', (None, str)),
+            ('first_stop', (None, Stop)),
+            ('last_stop', (None, Stop)),
+            ('network', (None, str)),
+            ('operator', (None, str)),
+        )
 
     def __init__(self, linetype=None):
         super().__init__()
@@ -36,6 +36,28 @@ class Line(Collectable):
     def _update(self, other, better):
         if other.linetype in self.linetype:
             self.linetype = other.linetype
+
+    def __eq__(self, other):
+        if not isinstance(other, Line):
+            return False
+
+        if self.linetype not in other.linetype and other.linetype not in self.linetype:
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is not None:
+            return byid
+
+        if self.route == other.route and self.name == other.name:
+            return True
+
+        if (self.shortname is not None and other.shortname is not None and
+            len([s for s in self.shortname if s.isdigit()]) and
+            self.operator is not None and self.operator == other.operator and
+            self.network is not None and self.network == other.network):
+            return True
+
+        return False
 
     def __repr__(self):
         return '<Line %s %s>' % (str(self.linetype), repr(self.name))
@@ -96,10 +118,10 @@ class LineTypes(Serializable):
 
     @classmethod
     def _validate(cls):
-        return {
-            '_included': None,
-            '_excluded': None
-        }
+        return (
+            ('_included', None),
+            ('_excluded', None),
+        )
 
     def _validate_custom(self, name, value):
         if name in ('_included', '_excluded'):
@@ -110,7 +132,7 @@ class LineTypes(Serializable):
                     return False
             return True
 
-    def _serialize_custom(self, name, value):
+    def _serialize_custom(self, name):
         if name == '_included':
             return 'included', [str(s) for s in self._included]
         elif name == '_excluded':

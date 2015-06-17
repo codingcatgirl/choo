@@ -19,16 +19,16 @@ class Ride(Collectable):
 
     @classmethod
     def _validate(cls):
-        return {
-            'line': (None, Line),
-            'number': (None, str),
-            'direction': (None, str),
-            'canceled': (None, bool),
-            'bike_friendly': (None, bool),
-            'infotexts': None,
-            '_stops': None,
-            '_paths': None,
-        }
+        return (
+            ('line', (None, Line)),
+            ('number', (None, str)),
+            ('direction', (None, str)),
+            ('canceled', (None, bool)),
+            ('bike_friendly', (None, bool)),
+            ('infotexts', None),
+            ('_stops', None),
+            ('_paths', None),
+        )
 
     _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
 
@@ -88,6 +88,8 @@ class Ride(Collectable):
                 self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
 
     def _collect_children(self, collection, last_update=None):
+        super()._collect_children(collection, last_update)
+
         if self.line is not None:
             self.line._update_collect(collection, last_update)
 
@@ -157,11 +159,34 @@ class Ride(Collectable):
         self._alter_pointers_after(position, 1)
         return pointer
 
-    def extend(self, item):
-        pass  # todo
-
     def __eq__(self, other):
-        pass  # todo
+        if not isinstance(other, Ride):
+            return False
+
+        byid = self._equal_by_id(other)
+        if byid is False:
+            return False
+
+        if byid is None:
+            if self.number is not None and other.number is not None and self.number != other.number:
+                return False
+
+            if self[-1] is not None and other[-1] is not None and self[-1].stop != other[-1].stop:
+                return False
+
+            if self[0] is not None and other[0] is not None and self[0].stop != other[0].stop:
+                return False
+
+        for stop in self._stops[1:-1]:
+            if stop[1] is None:
+                continue
+            for stop2 in other._stops[1:-1]:
+                if stop2[1] is None:
+                    continue
+                if stop[1] == stop2[1]:
+                    return True
+
+        return False
 
     def __repr__(self):
         return '<Ride %s %s>' % (self.number, repr(self.line))
@@ -172,9 +197,9 @@ class Ride(Collectable):
 
         @classmethod
         def _validate(cls):
-            return {
-                '_i': int
-            }
+            return (
+                ('_i', int),
+            )
 
         def _serialize(self):
             return self._i
@@ -205,11 +230,11 @@ class RideSegment(TripPart):
 
     @classmethod
     def _validate(cls):
-        return {
-            'ride': Ride,
-            '_origin': None,
-            '_destination': None
-        }
+        return (
+            ('ride', Ride),
+            ('_origin', None),
+            ('_destination', None),
+        )
 
     def _validate_custom(self, name, value):
         if name in ('_origin', '_destination'):
@@ -294,10 +319,15 @@ class RideSegment(TripPart):
         return getattr(self.ride, name)
 
     def __eq__(self, other):
-        assert isinstance(other, RideSegment)
-        return (self.ride == other.ride and
-                self._origin == other._origin and
-                self._destination == other._destination)
+        if not isinstance(other, RideSegment):
+            return False
+
+        if self.ride is other.ride:
+            return self._origin == other._origin and self._destination == other._destination
+        elif self.ride == other.ride:
+            return (self.origin == other.origin and self.departure == other.departure and
+                    self.destination == other.destination and self.arrival == other.arrival)
+        return False
 
     def __repr__(self):
         return '<RideSegment %s %s %s>' % (repr(self.origin), repr(self.destination), repr(self.ride))

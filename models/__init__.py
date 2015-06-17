@@ -12,6 +12,9 @@ from .collection import Collection
 
 
 def unserialize_typed(data):
+    if not isinstance(data, (tuple, list)) or len(data) != 2:
+        raise TypeError('Not a typed serialization')
+
     model, data = data
     if '.' in model:
         model = model.split('.')

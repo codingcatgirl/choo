@@ -17,15 +17,15 @@ class Way(TripPart):
 
     @classmethod
     def _validate(cls):
-        return {
-            'waytype': WayType,
-            'origin': AbstractLocation,
-            'destination': AbstractLocation,
-            'distance': (None, int, float),
-            'duration': timedelta,
-            'events': None,
-            'path': None,
-        }
+        return (
+            ('waytype', WayType),
+            ('origin', AbstractLocation),
+            ('destination', AbstractLocation),
+            ('distance', (None, int, float)),
+            ('duration', timedelta),
+            ('events', None),
+            ('path', None),
+        )
 
     def _validate_custom(self, name, value):
         if name == 'path':
@@ -56,9 +56,8 @@ class Way(TripPart):
             self.events = [WayEvent.unserialize(e) for e in data]
 
     def __eq__(self, other):
-        assert isinstance(other, Way)
-        return (self.origin == other.origin and
-                self.destination == other.destination)
+        return (isinstance(other, Way) and self.waytype == other.waytype and
+                self.origin == other.origin and self.destination == other.destination)
 
     def __repr__(self):
         distance = ''
@@ -97,7 +96,7 @@ class WayType(Serializable):
     def __str__(self):
         return self._value
 
-    def __equals__(self, other):
+    def __eq__(self, other):
         return other._value == self._value
 
 
@@ -130,6 +129,9 @@ class WayEvent(Serializable):
 
     def __iter__(self):
         return self._value
+
+    def __eq__(self, other):
+        return isinstance(other, WayEvent) and self._value == other._value
 
     @property
     def name(self):

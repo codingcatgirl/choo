@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 from apis.efa import EFA
 
-supported = ('VRR', )
-
 
 class VRR(EFA):
     name = 'vrr'
@@ -19,8 +17,14 @@ class VRR(EFA):
     }
 
 
+_names = {
+    'vrr': VRR,
+}
+supported = tuple(_names)
+
+
 def network(name):
-    global supported
+    global supported, _names
     if name not in supported:
         raise NameError('Unsupported network: %s' % name)
-    return globals()[name]
+    return _names[name]
