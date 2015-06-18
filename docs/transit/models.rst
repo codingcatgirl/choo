@@ -76,19 +76,18 @@ Base Models
 
 .. py:class:: Collectable(Searchable)
 
-    An object that can be collected. It has an ID, is unique and is not some kind of data construct.
+    An object that can be collected. It has an ID and it really exists and is not some kind of data construct.
 
     .. py:attribute:: _ids
 
         IDs of this object in different APIs as a dictionary.
 
         * ``ifopt`` means *Identification of Fixed Objects in Public Transport* which is a gloablly unique ID supported by some APIs.
-        * ``uic`` means the international tran station ID of the **International Union of Railways*
 
+            Some APIs know the ** system. If this globally unique is known, it is stored as the element ``ifopt``.
 
-Main Models
------------
-
+Other Models
+------------
 
 .. py:class:: Location(country=None, city=None, name=None, coords=None)
 
