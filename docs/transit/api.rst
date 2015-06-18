@@ -13,3 +13,5 @@ Supported Networks
     The **EFA** API of the **Verkehrsverbund Rhein Ruhr** in Germany.
 
     Information for all of NRW is available, but real time data for local operators only in the VRR area.
+
+    Some Information for the rest of Germany is also available.
