@@ -131,7 +131,7 @@ For more information about the JSON format, see `Model Reference`_ and `Model Se
 Python Interface
 ----------------
 
-Let's see how you would access this via the Python interface. **Every attribute that has no data available will be None.**
+Let's see how you would access this via the Python interface.
 
 .. code-block:: python
 
@@ -142,6 +142,11 @@ Let's see how you would access this via the Python interface. **Every attribute 
     vrr = networks.network('vrr')
 
     essen = vrr.query(essen)
+
+We created the Stop, got the network and used the generic .query() function of the VRR api wich gave us the same result as above.
+
+.. code-block:: python
+
     print(essen.city)  # Essen
     print(essen.name)  # Hauptbahnhof
 
