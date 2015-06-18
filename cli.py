@@ -34,7 +34,11 @@ else:
             query = f.read()
             f.close()
 
-        query = json.loads(query)
+        try:
+            query = json.loads(query)
+        except:
+            traceback.print_exc()
+            sys.exit(3)
 
     elif args.input == 'msgpack':
         try:
@@ -49,19 +53,23 @@ else:
             query = f.read()
             f.close()
 
-        query = msgpack.unpackb(query)
+        try:
+            query = msgpack.unpackb(query)
+        except:
+            traceback.print_exc()
+            sys.exit(3)
 
     try:
         query = unserialize_typed(query)
     except:
         traceback.print_exc()
-        sys.exit(3)
+        sys.exit(4)
 
     try:
         result = network.query(query)
     except NotImplementedError:
         print('This network does not support this action.')
-        sys.exit(4)
+        sys.exit(5)
 
 serialized = None if result is None else result.serialize(typed=True)
 
