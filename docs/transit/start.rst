@@ -25,7 +25,7 @@ The models **Stop**, **Adress** and **POI** (Point of Interest) are all subclass
 
 Also, **Location** and **Platform** are subclasses of **AbstractLocation** which describas anything that has a static position.
 
-Those models are called **Searchables** because you can search for them with transit. You can…
+Those models are called **Searchables** because you can search for them with transit. You can...
 
 * provide an instance of them. transit will try to retrieve it and return a more complete version of it to you
 * use their ``Request`` submodel to specify what you are looking. transit will use the ``Result`` submodel to give you the search results.
