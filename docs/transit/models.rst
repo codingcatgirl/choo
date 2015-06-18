@@ -3,27 +3,24 @@ Model Reference
 
 transit is composed using a lot of models.
 
-Please note that nearly all attributes can also be ``None`` when the information they should describe is not available.
+Base Models
+-----------
 
-.. py:class:: ModelBase()
+.. py:class:: Serializable
 
-    Base class for all other models.
+    All models are Serializables.
 
-    .. attribute:: _ids
+    .. method:: validate()
 
-        A dictionary with the IDs of this object in different networks.
-
-    .. attribute:: _raws
-
-        A dictionary with raw data of this object from different networks.
+        Checks if all attributes have valid values. Raises an exception if the object is not valid. This method is also called by ``serialize()``.
 
     .. method:: serialize()
 
-        Serializes the object in a JSON-encodable format. For more information, see `Model Serialization`_.
+        Serializes the object in a JSON-encodable format.
 
     .. classmethod:: unserialize(data)
 
-        Unserializes any kind of object from a JSON-encodable format. For more information, see the `Model Serialization`_.
+        Unserializes any kind of object from a JSON-encodable format.
 
         :param data: A serialized representation of a transit object
         :rtype: the unserialized object
@@ -31,29 +28,66 @@ Please note that nearly all attributes can also be ``None`` when the information
 .. _`Model Serialization`: serializing.html
 
 
-.. py:class:: SearchResults(results=None, subject=None, api=None, method=None)
+.. py:class:: Updateable(Serializable)
 
-    When you try to retrieve an object and the multiple matches occur, you get :py:class:`SearchResults`.
+    An object that can be updated. It has information that can be incomplete or outdated.
 
-    To get the results, just iterate over a :py:class:`SearchResults` object.
+    .. py:attribute:: last_update
 
-    For some search methods each result is a ``(object, matchscore)`` tuple.
+        The last update or creation date of this object as ``datetime``. Can also be ``None``.
 
-    .. attribute:: results
+    .. py:attribute:: low_quality
 
-        The search results as a list.
+        ``True`` if this event has low quality (otherwise ``None`` or ``False``). This means that this data could be not completely correct (e.g. rarely updated realtime data for train companies that have their own better API) and should be confirmed by explicitly asking an API for it.
 
-    .. attribute:: subject
+    .. method:: update(obj)
 
-        The search input subject.
+        Updates the instance with data from another instance. There are no checks performed whether the other object does indeed describe the same thing.
 
-    .. attribute:: api
 
-        The name of the network that was used.
+.. py:class:: Searchable(Updateable)
 
-    .. attribute:: method
+    An object that can be searched for. You can pass it to the API and to get its complete information.
 
-        The name of the API method that was used.
+    All subclasses have a ``Request`` and a ``Results`` subclass. You can pass the and instance of the Request subclass to the API to get search results in a Results subclass.
+
+    .. py:class:: Searchable.Request(Serializable)
+
+        A request template for this Model with lots of possible search criteria that can be set.
+
+    .. py:class:: Searchable.Results(Serializable)
+
+        A list (of Request-Results) of instances of this object. Those lists can have matchscores.
+
+        You can just iterate over this object to get its contents.
+
+        .. method:: scored(obj)
+
+            Returns an iterator over tuples of (results, score).
+
+        .. method:: filter(request)
+
+            Remove all objects that do not match the given Request.
+
+        .. method:: filtered(request)
+
+            Returns a new ``Results`` instance with all objects that do not match the given Request removed.
+
+
+.. py:class:: Collectable(Searchable)
+
+    An object that can be collected. It has an ID, is unique and is not some kind of data construct.
+
+    .. py:attribute:: _ids
+
+        IDs of this object in different APIs as a dictionary.
+
+        * ``ifopt`` means *Identification of Fixed Objects in Public Transport* which is a gloablly unique ID supported by some APIs.
+        * ``uic`` means the international tran station ID of the **International Union of Railways*
+
+
+Main Models
+-----------
 
 
 .. py:class:: Location(country=None, city=None, name=None, coords=None)
