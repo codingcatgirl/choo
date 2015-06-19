@@ -54,7 +54,7 @@ else:
             f.close()
 
         try:
-            query = msgpack.unpackb(query)
+            query = msgpack.unpackb(query, encoding='utf-8')
         except:
             traceback.print_exc()
             sys.exit(3)
