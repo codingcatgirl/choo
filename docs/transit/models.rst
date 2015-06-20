@@ -187,7 +187,7 @@ Submodels of :py:class:``Collectable``.
         See above. Immutable. Do not use this class directly. You can cast it to int.
 
     .. note::
-        For serialization, pointers are not used. The property ``stops`` is created containing with each item being either a serialized ``TimeAndPlace`` object or ``None``.
+        For serialization, pointers are not used. The property ``stops`` is created containing with each item being either a serialized :py:class:`TimeAndPlace` object or ``None``.
 
         The property ``path`` is created containing a dictionary containing paths between consecutive ride stops with the index of the origin stop as keys.
 
@@ -421,7 +421,7 @@ Submodel of :py:class:`Searchable`.
         ``False`` if at least one :py:class:`Ride` that is part of this trip is not bike friendly. ``True`` if all of them are. ``None`` if there is no bike friendly information for all rides but those that have the information are bike friendly.
 
     .. note::
-        For serialization. The property ``parts`` is created containing the list of **typed** serialized trip parts.
+        For serialization, the property ``parts`` is created containing the list of **typed serialized** trip parts.
 
     .. py:class:: Trip.Request
 
@@ -570,7 +570,7 @@ Submodels of :py:class:`Serializable`.
         The arrival at the last :py:class:`Stop` of this segment as :py:class:`RealtimeTime`. Shortcut for ``segment[-1].arrival``.
 
     .. note::
-        For serialization, the boundaries are given as integer indexes as properties ``origin`` and ``destination``. Each one can be missing if the boundary is not set. (``ride[5:]``)
+        For serialization, the boundaries are given as integer indexes as properties ``origin`` and ``destination``. Each one can be missing if the boundary is not set. (e.g. ``ride[5:]``)
 
         Dont forget that Ride slicing is inclusive (see above)!
 
@@ -652,7 +652,7 @@ Submodels of :py:class:`Updateable`.
 
 
     .. attention::
-        The following attributes are **dynamic** and can not be set – their values are taken from ``parts`` when you access them
+        The following attributes are **dynamic** and can not be set.
 
     .. attribute:: is_live
 
@@ -798,7 +798,7 @@ Submodels of :py:class:`Serializable`.
         Make sure that the given line types and all of their subtypes are not matched by the selector.
 
     .. note::
-        For serialization, the properties ``included`` and ``excluded`` are given each containing a list of line types.
+        For serialization, the properties ``included`` and ``excluded`` are created, each one containing a list of line types.
 
 
 .. py:class:: WayType(name)
