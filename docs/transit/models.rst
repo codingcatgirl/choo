@@ -171,7 +171,7 @@ Submodels of :py:class:``Collectable``.
 
 
     .. attention::
-        The following attributes are **dynamic** and can not be set – their values are taken from ``parts`` when you access them
+        The following attributes are **dynamic** and can not be set.
 
     .. attribute:: path⁰
 
@@ -387,7 +387,7 @@ Submodel of :py:class:`Searchable`.
 
 
     .. attention::
-        The following attributes are **dynamic** and can not be set – their values are taken from ``parts`` when you access them
+        The following attributes are **dynamic** and can not be set.
 
     .. attribute:: origin
 
@@ -835,7 +835,8 @@ Submodels of :py:class:`Serializable`.
         >>> WayType('escalator', 'down') is WayType('escalator', 'down')
         True
 
-    **The attributes can not be set.**
+    .. attention::
+        The following attributes are **dynamic** and can not be set.
 
     .. attribute:: name
 
