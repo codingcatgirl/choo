@@ -1,7 +1,7 @@
 Model Reference
 ===============
 
-..attention::
+.. attention::
     Attributes that may be ``None`` are marked with a ⁰-Symbol.
 
 Base Classes
