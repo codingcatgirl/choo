@@ -10,7 +10,7 @@ Before we start using transit, you have to understand its underlying Models.
     A Stop is a group of Platforms (e.g. Berlin Hbf).
 
 **Platform**
-    A Platform is a place where a rides stop. (e.g. Gleis 7) It belongs to one Stop.
+    A Platform is a place where rides stop (e.g. Gleis 7). It belongs to one Stop.
 
 **Ride**
     A Ride is the journey of a bus/train/etc. It only happens once. Even the “same” ride on the next day is handled as another Ride.
