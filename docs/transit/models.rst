@@ -35,11 +35,11 @@ All transit models are based upon one of the following four base classes that bu
 
     A :py:class:`Serializable` that can be updated. It has information that can be incomplete or outdated.
 
-    .. py:attribute:: last_update
+    .. py:attribute:: last_update⁰
 
-        The last update or creation date of this object as ``datetime``. Can also be ``None``.
+        The last update or creation date of this object as ``datetime``.
 
-    .. py:attribute:: low_quality
+    .. py:attribute:: low_quality⁰
 
         ``True`` if this event has low quality (otherwise ``None`` or ``False``). This means that this data could be not completely correct (e.g. rarely updated realtime data for train companies that have their own better API) and should be confirmed by explicitly asking an API for it.
 
@@ -102,7 +102,7 @@ Submodels of :py:class:``Collectable``.
 
     .. attribute:: coords⁰
 
-        The :py:class:`Coordinates` of this location. Can be ``None``.
+        The :py:class:`Coordinates` of this location.
 
     .. py:class:: AbstractLocation.Request
 
