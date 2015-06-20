@@ -1,6 +1,8 @@
 Model Reference
 ===============
 
+Attributes that may be ``None`` are marked with a ⁰-Symbol.
+
 Base Classes
 ------------
 
@@ -98,7 +100,7 @@ Submodels of :py:class:``Collectable``.
 
     Base class for everything that has a fixed position.
 
-    .. attribute:: coords
+    .. attribute:: coords⁰
 
         The :py:class:`Coordinates` of this location. Can be ``None``.
 
@@ -129,15 +131,15 @@ Submodels of :py:class:``Collectable``.
 
         The :py:class:`Line` of this :py:class:`Ride`.
 
-    .. attribute:: number
+    .. attribute:: number⁰
 
         The number (train number or similar) of this :py:class:`Ride` as a string.
 
-    .. attribute:: canceled
+    .. attribute:: canceled⁰
 
         A boolean indicating whether this ride has been canceled.
 
-    .. attribute:: bike_friendly
+    .. attribute:: bike_friendly⁰
 
         A boolean indicating whether this is a bike-friendly vehicle.
 
@@ -184,7 +186,7 @@ Submodels of :py:class:``Collectable``.
 
         The :py:class:`LineType` of this :py:class:`Line`.
 
-    .. attribute:: product
+    .. attribute:: product⁰
 
         The product name, for example `InterCity`, `Hamburg-Köln-Express` or `Niederflurbus`.
 
@@ -196,23 +198,23 @@ Submodels of :py:class:``Collectable``.
 
         The short name of the :py:class:`Line`, for example `RE2`.
 
-    .. attribute:: route
+    .. attribute:: route⁰
 
         The route description.
 
-    .. attribute:: first_stop
+    .. attribute:: first_stop⁰
 
         The first :py:class:`Stop` of this :py:class:`Line`. Rides may start at a later station.
 
-    .. attribute:: last_stop
+    .. attribute:: last_stop⁰
 
         The last :py:class:`Stop` of this :py:class:`Line`. Rides may end at a earlier station.
 
-    .. attribute:: network
+    .. attribute:: network⁰
 
         The name of the network this :py:class:`Line` is part of as a string.
 
-    .. attribute:: operator
+    .. attribute:: operator⁰
 
         The name of the company that operates this line.
 
@@ -239,11 +241,11 @@ Submodels of :py:class:`AbstractLocation`.
 
         The :py:class:`Stop` this platform belongs to.
 
-    .. attribute:: name
+    .. attribute:: name⁰
 
         The name of this Platform (e.g. 7 or 2b).
 
-    .. attribute:: full_name
+    .. attribute:: full_name⁰
 
         The full name of this Platform (e.g. Bussteig 7 or Gleis 2b)
 
@@ -260,11 +262,11 @@ Submodels of :py:class:`AbstractLocation`.
 
     An :py:class:`AbstractLocation` that is named and not a sublocation like a Platform.
 
-    .. attribute:: country
+    .. attribute:: country⁰
 
         The country of this location as a two-letter country code.
 
-    .. attribute:: city
+    .. attribute:: city⁰
 
         The name of the city this location is located in.
 
@@ -272,7 +274,7 @@ Submodels of :py:class:`AbstractLocation`.
 
         The name of this location. If the ``city`` attribute is ``None`` this it may also included in the name.
 
-    .. attribute:: near_stops
+    .. attribute:: near_stops⁰
 
         Other stops near this one as a ``Stop.Results``, if available. You can always search for Stops near an :py:class:`AbstractLocation` directly using ``AbstractLocation.Request``.
 
@@ -289,15 +291,15 @@ Submodels of :py:class:`AbstractLocation`.
 
     A :py:class:`Location` describing a stop, for example: Düsseldorf Hbf.
 
-    .. attribute:: train_station_name
+    .. attribute:: train_station_name⁰
 
         The official train station name if this stop belongs to a train station. This is the difference between the Stop **Hauptbahnhof** in **Düsseldorf** and the name of the train station **Düsseldorf Hbf**.
 
-    .. attribute:: lines
+    .. attribute:: lines⁰
 
-        The Lines that are available at this stop as a ``Line.Results`` object, if available. You can always search for Lines at a :py:class:`Stop` using :py:class:`Line.Request`.
+         The Lines that are available at this stop as a ``Line.Results`` object, if available. You can always search for Lines at a :py:class:`Stop` using :py:class:`Line.Request`.
 
-    .. attribute:: rides
+    .. attribute:: rides⁰
 
         The next rides at this stop as a ``Ride.Results`` object, if available. You can always search for Rides at a :py:class:`Stop` using :py:class:`Ride.Request`.
 
@@ -314,11 +316,11 @@ Submodels of :py:class:`AbstractLocation`.
 
     A :py:class:`Location` describing an address. The ``name`` attribute contains the address in one string, but more detailed attributes may be available:
 
-    .. attribute:: street
+    .. attribute:: street⁰
 
         The name of the street.
 
-    .. attribute:: number
+    .. attribute:: number⁰
 
         The house number as a string.
 
@@ -356,7 +358,7 @@ Submodel of :py:class:`Searchable`.
 
     It consists of a list of :py:class:`RideSegment` and :py:class:`Way` objects. Just iterate over it to get its elements.
 
-    .. attribute:: tickets
+    .. attribute:: tickets⁰
 
         :py:class:`TicketList` of available tickets for this trip.
 
@@ -406,13 +408,13 @@ Submodel of :py:class:`Searchable`.
 
             The end :py:class:`AbstractLocation` of the trip.
 
-        .. attribute:: departure
+        .. attribute:: departure⁰
 
             The minimum departure time as :py:class:`RealtimeTime` or ``datetime.datetime``.
 
             If both times are ``None`` the behaviour is as if you would have set the departure time to the current time right before sending the request. (Default: ``None``)
 
-        .. attribute:: arrival
+        .. attribute:: arrival⁰
 
             The latest allowed arrival as :py:class:`RealtimeTime` or ``datetime.datetime``. (Default: ``None``)
 
@@ -420,7 +422,7 @@ Submodel of :py:class:`Searchable`.
 
             The line types that are allowed as :py:class:`LineTypes`. (Default: all)
 
-        .. attribute:: max_changes
+        .. attribute:: max_changes⁰
 
             The maximum number of changes allowed or ``None`` for no limit. (Default: ``None``)
 
@@ -575,15 +577,15 @@ Submodels of :py:class:`Updateable`.
 
         The :py:class:`Platform`.
 
-    .. attribute:: arrival
+    .. attribute:: arrival⁰
 
         The arrival time of the :py:class:`Ride` as :py:class:`RealtimeTime`.
 
-    .. attribute:: departure
+    .. attribute:: departure⁰
 
         The departure time of the :py:class:`Ride` as :py:class:`RealtimeTime`.
 
-    .. attribute:: passthrough
+    .. attribute:: passthrough⁰
 
         A boolean indicating whether the ride does not actualle stop at this :py:class:`Stop` but pass through it.
 
@@ -599,7 +601,7 @@ Submodels of :py:class:`Updateable`.
 
         The originally planned time as a `datetime.datetime` object.
 
-    .. attribute:: delay
+    .. attribute:: delay⁰
 
         The (expected) delay as a `datetime.timedelta` object or None.
         Please note that a zero delay is not the same as None. None stands for absence of real time information.
@@ -625,7 +627,7 @@ Submodels of :py:class:`Updateable`.
 
         The name or abbreviation of the currency.
 
-    .. attribute:: level_name
+    .. attribute:: level_name⁰
 
         How a level is named at this network.
 
@@ -633,7 +635,7 @@ Submodels of :py:class:`Updateable`.
 
         The single ticket as :py:class:`TicketData`.
 
-    .. attribute:: bike
+    .. attribute:: bike⁰
 
         The single ticket as :py:class:`TicketData`.
 
@@ -652,11 +654,11 @@ Submodels of :py:class:`Serializable`.
 
     Information about a ticket.
 
-    .. attribute:: authority
+    .. attribute:: authority⁰
 
         The name of the authority selling this ticket.
 
-    .. attribute:: level
+    .. attribute:: level⁰
 
         The level of this ticket, e.g. A or something similar, depending on the network
 
@@ -664,7 +666,7 @@ Submodels of :py:class:`Serializable`.
 
         The price of this ticket as float.
 
-    .. attribute:: price_child
+    .. attribute:: price_child⁰
 
         The children’s price for this ticket if this ticket is not a ticket for children only but has a different price for children.
 
