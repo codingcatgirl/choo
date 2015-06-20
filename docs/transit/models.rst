@@ -1,7 +1,8 @@
 Model Reference
 ===============
 
-Attributes that may be ``None`` are marked with a ⁰-Symbol.
+..attention::
+    Attributes that may be ``None`` are marked with a ⁰-Symbol.
 
 Base Classes
 ------------
