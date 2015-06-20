@@ -63,7 +63,7 @@ All transit models are based upon one of the following four base classes that bu
 
     .. py:class:: Searchable.Results(Serializable)
 
-        A list (of Request-Results) of instances of this object. Those lists can have matchscores.
+        A list (of Request-Results) of instances of this object. Those lists can have match scores.
 
         You can just iterate over this object to get its contents.
 
@@ -78,6 +78,9 @@ All transit models are based upon one of the following four base classes that bu
         .. method:: filtered(request)
 
             Returns a new ``Results`` instance with all objects that do not match the given Request removed.
+
+        .. note::
+            For serialization, the list of results is stored in the property ``results`` as a list. Each element of this list is a two-element list containing the serialized result and the match score.
 
 
 .. py:class:: Collectable
@@ -130,6 +133,9 @@ Submodels of :py:class:``Collectable``.
 
     You can slice a :py:class:`Ride` (using integer indices or :py:class RideStopPointer`) which will get you a :py:class:`RideSegment` that will always have the correct boundaries. Slicing with no start or no end point is also supported.
 
+    .. caution::
+        Slicing a :py:class:`Ride` is inclusive! For example, slicing from element 2 to element 5 results in a :py:class:`RideSegment` containing 4 elements in total!
+
     .. attribute:: line
 
         The :py:class:`Line` of this :py:class:`Ride`.
@@ -150,6 +156,9 @@ Submodels of :py:class:``Collectable``.
 
         A ``(RideStopPointer, TimeAndPlace)`` iterator as explained above.
 
+
+
+
     .. method:: append(item)
 
         Append a :py:class:`TimeAndPlace` object.
@@ -164,6 +173,11 @@ Submodels of :py:class:``Collectable``.
 
     **The following attributes are dynamic and cannot be set:**
 
+    .. attribute:: path⁰
+        Get the geographic path of the ride as a list of :py:class:`Coordinates`.
+
+        Falls back to just directly connecting the platform or stop coordinates if no other information is available. If some information is still missing, its value is ``None``.
+
     .. attribute:: is_complete
 
         ``True`` if the :py:class:`TimeAndPlace` list is complete and there are no Nones in the list, otherwise ``False``.
@@ -171,6 +185,11 @@ Submodels of :py:class:``Collectable``.
     .. py:class:: Ride.StopPointer
 
         See above. Immutable. Do not use this class directly. You can cast it to int.
+
+    .. note::
+        For serialization, pointers are not used. The property ``stops`` is created containing with each item being either a serialized ``TimeAndPlace`` object or ``None``.
+
+        The property ``path`` is created containing a dictionary containing paths between consecutive ride stops with the index of the origin stop as keys.
 
     .. py:class:: Ride.Request
 
@@ -355,7 +374,7 @@ Trips
 
 Submodel of :py:class:`Searchable`.
 
-.. py:class:: Trip()
+.. py:class:: Trip
 
     A connection from a :py:class:`AbstractLocation` to another :py:class:`AbstractLocation`.
 
@@ -400,6 +419,9 @@ Submodel of :py:class:`Searchable`.
     .. attribute:: bike_friendly
 
         ``False`` if at least one :py:class:`Ride` that is part of this trip is not bike friendly. ``True`` if all of them are. ``None`` if there is no bike friendly information for all rides but those that have the information are bike friendly.
+
+    .. note::
+        For serialization. The property ``parts`` is created containing the list of **typed** serialized trip parts.
 
     .. py:class:: Trip.Request
 
@@ -499,12 +521,14 @@ Trip parts
 Submodels of :py:class:`Serializable`.
 
 .. py:class:: RideSegment
-
     This class created by slicing :py:class:`Ride` objects.
 
     Integer indices are not too useful in this class, either, although you can for example still use 0 and -1 to get the first or last :py:class:`RideStopPointer` of this segment.
 
-    This model is usable in the same way as a :py:class:`Ride`. Slicing will return another :py:class:`RideSegment`.
+    This model is usable in the same way as a :py:class:`Ride`. Slicing it will return another :py:class:`RideSegment` for the same :py:class:`Ride`.
+
+    .. caution::
+        Slicing a :py:class:`RideSegment` is inclusive! For example, slicing from element 2 to element 5 results in a :py:class:`RideSegment` containing 4 elements in total!
 
     .. attribute:: ride
 
@@ -519,6 +543,11 @@ Submodels of :py:class:`Serializable`.
 
     .. attention::
         The following attributes are **dynamic** and can not be set.
+
+    .. attribute:: path⁰
+        Get the geographic path of the ride segment as a list of :py:class:`Coordinates`.
+
+        Falls back to just directly connecting the platform or stop coordinates if no other information is available. If some information is still missing, its value is ``None``.
 
     .. attribute:: is_complete
 
@@ -539,6 +568,11 @@ Submodels of :py:class:`Serializable`.
     .. attribute:: arrival
 
         The arrival at the last :py:class:`Stop` of this segment as :py:class:`RealtimeTime`. Shortcut for ``segment[-1].arrival``.
+
+    .. note::
+        For serialization, the boundaries are given as integer indexes as properties ``origin`` and ``destination``. Each one can be missing if the boundary is not set. (``ride[5:]``)
+
+        Dont forget that Ride slicing is inclusive (see above)!
 
 
 .. py:class:: Way(origin: Location, destination: Location, distance: int=None)
@@ -568,6 +602,7 @@ Submodels of :py:class:`Serializable`.
     .. attribute:: events
 
         Events on the way (e.g. taking escalators upwards) as a (ordered) list of :py:class:`WayEvent`.
+
 
 
 
@@ -719,6 +754,9 @@ Submodels of :py:class:`Serializable`.
         >>> str(LineType('train.local'))
         'train.local'
 
+    .. note::
+        The serialized representation of this model is its string representation.
+
 
 .. py:class:: LineTypes(include=('', ), exclude=())
 
@@ -759,6 +797,9 @@ Submodels of :py:class:`Serializable`.
 
         Make sure that the given line types and all of their subtypes are not matched by the selector.
 
+    .. note::
+        For serialization, the properties ``included`` and ``excluded`` are given each containing a list of line types.
+
 
 .. py:class:: WayType(name)
 
@@ -770,6 +811,16 @@ Submodels of :py:class:`Serializable`.
 
         >>> WayType('walk') is WayType('walk')
         True
+
+    You can cast a :py:class:`WayType` to string if needed:
+
+    .. code-block:: python
+
+        >>> str(WayType('walk'))
+        'walk'
+
+    .. note::
+        The serialized representation of this model is its string representation.
 
 .. py:class:: WayEvent(name, direction)
 
@@ -791,3 +842,22 @@ Submodels of :py:class:`Serializable`.
     .. attribute:: direction
 
         ``up`` or ``down``
+
+    .. note::
+        The serialized representation of this model is a ``(name, direction)`` tuple.
+
+
+.. py:class:: Coordinates(lat, lon)
+
+    A geographic coordinate.
+
+    .. attribute:: lat
+
+        latitude as float
+
+    .. attribute:: longitude
+
+        longitude as float
+
+    .. note::
+        The serialized representation of this model is a ``(lat, lon)`` tuple.
