@@ -25,10 +25,10 @@ How it works
 
 .. _`Model Reference`: models.html
 
-All public attributes that are not dynamic and not ``None`` are put into a dictionary. All values are serialized.
-
 .. caution::
-    Some models do not represent itself as a dictionary or have some additional attributes in their dictionary representation. See the `Model Reference`_ for more information.
+    Some models have a non-dictionary representation or some additional attributes in their dictionary representation. See the `Model Reference`_ for more information.
+
+All public attributes that are not dynamic and not ``None`` are put into a dictionary. All values are serialized.
 
 | **datetime** values are respresented as a string in ``YYYY-MM-DD HH:II:SS`` format.
 | **timedelta** values are respresented as a the total number of seconds as int.
