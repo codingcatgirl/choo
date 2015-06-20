@@ -391,19 +391,19 @@ Submodel of :py:class:`Searchable`.
 
     .. attribute:: origin
 
-        The start :py:class:`Location` of this trip.
+        The start :py:class:`AbstractLocation` of this trip.
 
     .. attribute:: destination
 
-        The end :py:class:`Location` of this trip.
+        The end :py:class:`AbstractLocation` of this trip.
 
     .. attribute:: departure
 
-        The departure at the first :py:class:`Location` of this trip as :py:class:`RealtimeTime`. (If there are leading :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
+        The departure at the first :py:class:`AbstractLocation` of this trip as :py:class:`RealtimeTime`. (If there are leading :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
 
     .. attribute:: arrival
 
-        The arrival at the last :py:class:`Location` of this trip as :py:class:`RealtimeTime`. (If there are trailing :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
+        The arrival at the last :py:class:`AbstractLocation` of this trip as :py:class:`RealtimeTime`. (If there are trailing :py:class:`Way` objects they need to have the ``duration`` attribute set in order for this to work)
 
     .. attribute:: linetypes
 
