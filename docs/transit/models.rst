@@ -157,9 +157,6 @@ Submodels of :py:class:``Collectable``.
 
         A ``(RideStopPointer, TimeAndPlace)`` iterator as explained above.
 
-
-
-
     .. method:: append(item)
 
         Append a :py:class:`TimeAndPlace` object.
@@ -172,9 +169,12 @@ Submodels of :py:class:``Collectable``.
 
         Insert a :py:class:`TimeAndPlace` as the new position ``position``.
 
-    **The following attributes are dynamic and cannot be set:**
+
+    .. attention::
+        The following attributes are **dynamic** and can not be set – their values are taken from ``parts`` when you access them
 
     .. attribute:: path⁰
+
         Get the geographic path of the ride as a list of :py:class:`Coordinates`.
 
         Falls back to just directly connecting the platform or stop coordinates if no other information is available. If some information is still missing, its value is ``None``.
@@ -546,6 +546,7 @@ Submodels of :py:class:`Serializable`.
         The following attributes are **dynamic** and can not be set.
 
     .. attribute:: path⁰
+
         Get the geographic path of the ride segment as a list of :py:class:`Coordinates`.
 
         Falls back to just directly connecting the platform or stop coordinates if no other information is available. If some information is still missing, its value is ``None``.

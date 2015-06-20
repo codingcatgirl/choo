@@ -23,14 +23,14 @@ Before we start using transit, you have to understand its underlying Models.
 
 The models **Stop**, **Adress** and **POI** (Point of Interest) are all subclasses of **Location** which describes a stand-alone Location with City and Name
 
-Also, **Location** and **Platform** are subclasses of **AbstractLocation** which describas anything that has a static position.
+Also, **Location** and **Platform** are subclasses of **AbstractLocation** which describes anything that has a static position.
 
 Those models are called **Searchables** because you can search for them with transit. You can...
 
 * provide an instance of them. transit will try to retrieve it and return a more complete version of it to you
 * use their ``Request`` submodel to specify what you are looking. transit will use the ``Result`` submodel to give you the search results.
 
-Other Models that are part of transit but can not be searched for include:
+Some other Models that are part of transit but can not be searched for:
 
 **Way**
     A path between two AbstractLocation objects.
