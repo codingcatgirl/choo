@@ -4,9 +4,10 @@ Command Line Usage
 Syntax
 ------
 
-The Transit Command Line api supports json and msgpack.
+.. important::
+    For msgpack support, the pip package ``msgpack-python`` has to be installed.
 
-For msgpack support, the pip package ``msgpack-python`` has to be installed.
+The Transit Command Line api supports **json** and **msgpack**.
 
 You can specify your input type with the flag ``--input json`` or ``--input msgpack`` (default is json).
 
