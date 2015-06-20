@@ -362,7 +362,9 @@ Submodel of :py:class:`Searchable`.
 
         :py:class:`TicketList` of available tickets for this trip.
 
-    **The following attributes are dynamic** and can not be set – their values are taken from ``parts`` when you access them:
+
+    .. attention::
+        The following attributes are **dynamic** and can not be set – their values are taken from ``parts`` when you access them
 
     .. attribute:: origin
 
@@ -511,7 +513,9 @@ Submodels of :py:class:`Serializable`.
 
     All attributes of the :py:class:`Ride` are also directly accessible through a :py:class:`RideSegment`.
 
-    **This following attributes are dynamic and cannot be set:**
+
+    .. attention::
+        The following attributes are **dynamic** and can not be set.
 
     .. attribute:: is_complete
 
@@ -608,7 +612,9 @@ Submodels of :py:class:`Updateable`.
 
     Note that the ``last_update`` attribute (inherited from :py:class:`Updateable`) tells you how up to date the real time information is.
 
-    **The following attributes are dynamic and cannot be set:**
+
+    .. attention::
+        The following attributes are **dynamic** and can not be set – their values are taken from ``parts`` when you access them
 
     .. attribute:: is_live
 
