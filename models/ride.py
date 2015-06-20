@@ -188,21 +188,17 @@ class Ride(Collectable):
 
         return False
 
+    @property
+    def path(self, origin=None, destination=None):
+        # todo
+        raise NotImplementedError
+
     def __repr__(self):
         return '<Ride %s %s>' % (self.number, repr(self.line))
 
     class StopPointer():
         def __init__(self, i: int):
             self._i = i
-
-        @classmethod
-        def _validate(cls):
-            return (
-                ('_i', int),
-            )
-
-        def _serialize(self):
-            return self._i
 
         def __int__(self):
             return self._i
@@ -257,6 +253,11 @@ class RideSegment(TripPart):
             return self.ride._stops[self._origin:None]
         else:
             return self.ride._stops[self._origin:int(self._destination) + 1]
+
+    @property
+    def path(self, origin=None, destination=None):
+        # todo
+        raise NotImplementedError
 
     @property
     def is_complete(self):
