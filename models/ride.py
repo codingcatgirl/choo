@@ -20,7 +20,7 @@ class Ride(Collectable):
     @classmethod
     def _validate(cls):
         return (
-            ('line', (None, Line)),
+            ('line', Line),
             ('number', (None, str)),
             ('direction', (None, str)),
             ('canceled', (None, bool)),

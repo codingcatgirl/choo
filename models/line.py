@@ -7,10 +7,10 @@ class Line(Collectable):
     def _validate(cls):
         from .locations import Stop
         return (
-            ('linetype', (None, LineType)),
+            ('linetype', LineType),
             ('product', (None, str)),
-            ('name', (None, str)),
-            ('shortname', (None, str)),
+            ('name', str),
+            ('shortname', str),
             ('route', (None, str)),
             ('first_stop', (None, Stop)),
             ('last_stop', (None, Stop)),
