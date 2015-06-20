@@ -17,9 +17,12 @@ All transit models are based upon one of the following four base classes that bu
 
         Checks if all attributes have valid values. Raises an exception if the object is not valid. This method is also called by ``serialize()``.
 
-    .. method:: serialize()
+    .. method:: serialize(typed=False)
 
         Serializes the object in a JSON-encodable format.
+
+        :param typed: whether the output should contain the Model name
+        :rtype: the serialized object
 
     .. classmethod:: unserialize(data)
 

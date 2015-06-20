@@ -1,60 +1,57 @@
 Model Serialization / JSON
 ==========================
 
-All Models can be (un)serialized to/from a JSON-encodable format.
+All objects can be (un)serialized to/from a JSON-encodable format.
 
-A list of all Models can be found in the `Model Reference`_.
+In Python
+---------
+
+.. code-block:: python
+
+    from models import Stop, unserialize_typed
+    # Create a Stop
+    stop = Stop(city='Essen', name='Hauptbahnhof')
+
+    # non-typed serialization (default)
+    serialized = Stop.serialize()
+    stop = Stop.unserialize(serialized)
+
+    # typed serialization
+    serialized = Stop.serialize(typed=True)
+    stop = unserialize_typed(serialized)
+
+How it works
+------------
 
 .. _`Model Reference`: models.html
 
-Here is how to construct the serialized representation of anything:
+All public attributes that are not dynamic and not ``None`` are put into a dictionary. All values are serialized.
 
-**model**
-    All public attributes that are either not dynamic and not None or overwritten and the attributs ``_ids`` and ``_raws`` are put into a dictionary. All values are serialized.
+**datetime** values are respresented as a string in ``YYYY-MM-DD HH:II:SS`` format.
 
-    The result is a list consisting of the Model type as a string and the created dictionary.
+**timedelta** values are respresented as a the total number of seconds as int.
 
-    .. code-block:: json
+.. caution::
+    Some models do not represent itself as a dictionary or have some additional attributes in their dictionary representation. See the `Model Reference`_ for more information.
 
-        ["Stop", {
-            "_ids": {"vrr": 20009289},
-            "_raws": {},
-            "country": "de",
-            "city": "Essen",
-            "name": "Hauptbahnhof",
-            "coords": ["tuple", [51.451139, 7.012937]]
-        }]
+.. code-block:: json
 
-    * **Ride** objects get the attribute ``stops`` with a serialized list of ``TimeAndPlace`` objects and None items.
-    * **LineType** objects do not generate a dictionary but the line type as a string.
-    * **LineTypes** objects do not generate a dictionary but a list of included line types as strings.
-    * **RideStopPointer** objects are treated as integers.
+    {
+        "_ids": {"vrr": 20009289},
+        "country": "de",
+        "city": "Essen",
+        "name": "Hauptbahnhof",
+        "coords": [51.451139, 7.012937]
+    }
 
-**dictionary, integer, float, string**
-    Normal JSON representation.
+If you select a typed serialization, the output is a two element list with name of the model and the constructed dictionary (or other respresentation).
 
-**list, tuple**:
-    A tuple consisting of the string ``list`` or ``tuple`` and a list of its serialized contents.
+.. code-block:: json
 
-    .. code-block:: json
-
-        ["tuple", [51.451139, 7.012937]]
-
-**datetime**:
-    A tuple consisting of the string ``datetime` and the datetime as YYYY-MM-DD HH:II.
-
-    .. code-block:: json
-
-        ["datetime", "2014-12-15 13:24"]
-
-**timedelta**:
-    A tuple consisting of the string ``timedelta` and the timedelta in seconds as an integer.
-
-    .. code-block:: json
-
-        ["timedelta", 120]
-
-**None**:
-    .. code-block:: json
-
-        null
+    ["Stop", {
+        "_ids": {"vrr": 20009289},
+        "country": "de",
+        "city": "Essen",
+        "name": "Hauptbahnhof",
+        "coords": [51.451139, 7.012937]
+    }]
