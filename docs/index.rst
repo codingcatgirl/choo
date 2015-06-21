@@ -10,10 +10,8 @@ Contents:
    :maxdepth: 2
 
    transit/start
+   transit/networks
    transit/api
-   transit/cli
-   transit/cliexamples
-   transit/pyexamples
    transit/models
    transit/serializing
 
