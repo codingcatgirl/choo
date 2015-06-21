@@ -38,11 +38,11 @@ API Interfaces
     Commands and responses end with ``\r\n``.
 
 **Websockets**
-    .. important::
-        For websockets, the pip package ``websockets`` has to be installed.
-
     Communication over Websockets.
     Data format is automatically set to ``json``.
+
+    .. important::
+        For websockets, the pip package ``websockets`` has to be installed.
 
 
 Available Commands
@@ -51,12 +51,12 @@ Available Commands
 **format <format>**
     Set the data format: ``json`` or ``msgpack``
 
-    .. important::
-        For msgpack support, the pip package ``msgpack-python`` has to be installed.
-
     You have to set the format before and other command is accepted.
 
     Returns the selected format as a string.
+
+    .. important::
+        For msgpack support, the pip package ``msgpack-python`` has to be installed.
 
 **get networks**
     Returns the list of available networks. See _`Network Reference` for more information.
