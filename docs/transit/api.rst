@@ -1,7 +1,7 @@
 Transit API
 ===========
 
-Use the transit API du access transit's capabilities from other programming languages.
+Use the transit API to access transit's capabilities from other programming languages.
 
 * Each command starts with a keyword and is followed by a space and an argument.
 
