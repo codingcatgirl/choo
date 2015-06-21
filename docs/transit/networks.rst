@@ -13,7 +13,7 @@ Network Interfaces
 
 .. py:class:: EFA
 
-    EFA is a public transit API used world wide by many network operators.
+    EFA is a public transit :py:class:`API` used world wide by many network operators.
 
 
 Supported Networks
@@ -21,7 +21,7 @@ Supported Networks
 
 .. py:class:: VRR
 
-    The py:class:`EFA` instance of the **Verkehrsverbund Rhein Ruhr** in Germany.
+    The :py:class:`EFA` instance of the **Verkehrsverbund Rhein Ruhr** in Germany.
 
     Information for all of NRW is available, but real time data for local operators only in the VRR area.
 
