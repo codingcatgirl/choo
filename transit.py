@@ -170,7 +170,7 @@ def shell_api():
         sys.stdout.buffer.flush()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--shell', action='store_true', help='enable stdin/stdout')
+parser.add_argument('--cli', action='store_true', help='enable command line interface')
 
 parser.add_argument('--tcp', action='store_true', help='enable tcp server')
 parser.add_argument('--tcp-host', type=str, default='0.0.0.0', help='set address to listen on (default: 0.0.0.0)')
@@ -202,8 +202,8 @@ if args.ws:
     print('websocket server running on %s:%s' % (args.ws_host, args.ws_port if args.ws_port else  '?'))
     threads.append(ws_thread)
 
-if args.shell:
-    print('stdin/stdout server running')
+if args.cli:
+    print('command line interface running')
     shell_thread = threading.Thread(target=shell_api)
     shell_thread.daemon = True
     shell_thread.start()
