@@ -72,6 +72,8 @@ Available Commands
 **query <query>**
     The argument has to be a serialized ``Searchable`` or ``Searchable.Request`` object in your selected data format.
 
-    Returns the result.
+    Pass a ``Searchable`` and it will return a ``Searchable`` from the API or ``null`` if it could not be found. Pass a ``Searchable.Request`` and you will get a corresponding ``Searchable.Results``.
+
+    Returns the typed serialized result.
 
 .. _`Network Reference`: api.html
