@@ -74,19 +74,32 @@ To do so, we first have to describe Essen Hauptbahnhof as a ``Stop``:
       "name": "Essen Hauptbahnhof"
     }]
 
-The outer list describes the data type (``Stop``) and the data.
-
-Now we pass this data to the API. If you set the filename to ``-`` you can pass the data via STDIN.
+Now we pass this data to the API. For this, start the transit command line interface using:
 
 .. code-block:: none
 
-    transit vrr --output prettyjson essen.json
+    ./transit --cli
 
-This sends the Stop to transit and it tries to get as much information as possible about that given stop with only one request to the server.
+Set the data format (second line is the answer):
 
-.. code-block:: json
+.. code-block:: none
 
-    ["Stop",
+    format json
+    ok "json"
+
+Set the network:
+
+.. code-block:: none
+
+    format vrr
+    ok "vrr"
+
+Pass the Stop to transit. It will try to get as much information as possible about that given stop with only one request to the server.
+
+.. code-block:: none
+
+    query ["Stop", {"name": "Essen Hauptbahnhof"}]
+    ok ["Stop",
       {
         "train_station_name": "Essen Hbf",
         "country": "de",
@@ -113,7 +126,7 @@ This sends the Stop to transit and it tries to get as much information as possib
       }
     ]
 
-As you can see, the API returned a Stop with more information.
+As you can see, the API returned a Stop with more information (indentation added for documentary purposes). You can now exit transit using Ctrl+C.
 
 The stop now is defined by it’s correct country, city and name attribute. Also, we have its coordinates now. In the _ids attribute you can find its ids. This ID would be enough to identify the stop. Our input JSON could also have been ``["Stop", {"ids": {"vrr": 20009289}}]`` with the same result.
 
