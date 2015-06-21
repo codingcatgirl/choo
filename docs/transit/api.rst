@@ -30,15 +30,18 @@ API Interfaces
 --------------
 
 **Command Line**
-    Communication over Standard Input/Output
+    Communication over Standard Input/Output.
+
     Commands and responses end with ``\n``.
 
 **TCP**
-    Communication over TCP
+    Communication over TCP.
+
     Commands and responses end with ``\r\n``.
 
 **Websockets**
     Communication over Websockets.
+
     Data format is automatically set to ``json``.
 
     .. important::
