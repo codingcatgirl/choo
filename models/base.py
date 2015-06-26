@@ -297,11 +297,18 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
         def _serialize_custom(self, name):
             if name == 'results':
-                return 'results', [(r[0].serialize(), r[1]) for r in self.results]
+                typed = len(self._unfold_subclasses(self.Model)) > 0
+                return 'results', [(r[0].serialize(typed=typed), r[1]) for r in self.results]
 
         def _unserialize_custom(self, name, data):
+
             if name == 'results':
-                self.results = [(self.Model.unserialize(d[0]), d[1]) for d in data]
+                possibilities = self._unfold_subclasses(self.Model)
+                typed = len(possibilities) > 1
+                if typed:
+                    self.results = [(self._unserialize_typed(d[0], possibilities), d[1]) for d in data]
+                else:
+                    self.results = [(self.Model.unserialize(d[0]), d[1]) for d in data]
 
         def filter(self, request):
             if not self.results:
