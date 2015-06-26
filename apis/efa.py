@@ -21,8 +21,8 @@ class EFA(API):
     train_station_lines = LineTypes(('train', 'urban'))
     encoding = 'ISO-8859-1'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.cities = {}
 
     def _get_location(self, location):

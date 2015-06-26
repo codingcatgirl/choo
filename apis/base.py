@@ -6,8 +6,8 @@ from models import Trip, Ride, Line, Platform, Location
 class API():
     name = None
 
-    def __init__(self):
-        self.collection = Collection()
+    def __init__(self, collection=None):
+        self.collection = collection if collection is not None else Collection()
 
     def query(self, obj):
         if not isinstance(obj, (Searchable, Searchable.Request)):
