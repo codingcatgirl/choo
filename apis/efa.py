@@ -21,6 +21,7 @@ class EFA(API):
     place_id_safe_stop_id_prefix = None
     train_station_suffixes = {}
     train_station_lines = LineTypes(('train', 'urban'))
+    encoding = 'ISO-8859-1'
 
     def __init__(self):
         super().__init__()
@@ -52,31 +53,36 @@ class EFA(API):
 
     def _convert_location(self, location: Location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
-        myid = location._ids.get(self.name)
+        myid = None
+        if isinstance(location, Location):
+            myid = location._ids.get(self.name)
 
-        city = location.city
+        city = location.city.encode(self.encoding) if location.city is not None else None
+        name = location.name.encode(self.encoding) if location.name is not None else None
 
-        if location.name is None:
+        model = location.Model if isinstance(location, Location.Request) else location.__class__
+
+        if name is None:
             if location.coords is not None:
                 r = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % (reversed(location.coords))}
             else:
                 r = {'type': 'stop', 'place': city, 'name': ''}
-        elif isinstance(location, Stop):
+        elif issubclass(model, Stop):
             if myid is not None:
                 r = {'type': 'stop', 'place': None, 'name': str(myid)}
             elif 'ifopt' in location._ids and None not in location._ids['ifopt'] and location.country is not None:
                 r = {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % ((location.country, ) + location._ids['ifopt'])}
             else:
-                r = {'type': 'stop', 'place': city, 'name': location.name}
-        elif isinstance(location, Address):
-            r = {'type': 'address', 'place': city, 'name': location.name}
-        elif isinstance(location, POI):
+                r = {'type': 'stop', 'place': city, 'name': name}
+        elif issubclass(model, Address):
+            r = {'type': 'address', 'place': city, 'name': name}
+        elif issubclass(model, POI):
             if myid is not None:
                 r = {'type': 'poiID', 'name': str(myid)}
             else:
-                r = {'type': 'poi', 'place': city, 'name': location.name}
-        elif isinstance(location, Location):
-            r = {'type': 'any', 'place': city, 'name': location.name if location.name else None}
+                r = {'type': 'poi', 'place': city, 'name': name}
+        elif issubclass(model, Location):
+            r = {'type': 'any', 'place': city, 'name': name if name else None}
         else:
             raise NotImplementedError
 
