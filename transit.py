@@ -72,7 +72,7 @@ class TransitInstance():
                 pass
             else:
                 if data == 'networks':
-                    return b'ok ' + self.pack(self.allowed_formats)
+                    return b'ok ' + self.pack(networks.supported)
             return b'err unknown property'
 
         if command == 'network':
