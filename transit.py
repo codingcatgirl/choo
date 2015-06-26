@@ -199,7 +199,7 @@ if args.ws:
     ws_thread = threading.Thread(target=ws_api)
     ws_thread.daemon = True
     ws_thread.start()
-    print('websocket server running on %s:%s' % (args.ws_host, args.ws_port if args.ws_port else  '?'))
+    print('websocket server running on %s:%s' % (args.ws_host, args.ws_port if args.ws_port else '?'))
     threads.append(ws_thread)
 
 if args.cli:
