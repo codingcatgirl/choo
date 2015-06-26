@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from models import Location, Stop, POI, Address
+from models import Searchable, Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
 from models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
 from models import Line, LineType, LineTypes, Way, WayType, WayEvent
@@ -26,19 +26,25 @@ class EFA(API):
         super().__init__()
         self.cities = {}
 
-    def _get_location(self, stop):
-        if not isinstance(stop, Stop):
+    def _get_location(self, location):
+        if not isinstance(location, Stop):
             raise NotImplementedError()
-        result = self._get_stop_rides(stop)
+        result = self._get_stop_rides(location)
         return result if isinstance(result, Stop) else None
+
+    def _search_locations(self, location):
+        if type(location) != Location.Request:
+            raise NotImplementedError()
+        result = self._stop_finder_request(location)
+        return result
 
     def _search_trips(self, triprequest: Trip.Request):
         return self._trip_request(triprequest)
 
+    # Internal methods start here
     def _get_stop_rides(self, stop: Stop):
         return self._departure_monitor_request(stop)
 
-    # Internal methods start here
     def _post(self, endpoint, data):
         text = requests.post(self.base_url + endpoint, data=data).text
         open('dump.xml', 'w').write(text)
@@ -204,11 +210,12 @@ class EFA(API):
         results._update_collect(self.collection, servernow)
         return results
 
-    def _stop_finder_request(self, stop: Stop):
+    def _stop_finder_request(self, stop):
         """ Searches a Stop; Returns a SearchResult(Stop) """
         post = {
             'language': 'de',
             'outputFormat': 'XML',
+            'coordOutputFormat': 'WGS84',
             'odvSugMacro': 'true'
         }
         post.update(self._convert_location(stop, '%s_sf'))
@@ -218,10 +225,10 @@ class EFA(API):
 
         results = self._parse_odv(data.find('./itdOdv'))
         if type(results) != list:
-            results = [results]
-        results = [result for result in results if isinstance(stop, result[0].__class__)]
+            return stop.Model.Results([results] if isinstance(results, stop.Model) else [])
 
-        return Stop.Results(results)
+        results = [result for result in results if isinstance(result[0], stop.Model)]
+        return stop.Model.Results(results, scored=True)
 
     def _departure_monitor_request(self, stop: Stop, time: datetime=None):
         """ Fills in Stop.rides; Can Return A SearchResult(Stop) without rides. """
