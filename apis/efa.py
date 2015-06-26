@@ -1013,7 +1013,6 @@ class EFA(API):
         return result
 
     def _parse_trip_point_time(self, data, point, walk=False):
-
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):
             # Used for routes (only arrival or departure time)
