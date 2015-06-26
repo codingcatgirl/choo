@@ -257,7 +257,6 @@ if not threads:
     parser.error('No API selected')
 
 try:
-    while True:
-        pass
+    threads[0].join()
 except KeyboardInterrupt:
-    pass
+    sys.exit(0)
