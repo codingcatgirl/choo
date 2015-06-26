@@ -299,7 +299,6 @@ class EFA(API):
     def _process_stop_city(self, stop, cityid):
         if (self.name not in stop._ids or self.place_id_safe_stop_id_prefix is None or
                 not str(stop._ids[self.name]).startswith(self.place_id_safe_stop_id_prefix)):
-            print(stop)
             return
 
         if cityid in self.cities:
