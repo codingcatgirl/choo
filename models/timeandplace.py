@@ -44,13 +44,19 @@ class TimeAndPlace(Updateable):
         if not isinstance(other, TimeAndPlace):
             return False
 
+        if self.arrival is not None and other.arrival is not None and self.arrival != other.arrival:
+            return False
+
+        if self.deprture is not None and other.departure is not None and self.departure != other.departure:
+            return False
+
         if self.platform != other.platform:
             return False
 
-        if self.arrival is None and self.arrival == other.arrival:
+        if self.arrival is not None and self.arrival == other.arrival:
             return True
 
-        if self.departure is None and self.departure == other.departure:
+        if self.departure is not None and self.departure == other.departure:
             return True
 
         return False
