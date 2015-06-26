@@ -83,6 +83,8 @@ All transit models are based upon one of the following four base classes that bu
         .. note::
             For serialization, the list of results is stored in the property ``results`` as a list. Each element of this list is a two-element list containing the serialized result and the match score.
 
+            Please note that the serialized result is typed serialized if the Model has submodels (e.g. :py:class:`Location`, which has :py:class:`Stop` etc…)
+
 
 .. py:class:: Collectable
 
@@ -304,6 +306,14 @@ Submodels of :py:class:`AbstractLocation`.
     .. py:class:: Location.Request
 
         Submodel of :py:class:`AbstractLocation.Request`.
+
+        .. attribute:: name⁰
+
+            A search string for the name of the Location.
+
+        .. attribute:: city⁰
+
+            City of the Location.
 
     .. py:class:: Location.Results
 
