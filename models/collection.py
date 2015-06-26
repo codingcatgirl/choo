@@ -7,6 +7,7 @@ class Collection(Serializable):
         self.known = {}
         self.by_id = {}
         self.by_pid = {}
+        self.i = {}
 
     def _serialize(self):
         return {model: [obj.serialize() for obj in objects] for model, objects in self.known.items()}
@@ -18,7 +19,7 @@ class Collection(Serializable):
             self.by_id[name] = {}
         return self.known[name], self.by_id[name]
 
-    def retrieve(self, obj):
+    def retrieve(self, obj, id_only=False):
         assert isinstance(obj, Collectable)
 
         model = obj._serialized_name()
@@ -35,6 +36,9 @@ class Collection(Serializable):
                 if model == 'Ride' and found != obj:
                     continue
                 return found
+
+        if id_only:
+            return
 
         if model == 'Platform' and obj.name is None and obj.full_name is None:
             return
@@ -63,10 +67,17 @@ class Collection(Serializable):
             self.by_pid[id(found)] = found
             is_new = True
 
+        if is_new:
+            if model not in self.i:
+                self.i[model] = 1
+            obj._ids['session'] = self.i[model]
+            self.i[model] += 1
+
         ids = {name: value for name, value in obj._ids.items() if type(value) != tuple or None not in value}
         if model not in self.by_id:
             self.by_id[model] = {name: {value: found} for name, value in ids.items()}
             self.known[model] = obj.Results([found])
+            self.i[model] = 1
         else:
             by_id = self.by_id[model]
             for name, value in ids.items():

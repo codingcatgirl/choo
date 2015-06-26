@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from models import unserialize_typed
+from models import unserialize_typed, Collection, Collectable
 from autobahn.asyncio.websocket import WebSocketServerFactory, WebSocketServerProtocol
 import sys
 import networks
@@ -28,6 +28,7 @@ class TransitInstance():
 
     def __init__(self, write, default_format=None):
         self.format = default_format
+        self.collection = Collection()
         self.network = None
         self.queries = {}
         self.write = write
@@ -85,7 +86,7 @@ class TransitInstance():
                 pass
             else:
                 if data in networks.supported:
-                    self.network = networks.network(data)()
+                    self.network = networks.network(data)(self.collection)
                     return b'ok ' + self.pack(data)
             return b'err unknown network'
 
@@ -137,6 +138,13 @@ class TransitInstance():
         self.queries = {}
 
     def _query(self, query):
+        if isinstance(query, Collectable):
+            try:
+                found = self.collection.retrieve(query, id_only=False)
+                if found is not None:
+                    query = found
+            except:
+                return b'err collection lookup failed'
         try:
             result = self.network.query(query)
         except:
