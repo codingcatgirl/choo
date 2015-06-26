@@ -913,8 +913,8 @@ class EFA(API):
 
         return origin, destination, line, ridenum, ridedir, canceled
 
-    def _parse_trip_point(self, data, walk=False, train_line=False):
-        """ Parse a trip Point into a TimeAndPlace (including the Location) """
+    def _parse_trip_point_name(self, data):
+        # todo: this can be better
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
@@ -944,6 +944,12 @@ class EFA(API):
                 tmp = tmp[:-len(name)].strip()
                 if tmp:
                     city = tmp
+
+        return city, name
+
+    def _parse_trip_point(self, data, walk=False, train_line=False):
+        """ Parse a trip Point into a TimeAndPlace (including the Location) """
+        city, name = self._parse_trip_point_name(data)
 
         if data.attrib['area'] == '' and data.attrib['stopID'] == '0':
             return None
@@ -997,6 +1003,17 @@ class EFA(API):
         if data.attrib.get('x'):
             platform.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
+        # for genattr in data.findall('./genAttrList/genAttrElem'):
+        #  	name = genattr.find('name').text
+        # 	value = genattr.find('value').text
+        # 	if name == 'platformChange' and value == 'changed':
+        # 		result.changed_platform = True
+
+        self._parse_trip_point_time(data, result, walk)
+        return result
+
+    def _parse_trip_point_time(self, data, point, walk=False):
+
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):
             # Used for routes (only arrival or departure time)
@@ -1014,9 +1031,9 @@ class EFA(API):
                 livetime = times[1]
 
             if data.attrib['usage'] == 'departure':
-                result.departure = RealtimeTime(time=plantime, livetime=livetime)
+                point.departure = RealtimeTime(time=plantime, livetime=livetime)
             elif data.attrib['usage'] == 'arival':
-                result.arrival = RealtimeTime(time=plantime, livetime=livetime)
+                point.arrival = RealtimeTime(time=plantime, livetime=livetime)
 
         elif 'countdown' in data.attrib:
             # Used for departure lists
@@ -1032,7 +1049,7 @@ class EFA(API):
                 plantime = times[0]
             if len(times) == 2 and not walk:
                 livetime = times[1]
-            result.departure = RealtimeTime(time=plantime, livetime=livetime)
+            point.departure = RealtimeTime(time=plantime, livetime=livetime)
 
         else:
             # Also used for routes (arrival and departure time – most times)
@@ -1041,22 +1058,14 @@ class EFA(API):
                 times.append(self._parse_datetime(itddatetime))
 
             if not [t for t in times if t is not None]:
-                result.passthrough = True
+                point.passthrough = True
 
             if len(times) > 0 and times[0] is not None:
                 delay = int(data.attrib.get('arrDelay', '-1'))
                 delay = timedelta(minutes=delay) if delay >= 0 else None
-                result.arrival = RealtimeTime(time=times[0], delay=delay)
+                point.arrival = RealtimeTime(time=times[0], delay=delay)
 
             if len(times) > 1 and times[1] is not None:
                 delay = int(data.attrib.get('depDelay', '-1'))
                 delay = timedelta(minutes=delay) if delay >= 0 else None
-                result.departure = RealtimeTime(time=times[1], delay=delay)
-
-        # for genattr in data.findall('./genAttrList/genAttrElem'):
-        #  	name = genattr.find('name').text
-        # 	value = genattr.find('value').text
-        # 	if name == 'platformChange' and value == 'changed':
-        # 		result.changed_platform = True
-
-        return result
+                point.departure = RealtimeTime(time=times[1], delay=delay)
