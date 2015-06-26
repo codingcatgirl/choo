@@ -298,7 +298,7 @@ class EFA(API):
 
     def _process_stop_city(self, stop, cityid):
         if (self.name not in stop._ids or self.place_id_safe_stop_id_prefix is None or
-            not str(stop._ids[self.name]).startswith(self.place_id_safe_stop_id_prefix)):
+                not str(stop._ids[self.name]).startswith(self.place_id_safe_stop_id_prefix)):
             print(stop)
             return
 
@@ -307,7 +307,7 @@ class EFA(API):
             if stop.city is None:
                 stop.city = city
                 if city is not None and stop.name.startswith(city + ' '):
-                    stop.name = stop.name[len(city)+1:]
+                    stop.name = stop.name[len(city) + 1:]
             elif city is None:
                 self.cities[cityid] = (country, stop.city)
                 city = stop.city
