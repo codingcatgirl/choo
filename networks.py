@@ -7,8 +7,6 @@ class VRR(EFA):
     base_url = 'http://app.vrr.de/standard/'
     country_by_id = (('2', 'de'), )
     ifopt_platforms = True
-    ifopt_stopid_prefix = '200'
-    ifopt_stopid_digits = 5
     place_id_safe_stop_id_prefix = '2'
     train_station_suffixes = {
         ' S ': ' ',
