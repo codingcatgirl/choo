@@ -327,6 +327,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         def __iter__(self):
             yield from (r[0] for r in self.results)
 
+        def __len__(self):
+            return len(self.results)
+
         def scored(self):
             yield from self.results
 
