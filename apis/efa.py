@@ -723,52 +723,37 @@ class EFA(API):
 
             first = None
             last = None
+            waypoints = False
             if data.find('./itdStopSeq'):
-                waypoints = [self._parse_trip_point(point, train_line=train_line) for point in data.findall('./itdStopSeq/itdPoint')]
-                if not waypoints or waypoints[0].stop != points[0].stop:
-                    waypoints.insert(0, points[0])
-                if waypoints[-1].stop != points[1].stop:
-                    waypoints.append(points[1])
-                for p in waypoints:
-                    if first is None:
-                        if origin is not None:
-                            if origin != p.stop:
-                                ride.append(TimeAndPlace(Platform(origin)))
-                                ride.append(None)
-                        else:
-                            ride.append(None)
-                    pointer = ride.append(p)
-                    if first is None:
-                        first = pointer
-                last = pointer
+                new_points = [self._parse_trip_point(point, train_line=train_line) for point in data.findall('./itdStopSeq/itdPoint')]
+                if not new_points or new_points[0].stop != new_points[0].stop:
+                    new_points.insert(0, points[0])
+                if new_points[-1].stop != points[1].stop:
+                    new_points.append(points[1])
+                points = new_points
+                waypoints = True
 
-                if destination is not None:
-                    if destination != p.stop:
-                        ride.append(None)
-                        ride.append(TimeAndPlace(Platform(destination)))
-                else:
+            for p in points:
+                if not waypoints and first is None:
                     ride.append(None)
+                pointer = ride.append(p)
+                if first is None:
+                    first = pointer
+            last = pointer
+
+            if origin is not None:
+                if origin != ride[0].stop:
+                    ride.prepend(None)
+                    ride.prepend(TimeAndPlace(Platform(origin)))
             else:
-                for p in points:
-                    if first is None:
-                        if origin is not None:
-                            if origin != p.stop:
-                                ride.append(TimeAndPlace(Platform(origin)))
-                                ride.append(None)
-                        else:
-                            ride.append(None)
-                    ride.append(None)
-                    pointer = ride.append(p)
-                    if first is None:
-                        first = pointer
-                last = pointer
+                ride.prepend(None)
 
-                if destination is not None:
-                    if destination != p.stop:
-                        ride.append(None)
-                        ride.append(TimeAndPlace(Platform(destination)))
-                else:
+            if destination is not None:
+                if destination != ride[-1].stop:
                     ride.append(None)
+                    ride.append(TimeAndPlace(Platform(destination)))
+            else:
+                ride.append(None)
 
             segment = ride[first:last]
             paths = self._split_path(path, [p.platform.coords for p in segment])[:-1]
