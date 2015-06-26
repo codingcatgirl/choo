@@ -192,6 +192,7 @@ class Location(AbstractLocation):
             self.name = None
             self.city = None
 
+        @classmethod
         def _validate(cls):
             return (
                 ('name', (None, str)),
