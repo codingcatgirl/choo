@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from models import unserialize_typed
+from autobahn.asyncio.websocket import WebSocketServerFactory, WebSocketServerProtocol
 import sys
 import networks
 import json
@@ -25,9 +26,11 @@ supported = networks.supported
 class TransitInstance():
     allowed_formats = ('json', 'msgpack')
 
-    def __init__(self, default_format=None):
+    def __init__(self, write, default_format=None):
         self.format = default_format
         self.network = None
+        self.queries = {}
+        self.write = write
 
     def handle_msg(self, msg):
         try:
@@ -89,7 +92,13 @@ class TransitInstance():
         if self.network is None:
             return b'err choose network'
 
-        if command == 'query':
+        if command in ('query', 'asyncquery'):
+            if command == 'asyncquery':
+                if b' ' not in data:
+                    return b'err thread id missing'
+
+                queryid, data = data.split(b' ', 1)
+
             query = self.unpack(data)
 
             if query is None:
@@ -98,18 +107,43 @@ class TransitInstance():
             try:
                 query = unserialize_typed(query)
             except:
+                traceback.print_exc()
                 return b'err unserialize failed'
 
-            try:
-                print(repr(query))
-                result = self.network.query(query)
-            except:
-                traceback.print_exc()
-                return b'err query failed'
+            if command == 'asyncquery':
+                overwrite = queryid in self.queries
 
-            return b'ok ' + self.pack(result.serialize(typed=True))
+                t = threading.Thread(target=self._thread_query, args=(queryid, query))
+                t.daemon = True
+                t.start()
+                self.queries[queryid] = query
+
+                if overwrite:
+                    return b'ok ' + self.pack('replaced')
+                else:
+                    return b'ok ' + self.pack('new')
+            else:
+                return self._query(query)
 
         return b'err unknown command'
+
+    def _thread_query(self, queryid, query):
+        result = self._query(query)
+        if queryid in self.queries and self.queries[queryid] is query:
+            self.write(b'async ' + queryid + b' ' + result)
+            del self.queries[queryid]
+
+    def abort_queries(self):
+        self.queries = {}
+
+    def _query(self, query):
+        try:
+            result = self.network.query(query)
+        except:
+            traceback.print_exc()
+            return b'err query failed'
+
+        return b'ok ' + self.pack(result.serialize(typed=True))
 
     def pack(self, data):
         if self.format == 'json':
@@ -130,7 +164,7 @@ class TransitInstance():
 
 class TransitTCPHandler(socketserver.StreamRequestHandler):
     def handle(self):
-        instance = TransitInstance()
+        instance = TransitInstance(lambda r: self.wfile.write(r + b'\r\n'))
         while self.rfile.readable():
             data = self.rfile.readline()
             result = instance.handle_msg(data)
@@ -138,31 +172,42 @@ class TransitTCPHandler(socketserver.StreamRequestHandler):
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    pass
+    def __init__(self, url, debug=False, debugCodePaths=False):
+        WebSocketServerFactory.__init__(self, url, debug=debug, debugCodePaths=debugCodePaths)
 
 
-@asyncio.coroutine
-def ws_handler(websocket, path):
-    instance = TransitInstance('json')
-    while True:
-        data = yield from websocket.recv()
-        if data is None:
-            break
-        result = instance.handle_msg(data.encode()).decode()
-        yield from websocket.send(result)
+class TransitWebsocketServerProtocol(WebSocketServerProtocol):
+    def onConnect(self, request):
+        pass
+
+    def onOpen(self):
+        self.instance = TransitInstance(lambda r: self.sendMessage(r))
+
+    def onMessage(self, payload, isBinary):
+        result = self.instance.handle_msg(payload)
+        self.sendMessage(result)
+
+    def connectionLost(self, reason):
+        self.instance.abort_queries()
 
 
 def ws_api():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    start_server = websockets.serve(ws_handler, args.ws_host, args.ws_port)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+    factory = WebSocketServerFactory('ws://%s:%d' % (args.ws_host, args.ws_port))
+
+    factory.protocol = TransitWebsocketServerProtocol
+    factory.setProtocolOptions(allowHixie76=True)
+
+    loop = asyncio.get_event_loop()
+    coro = loop.create_server(factory, args.ws_host, args.ws_port)
+    loop.run_until_complete(coro)
+    loop.run_forever()
 
 
 def shell_api():
-    instance = TransitInstance()
+    instance = TransitInstance(lambda r: sys.stdout.buffer.write(r + b'\r\n'))
     while sys.stdin.buffer.readable():
         data = sys.stdin.buffer.readline()
         result = instance.handle_msg(data)
