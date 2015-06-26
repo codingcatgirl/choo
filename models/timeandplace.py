@@ -47,7 +47,7 @@ class TimeAndPlace(Updateable):
         if self.arrival is not None and other.arrival is not None and self.arrival != other.arrival:
             return False
 
-        if self.deprture is not None and other.departure is not None and self.departure != other.departure:
+        if self.departure is not None and other.departure is not None and self.departure != other.departure:
             return False
 
         if self.platform != other.platform:
