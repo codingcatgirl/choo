@@ -142,12 +142,11 @@ class TransitInstance():
         except:
             traceback.print_exc()
             return b'err query failed'
-
         return b'ok ' + self.pack(result.serialize(typed=True))
 
     def pack(self, data):
         if self.format == 'json':
-            return json.dumps(data).encode()
+            return json.dumps(data, separators=(',', ':')).encode()
         elif self.format == 'msgpack':
             return msgpack.packb(data, use_bin_type=True) + ('\r\n'.encode())
 
