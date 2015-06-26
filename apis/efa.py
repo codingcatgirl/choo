@@ -17,6 +17,8 @@ class EFA(API):
     country_by_id = ()
     ifopt_platforms = False
     ifopt_stopid_digits = False
+    ifopt_stopid_prefix = ''
+    place_id_safe_stop_id_prefix = None
     train_station_suffixes = {}
     train_station_lines = LineTypes(('train', 'urban'))
 
@@ -295,10 +297,17 @@ class EFA(API):
         return None
 
     def _process_stop_city(self, stop, cityid):
+        if (self.name not in stop._ids or self.place_id_safe_stop_id_prefix is None or
+            not str(stop._ids[self.name]).startswith(self.place_id_safe_stop_id_prefix)):
+            print(stop)
+            return
+
         if cityid in self.cities:
             country, city = self.cities[cityid]
             if stop.city is None:
                 stop.city = city
+                if city is not None and stop.name.startswith(city + ' '):
+                    stop.name = stop.name[len(city)+1:]
             elif city is None:
                 self.cities[cityid] = (country, stop.city)
                 city = stop.city
@@ -893,7 +902,7 @@ class EFA(API):
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination._ids[self.name] = int(data.attrib['destID'])
-            if self.ifopt_stopid_digits:
+            if self.ifopt_stopid_digits and data.attrib['destID'].startswith(self.ifopt_stopid_prefix):
                 destination._ids['ifopt'] = (None, str(int(data.attrib['destID'][-self.ifopt_stopid_digits:])))
         self._make_train_station(destination, train_line)
 
@@ -921,7 +930,17 @@ class EFA(API):
             tmp = data.attrib.get('stopName', '')
             if not tmp:
                 tmp = data.attrib.get('name', '')
-            if tmp.endswith(' ' + name):
+                if ', ' in tmp:
+                    city, name = tmp.split(', ', 1)
+                elif tmp.endswith(' ' + name):
+                    tmp = tmp[:-len(name)].strip()
+                    if tmp:
+                        city = tmp
+
+                if city is None:
+                    name = tmp
+
+            elif city is None and tmp.endswith(' ' + name):
                 tmp = tmp[:-len(name)].strip()
                 if tmp:
                     city = tmp
@@ -941,7 +960,7 @@ class EFA(API):
             if cityid:
                 self._process_stop_city(location, int(cityid))
 
-            if self.ifopt_stopid_digits:
+            if self.ifopt_stopid_digits and data.attrib['stopID'].startswith(self.ifopt_stopid_prefix):
                 location._ids['ifopt'] = (None, str(int(data.attrib['stopID'][-self.ifopt_stopid_digits:])))
 
         # get and clean the platform
@@ -963,13 +982,15 @@ class EFA(API):
 
         platform = Platform(location, platform, full_platform)
         if full_platform is not None:
-            platform._ids[self.name if not self.ifopt_platforms else 'ifopt'] = (data.attrib['area'], data.attrib['platform'])
+            platform._ids[self.name] = (location._ids[self.name], data.attrib['area'], data.attrib['platform'])
 
         ifopt = data.attrib.get('gid', '').split(':')
-        if len(ifopt) == 5:
+        if len(ifopt) == 5 and str(location._ids[self.name]).endswith(ifopt[2]):
             location.country = ifopt[0]
             location._ids['ifopt'] = (ifopt[1], ifopt[2])
-            platform._ids['ifopt'] = (ifopt[3], ifopt[4])
+
+            if full_platform is not None:
+                platform._ids['ifopt'] = (ifopt[1], ifopt[2], ifopt[3], ifopt[4])
 
         result = TimeAndPlace(platform)
 
