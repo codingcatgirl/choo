@@ -44,6 +44,9 @@ class AbstractLocation(Collectable):
     def _near(self, other):
         return self.coords is not None and other.coords is not None and abs(self.coords.lat - other.coords.lat) < 0.02 and abs(self.coords.lon - other.coords.lon) < 0.02
 
+    def _toofar(self, other):
+        return (self.coords is not None and other.coords is not None) and (abs(self.coords.lat - other.coords.lat) > 0.04 or abs(self.coords.lon - other.coords.lon) > 0.04)
+
     def __eq__(self, other):
         return self.coords == other.coords
 
@@ -161,7 +164,7 @@ class Location(AbstractLocation):
 
         if self.city is None:
             if other.city is None:
-                return self.name.replace(',', '').replace('  ', ' ') == other.name.replace(',', '').replace('  ', ' ') or near
+                return near or self.name.replace(',', '').replace('  ', ' ') == other.name.replace(',', '').replace('  ', ' ')
 
             else:
                 if not self.name.endswith(other.name):
@@ -184,7 +187,7 @@ class Location(AbstractLocation):
                 if self.name != other.name:
                     return False
 
-                return self.city == other.city or near
+                return near or self.city == other.city
 
     class Request(Searchable.Request):
         def __init__(self):
