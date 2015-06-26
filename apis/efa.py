@@ -152,36 +152,12 @@ class EFA(API):
         else:
             post['lineRestriction'] = 403
 
-        if 'urban' in linetypes:
-            post['inclMOT_1'] = 'on'
-
-        if 'metro' in linetypes:
-            post['inclMOT_2'] = 'on'
-            post['inclMOT_3'] = 'on'
-
-        if 'tram' in linetypes:
-            post['inclMOT_4'] = 'on'
-
-        if 'bus.city' in linetypes:
-            post['inclMOT_5'] = 'on'
-
-        if 'bus.regional' in linetypes:
-            post['inclMOT_6'] = 'on'
-
-        if 'bus.express' in linetypes:
-            post['inclMOT_7'] = 'on'
-
-        if 'suspended' in linetypes:
-            post['inclMOT_8'] = 'on'
-
-        if 'ship' in linetypes:
-            post['inclMOT_9'] = 'on'
-
-        if 'dialable' in linetypes:
-            post['inclMOT_10'] = 'on'
-
-        if 'other' in linetypes:
-            post['inclMOT_11'] = 'on'
+        for linetype, number in (('urban', '1'), ('metro', '2'), ('metro', '3'),
+                                 ('tram', '4'), ('bus.city', '5'), ('bus.regional', '6')
+                                 ('bus.express', '7'), ('suspended', '8'), ('ship', '9'),
+                                 ('dialable', '10'), ('other', '11')):
+            if linetype in linetypes:
+                post['inclMOT_' + number] = 'on'
 
         if triprequest.wayduration_origin or triprequest.wayduration_destination:
             post['useProxFootSearch'] = 1
