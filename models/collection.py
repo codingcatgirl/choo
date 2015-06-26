@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import Serializable, Collectable
-import time
+
 
 class Collection(Serializable):
     def __init__(self):
