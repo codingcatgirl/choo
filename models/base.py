@@ -375,13 +375,6 @@ class Collectable(Searchable):
             other_id = other._ids.get(name)
             if other_id is None:
                 continue
-            if type(value) == tuple and (None in value or None in other_id):
-                for i, v in enumerate(value):
-                    o = other_id[i]
-                    if v is None or o is None:
-                        continue
-                    if o != v:
-                        return False
             else:
                 return value == other_id
 

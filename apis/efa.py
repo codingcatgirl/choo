@@ -16,8 +16,6 @@ class EFA(API):
     base_url = None
     country_by_id = ()
     ifopt_platforms = False
-    ifopt_stopid_digits = False
-    ifopt_stopid_prefix = ''
     place_id_safe_stop_id_prefix = None
     train_station_suffixes = {}
     train_station_lines = LineTypes(('train', 'urban'))
@@ -299,6 +297,7 @@ class EFA(API):
                 break
 
         self._make_train_station(stop, train_station)
+
         stop._update_collect(self.collection, servernow)
 
         return stop
@@ -453,15 +452,11 @@ class EFA(API):
             if isinstance(location, Stop):
                 location.country = self._get_country(stopid)
                 location._ids[self.name] = int(stopid)
-                if self.ifopt_stopid_digits:
-                    location._ids['ifopt'] = (None, str(int(stopid[-self.ifopt_stopid_digits:])))
         elif myid:
             if location is None:
                 location = POI(None, city, name)
             location.country = self._get_country(myid)
             location._ids[self.name] = int(myid)
-            if self.ifopt_stopid_digits:
-                location._ids['ifopt'] = (None, str(int(myid[-self.ifopt_stopid_digits:])))
         elif location is None:
             # Still no clue about the Type? Well, it's an Address then.
             location = Address(None, city, name)
@@ -914,8 +909,6 @@ class EFA(API):
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination._ids[self.name] = int(data.attrib['destID'])
-            if self.ifopt_stopid_digits and data.attrib['destID'].startswith(self.ifopt_stopid_prefix):
-                destination._ids['ifopt'] = (None, str(int(data.attrib['destID'][-self.ifopt_stopid_digits:])))
         self._make_train_station(destination, train_line)
 
         # route description
@@ -977,9 +970,6 @@ class EFA(API):
             cityid = data.attrib.get('placeID')
             if cityid:
                 self._process_stop_city(location, int(cityid))
-
-            if self.ifopt_stopid_digits and data.attrib['stopID'].startswith(self.ifopt_stopid_prefix):
-                location._ids['ifopt'] = (None, str(int(data.attrib['stopID'][-self.ifopt_stopid_digits:])))
 
         # get and clean the platform
         platform = data.attrib['platform']
