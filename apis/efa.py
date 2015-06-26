@@ -155,7 +155,7 @@ class EFA(API):
             post['lineRestriction'] = 403
 
         for linetype, number in (('urban', '1'), ('metro', '2'), ('metro', '3'),
-                                 ('tram', '4'), ('bus.city', '5'), ('bus.regional', '6')
+                                 ('tram', '4'), ('bus.city', '5'), ('bus.regional', '6'),
                                  ('bus.express', '7'), ('suspended', '8'), ('ship', '9'),
                                  ('dialable', '10'), ('other', '11')):
             if linetype in linetypes:
