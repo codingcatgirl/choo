@@ -3,10 +3,11 @@ from .base import Serializable, Collectable
 
 
 class Collection(Serializable):
-    def __init__(self):
+    def __init__(self, name=None):
         self.known = {}
         self.by_id = {}
         self.by_pid = {}
+        self.name = name
         self.i = {}
 
     def _serialize(self):
@@ -67,10 +68,10 @@ class Collection(Serializable):
             self.by_pid[id(found)] = found
             is_new = True
 
-        if is_new:
+        if is_new and self.name is not None:
             if model not in self.i:
                 self.i[model] = 1
-            obj._ids['session'] = self.i[model]
+            obj._ids[self.name] = self.i[model]
             self.i[model] += 1
 
         ids = {name: value for name, value in obj._ids.items() if type(value) != tuple or None not in value}

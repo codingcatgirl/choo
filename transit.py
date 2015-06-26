@@ -28,7 +28,7 @@ class TransitInstance():
 
     def __init__(self, write, default_format=None):
         self.format = default_format
-        self.collection = Collection()
+        self.collection = Collection('session')
         self.network = None
         self.queries = {}
         self.write = write
