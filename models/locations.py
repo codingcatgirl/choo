@@ -187,7 +187,16 @@ class Location(AbstractLocation):
                 return self.city == other.city or near
 
     class Request(Searchable.Request):
-        pass
+        def __init__(self):
+            super().__init__()
+            self.name = None
+            self.city = None
+
+        def _validate(cls):
+            return (
+                ('name', (None, str)),
+                ('city', (None, str))
+            )
 
     class Results(Searchable.Results):
         pass
