@@ -99,6 +99,9 @@ class Platform(AbstractLocation):
         if self.full_name is not None and self.full_name == other.full_name:
             return True
 
+        if self.coords is not None and self.coords == other.coords:
+            return True
+
         return False
 
     class Request(Searchable.Request):
