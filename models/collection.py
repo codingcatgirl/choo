@@ -54,7 +54,7 @@ class Collection(Serializable):
 
     def add(self, obj):
         model = obj._serialized_name()
-        if model == 'Platform' and obj.name is None and obj.full_name is None:
+        if model == 'Platform' and obj.name is None and obj.full_name is None and obj.coords is None:
             return obj
 
         found = self.retrieve(obj)
