@@ -89,3 +89,10 @@ class Collection(Serializable):
             self.known[model].append(found)
 
         return found
+
+    def get_by_ids_serialized(self, all_ids):
+        result = {}
+        myname = self.name
+        for model, ids in all_ids.items():
+            result[model] = {id_: obj.serialize(children_refer_by=myname) for id_, obj in self.by_id[model][myname].items() if id_ in ids}
+        return result
