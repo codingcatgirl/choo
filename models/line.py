@@ -52,9 +52,9 @@ class Line(Collectable):
             return True
 
         if (self.shortname is not None and other.shortname is not None and
-            len([s for s in self.shortname if s.isdigit()]) and
-            self.operator is not None and self.operator == other.operator and
-            self.network is not None and self.network == other.network):
+                len([s for s in self.shortname if s.isdigit()]) and
+                self.operator is not None and self.operator == other.operator and
+                self.network is not None and self.network == other.network):
             return True
 
         return False
