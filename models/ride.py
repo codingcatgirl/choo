@@ -69,13 +69,13 @@ class Ride(Collectable):
                         return False
             return True
 
-    def _serialize_custom(self, name):
+    def _serialize_custom(self, name, **kwargs):
         if name == 'infotexts':
             return 'infotexts', (self.infotexts if self.infotexts else None)
         elif name == '_stops':
-            return 'stops', [(s.serialize() if s else None) for i, s in self._stops]
+            return 'stops', [(s.serialize(**kwargs) if s else None) for i, s in self._stops]
         elif name == '_paths':
-            return 'paths', {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
+            return 'paths', {int(i): [p.serialize(**kwargs) for p in path] for i, path in self._paths.items()}
 
     def _unserialize_custom(self, name, data):
         if name == 'infotexts':
@@ -236,7 +236,7 @@ class RideSegment(TripPart):
         if name in ('_origin', '_destination'):
             return value is None or isinstance(value, Ride.StopPointer)
 
-    def _serialize_custom(self, name):
+    def _serialize_custom(self, name, **kwargs):
         if name == '_origin':
             return 'origin', int(self._origin) if self._origin is not None else None
         elif name == '_destination':

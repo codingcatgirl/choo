@@ -43,11 +43,11 @@ class Way(TripPart):
                     return False
             return True
 
-    def _serialize_custom(self, name):
+    def _serialize_custom(self, name, **kwargs):
         if name == 'path':
-            return 'path', [p.serialize() for p in self.path] if self.path is not None else None
+            return 'path', [p.serialize(**kwargs) for p in self.path] if self.path is not None else None
         elif name == 'events':
-            return 'events', [e.serialize() for e in self.events] if self.events is not None else None
+            return 'events', [e.serialize(**kwargs) for e in self.events] if self.events is not None else None
 
     def _unserialize_custom(self, name, data):
         if name == 'path':
