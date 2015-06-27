@@ -77,8 +77,17 @@ class Serializable:
         return allowed
 
     def serialize(self, typed=False, **kwargs):
+        refer_by = kwargs.get('refer_by')
+        if refer_by is not None:
+            if isinstance(self, Collectable) and refer_by in self._ids:
+                return self._ids[refer_by]
+        else:
+            kwargs['refer_by'] = kwargs.get('children_refer_by')
+
         self.validate()
         data = OrderedDict()
+
+        nostopresults = kwargs.get('nostopresults')
 
         if hasattr(self, '_serialize'):
             data = self._serialize()
@@ -98,7 +107,7 @@ class Serializable:
 
                     allowed = c._unfold_subclasses(allowed)
                     if c.__name__ == 'Stop' and isinstance(value, Searchable.Results):
-                        if kwargs.get('nostopresults') is True:
+                        if nostopresults is True:
                             continue
                         kwargs['nostopresults'] = True
 
