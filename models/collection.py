@@ -78,7 +78,6 @@ class Collection(Serializable):
         if model not in self.by_id:
             self.by_id[model] = {name: {value: found} for name, value in ids.items()}
             self.known[model] = obj.Results([found])
-            self.i[model] = 1
         else:
             by_id = self.by_id[model]
             for name, value in ids.items():
