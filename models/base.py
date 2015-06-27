@@ -182,13 +182,27 @@ class Serializable:
 
         return obj
 
-    def _update_collect(self, collection, last_update=None):
+    def _update_collect(self, collection, last_update=None, ids=None):
         if last_update is not None and isinstance(self, Updateable):
             self.last_update = last_update
 
-        self._collect_children(collection, last_update)
+        newself = self
+        if isinstance(self, Collectable):
+            newself = collection.add(self)
+            if ids is not None and collection.name:
+                model = self.__class__._serialized_name()
+                myid = newself._ids.get(collection.name)
+                if myid is not None:
+                    if model not in ids:
+                        ids[model] = set()
 
-    def _collect_children(self, collection, last_update=None):
+                    ids[model].add(myid)
+
+        if self is newself:
+            self._collect_children(collection, last_update, ids=ids)
+        return newself
+
+    def _collect_children(self, collection, last_update=None, ids=None):
         for c in self.__class__.__mro__:
             if not hasattr(c, '_validate'):
                 continue
@@ -196,14 +210,12 @@ class Serializable:
             for name, allowed in c._validate():
                 value = getattr(self, name)
 
-                if isinstance(value, Collectable):
-                    newvalue = collection.add(value)
-                    if newvalue is not value:
-                        setattr(self, name, newvalue)
-                    value = newvalue
-
                 if isinstance(value, Serializable):
-                    value._update_collect(collection, last_update)
+                    newvalue = value._update_collect(collection, last_update, ids=ids)
+
+                    if isinstance(value, Collectable):
+                        if newvalue is not value:
+                            setattr(self, name, newvalue)
 
 
 class Updateable(Serializable):
@@ -281,16 +293,11 @@ class Searchable(Updateable, metaclass=MetaSearchable):
                 ('results', None),
             )
 
-        def _collect_children(self, collection, last_update=None):
-            super()._collect_children(collection, last_update)
-
-            if issubclass(self.content, Collectable):
-                for i in range(len(self.results)):
-                    r = self.results[i]
-                    self.results[i] = (collection.add(r[0]), r[1])
-            else:
-                for r in self:
-                    r._update_collect(collection, last_update)
+        def _collect_children(self, collection, last_update=None, ids=None):
+            super()._collect_children(collection, last_update, ids=ids)
+            for i in range(len(self.results)):
+                r = self.results[i]
+                self.results[i] = (r[0]._update_collect(collection, last_update, ids=ids), r[1])
 
         def _validate_custom(self, name, value):
             if name == 'results':
