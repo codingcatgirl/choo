@@ -28,14 +28,15 @@ class EFA(API):
     def _get_location(self, location):
         if not isinstance(location, Stop):
             raise NotImplementedError()
-        result = self._get_stop_rides(location)
-        return result if isinstance(result, Stop) else None
+        result, now = self._get_stop_rides(location)
+        if not isinstance(result, location.__class__):
+            result = None
+        return result, now
 
     def _search_locations(self, location):
         if type(location) != Location.Request:
             raise NotImplementedError()
-        result = self._stop_finder_request(location)
-        return result
+        return self._stop_finder_request(location)
 
     def _search_trips(self, triprequest: Trip.Request):
         return self._trip_request(triprequest)
@@ -211,8 +212,7 @@ class EFA(API):
         results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
         results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
 
-        results._update_collect(self.collection, servernow)
-        return results
+        return results, servernow
 
     def _stop_finder_request(self, stop):
         """ Searches a Stop; Returns a SearchResult(Stop) """
@@ -225,6 +225,8 @@ class EFA(API):
         post.update(self._convert_location(stop, '%s_sf'))
 
         xml = self._post('XSLT_STOPFINDER_REQUEST', post)
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
+
         data = xml.find('./itdStopFinderRequest')
 
         results = self._parse_odv(data.find('./itdOdv'))
@@ -232,7 +234,7 @@ class EFA(API):
             return stop.Model.Results([results] if isinstance(results, stop.Model) else [])
 
         results = [result for result in results if isinstance(result[0], stop.Model)]
-        return stop.Model.Results(results, scored=True)
+        return stop.Model.Results(results, scored=True), servernow
 
     def _departure_monitor_request(self, stop: Stop, time: datetime=None):
         """ Fills in Stop.rides; Can Return A SearchResult(Stop) without rides. """
@@ -298,9 +300,7 @@ class EFA(API):
 
         self._make_train_station(stop, train_station)
 
-        stop._update_collect(self.collection, servernow)
-
-        return stop
+        return stop, servernow
 
     def _get_country(self, i):
         for s, country in self.country_by_id:

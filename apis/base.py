@@ -9,34 +9,43 @@ class API():
     def __init__(self, collection=None):
         self.collection = collection if collection is not None else Collection()
 
-    def query(self, obj):
+    def query(self, obj, get_ids=False):
         if not isinstance(obj, (Searchable, Searchable.Request)):
             raise TypeError('can only query Searchable or Searchable.Request')
 
         if isinstance(obj, Searchable.Request):
             if obj.Model == Trip:
-                return self.search_trip(obj)
+                result, now = self.search_trip(obj)
             elif obj.Model == Ride:
-                return self.search_ride(obj)
+                result, now = self.search_ride(obj)
             elif obj.Model == Line:
-                return self.search_line(obj)
+                result, now = self.search_line(obj)
             elif obj.Model == Platform:
-                return self.search_platform(obj)
+                result, now = self.search_platform(obj)
             elif obj.Model == Location:
-                return self.search_location(obj)
+                result, now = self.search_location(obj)
+            else:
+                raise NotImplementedError()
         else:
             if isinstance(obj, Trip):
-                return self.get_trip(obj)
+                result, now = self.get_trip(obj)
             elif isinstance(obj, Ride):
-                return self.get_ride(obj)
+                result, now = self.get_ride(obj)
             elif isinstance(obj, Line):
-                return self.get_line(obj)
+                result, now = self.get_line(obj)
             elif isinstance(obj, Platform):
-                return self.get_platform(obj)
+                result, now = self.get_platform(obj)
             elif isinstance(obj, Location):
-                return self.get_location(obj)
+                result, now = self.get_location(obj)
+            else:
+                raise NotImplementedError()
 
-        raise NotImplementedError()
+        if get_ids:
+            ids = {}
+            result = result._update_collect(self.collection, now, ids=ids)
+            return result, ids
+        else:
+            return result._update_collect(self.collection, now)
 
     def search_trip(self, obj):
         assert isinstance(obj, Trip.Request)
