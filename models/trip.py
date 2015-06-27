@@ -7,6 +7,7 @@ from .line import Line, LineType, LineTypes
 from .tickets import TicketList
 from datetime import timedelta, datetime
 
+
 class Trip(Searchable):
     def __init__(self):
         super().__init__()
