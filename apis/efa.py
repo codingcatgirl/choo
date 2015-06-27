@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from models import Searchable, Location, Stop, POI, Address
+from models import Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
 from models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
 from models import Line, LineType, LineTypes, Way, WayType, WayEvent

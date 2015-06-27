@@ -76,9 +76,10 @@ class Serializable:
                     allowed = tuple(set(allowed + tuple(a.__subclasses__())))
         return allowed
 
-    def serialize(self, typed=False):
+    def serialize(self, typed=False, **kwargs):
         self.validate()
         data = OrderedDict()
+
         if hasattr(self, '_serialize'):
             data = self._serialize()
         else:
@@ -90,16 +91,20 @@ class Serializable:
                     value = getattr(self, name)
 
                     if allowed is None:
-                        n, v = c._serialize_custom(self, name)
+                        n, v = c._serialize_custom(self, name, **kwargs)
                         if v is not None:
                             data[n] = v
                         continue
 
                     allowed = c._unfold_subclasses(allowed)
+                    if c.__name__ == 'Stop' and isinstance(value, Searchable.Results):
+                        if kwargs.get('nostopresults') is True:
+                            continue
+                        kwargs['nostopresults'] = True
 
                     if len(allowed) == 1:
                         if isinstance(value, Serializable):
-                            value = value.serialize()
+                            value = value.serialize(**kwargs)
                         elif isinstance(value, datetime):
                             value = value.strftime('%Y-%m-%d %H:%M:%S')
                         elif isinstance(value, timedelta):
@@ -110,7 +115,7 @@ class Serializable:
 
                         if isinstance(value, Serializable):
                             t = len([a for a in allowed if a is not None and issubclass(a, Serializable)]) > 1
-                            value = value.serialize(typed=t)
+                            value = value.serialize(typed=t, **kwargs)
                         elif isinstance(value, datetime):
                             value = value.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -295,10 +300,10 @@ class Searchable(Updateable, metaclass=MetaSearchable):
                         return False
                 return True
 
-        def _serialize_custom(self, name):
+        def _serialize_custom(self, name, **kwargs):
             if name == 'results':
                 typed = len(self._unfold_subclasses(self.Model)) > 0
-                return 'results', [(r[0].serialize(typed=typed), r[1]) for r in self.results]
+                return 'results', [(r[0].serialize(typed=typed, **kwargs), r[1]) for r in self.results]
 
         def _unserialize_custom(self, name, data):
 
@@ -381,7 +386,7 @@ class Collectable(Searchable):
             else:
                 return value == other_id
 
-    def _serialize_custom(self, name):
+    def _serialize_custom(self, name, **kwargs):
         if name == '_ids':
             return 'ids', self._ids
 

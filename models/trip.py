@@ -27,9 +27,9 @@ class Trip(Searchable):
                     return False
             return True
 
-    def _serialize_custom(self, name):
+    def _serialize_custom(self, name, **kwargs):
         if name == '_parts':
-            return 'parts', [p.serialize(True) for p in self._parts]
+            return 'parts', [p.serialize(typed=True, **kwargs) for p in self._parts]
 
     def _unserialize_custom(self, name, data):
         if name == 'parts':

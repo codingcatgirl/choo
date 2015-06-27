@@ -38,9 +38,9 @@ class TicketList(Updateable):
                     return False
             return True
 
-    def _serialize_custom(self, name):
+    def _serialize_custom(self, name, **kwargs):
         if name == 'other':
-            return 'other', {name: t.serialize() for name, t in self.other.items()}
+            return 'other', {name: t.serialize(**kwargs) for name, t in self.other.items()}
 
     def _unserialize_custom(self, name, data):
         if name == 'other':
