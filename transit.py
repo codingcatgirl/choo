@@ -28,6 +28,7 @@ class TransitInstance():
 
     def __init__(self, write, default_format=None):
         self.format = default_format
+        self.byid = False
         self.collection = Collection('session')
         self.network = None
         self.queries = {}
@@ -67,6 +68,18 @@ class TransitInstance():
             return b'err unknown format. allowed formats are ' + repr(self.allowed_formats).encode()
 
         if self.format is None:
+            return b'err choose format'
+
+        if command == 'byid':
+            try:
+                data = data.decode()
+            except:
+                pass
+            else:
+                if data not in ('off', 'on'):
+                    return b'err select on or off'
+                self.byid = (data == 'on')
+                return b'ok ' + self.pack(self.byid)
             return b'err choose format'
 
         if command == 'get':
@@ -140,17 +153,23 @@ class TransitInstance():
     def _query(self, query):
         if isinstance(query, Collectable):
             try:
-                found = self.collection.retrieve(query, id_only=False)
+                found = self.collection.retrieve(query, id_only=True)
                 if found is not None:
                     query = found
             except:
                 return b'err collection lookup failed'
         try:
-            result = self.network.query(query)
+            result, ids = self.network.query(query, get_ids=True)
         except:
             traceback.print_exc()
             return b'err query failed'
-        return b'ok ' + self.pack(result.serialize(typed=True))
+
+        if self.byid:
+            serialized = (self.collection.get_by_ids_serialized(ids), result.serialize(typed=True, refer_by='session'))
+        else:
+            serialized = result.serialize(typed=True)
+
+        return b'ok ' + self.pack(serialized)
 
     def pack(self, data):
         if self.format == 'json':
