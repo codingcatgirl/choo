@@ -204,22 +204,21 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         WebSocketServerFactory.__init__(self, url, debug=debug, debugCodePaths=debugCodePaths)
 
 
-class TransitWebsocketServerProtocol(WebSocketServerProtocol):
-    def onConnect(self, request):
-        pass
-
-    def onOpen(self):
-        self.instance = TransitInstance(lambda r: self.sendMessage(r))
-
-    def onMessage(self, payload, isBinary):
-        result = self.instance.handle_msg(payload)
-        self.sendMessage(result)
-
-    def connectionLost(self, reason):
-        self.instance.abort_queries()
-
-
 def ws_api():
+    class TransitWebsocketServerProtocol(WebSocketServerProtocol):
+        def onConnect(self, request):
+            pass
+
+        def onOpen(self):
+            self.instance = TransitInstance(lambda r: self.sendMessage(r))
+
+        def onMessage(self, payload, isBinary):
+            result = self.instance.handle_msg(payload)
+            self.sendMessage(result)
+
+        def connectionLost(self, reason):
+            self.instance.abort_queries()
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
