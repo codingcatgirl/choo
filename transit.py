@@ -160,6 +160,8 @@ class TransitInstance():
                 return b'err collection lookup failed'
         try:
             result, ids = self.network.query(query, get_ids=True)
+        except NotImplementedError:
+            return b'err network does not implement this'
         except:
             traceback.print_exc()
             return b'err query failed'
