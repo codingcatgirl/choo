@@ -15,8 +15,8 @@ class Way(TripPart):
         self.events = None
         self.path = None
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('waytype', WayType),
             ('origin', AbstractLocation),

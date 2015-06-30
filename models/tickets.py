@@ -11,8 +11,8 @@ class TicketList(Updateable):
         self.bike = None
         self.other = {}
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('currency', str),
             ('level_name', (None, str)),
@@ -57,8 +57,8 @@ class TicketData(Serializable):
         self.price = price
         self.price_child = price_child
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('authority', (str, None)),
             ('level', (str, None)),
