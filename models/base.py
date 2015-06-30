@@ -330,7 +330,6 @@ class Searchable(Updateable, metaclass=MetaSearchable):
                 return True
 
         def _serialize_custom(self, name, **kwargs):
-            print(self)
             if name == 'results':
                 typed = len(self._unfold_subclasses(self.Model)) > 0
                 return 'results', [(r[0].serialize(typed=typed, **kwargs), r[1]) for r in self.results]
