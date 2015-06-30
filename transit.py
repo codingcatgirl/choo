@@ -127,10 +127,10 @@ class TransitInstance():
             if command == 'asyncquery':
                 overwrite = queryid in self.queries
 
+                self.queries[queryid] = query
                 t = threading.Thread(target=self._thread_query, args=(queryid, query))
                 t.daemon = True
                 t.start()
-                self.queries[queryid] = query
 
                 if overwrite:
                     return b'ok ' + self.pack('replaced')
