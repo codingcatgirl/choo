@@ -80,7 +80,10 @@ class Serializable:
         refer_by = kwargs.get('refer_by')
         if refer_by is not None:
             if isinstance(self, Collectable) and refer_by in self._ids:
-                return self._ids[refer_by]
+                if typed:
+                    return self.__class__._serialized_name(), self._ids[refer_by]
+                else:
+                    return self._ids[refer_by]
         else:
             kwargs['refer_by'] = kwargs.get('children_refer_by')
 
