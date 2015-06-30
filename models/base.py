@@ -163,11 +163,9 @@ class Serializable:
             for c in cls.__mro__:
                 validate = {}
                 if hasattr(c, '_validate'):
-                    validate = dict(c._validate())
-
-                parent = c.__bases__[0]
-                if hasattr(parent, '_validate') and parent._validate == c._validate:
-                    continue
+                    parent = c.__bases__[0]
+                    if not hasattr(parent, '_validate') or parent._validate != c._validate:
+                        validate = dict(c._validate())
 
                 custom = hasattr(c, '_unserialize_custom')
 
