@@ -17,8 +17,8 @@ class Ride(Collectable):
         self.bike_friendly = None
         self.infotexts = []
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('line', Line),
             ('number', (None, str)),
@@ -221,8 +221,8 @@ class RideSegment(TripPart):
         self._origin = origin
         self._destination = destination
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('ride', Ride),
             ('_origin', None),

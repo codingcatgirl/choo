@@ -3,8 +3,8 @@ from .base import Collectable, Serializable
 
 
 class Line(Collectable):
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         from .locations import Stop
         return (
             ('linetype', LineType),
@@ -116,8 +116,8 @@ class LineTypes(Serializable):
         self._included = set([LineType(s) for s in include])
         self._excluded = set([LineType(s) for s in exclude])
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('_included', None),
             ('_excluded', None),

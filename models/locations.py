@@ -7,8 +7,8 @@ class Coordinates(Serializable):
         self.lat = lat
         self.lon = lon
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('lat', float),
             ('lon', float),
@@ -32,8 +32,8 @@ class AbstractLocation(Collectable):
         super().__init__()
         self.coords = coords
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('coords', (None, Coordinates)),
         )
@@ -66,8 +66,8 @@ class Platform(AbstractLocation):
         self.name = name
         self.full_name = full_name
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('stop', Stop),
             ('name', (str, None)),
@@ -119,8 +119,8 @@ class Location(AbstractLocation):
         self.name = name
         self.near_stops = None
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('country', (None, str)),
             ('city', (None, str)),
@@ -198,8 +198,8 @@ class Location(AbstractLocation):
             self.name = None
             self.city = None
 
-        @classmethod
-        def _validate(cls):
+        @staticmethod
+        def _validate():
             return (
                 ('name', (None, str)),
                 ('city', (None, str))
@@ -217,8 +217,8 @@ class Stop(Location):
         self.lines = None
         self.train_station_name = None
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         from .ride import Ride
         from .line import Line
         return (
@@ -301,8 +301,8 @@ class Address(Location):
 
     _update_default = ('street', 'number')
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('street', (None, str)),
             ('number', (None, str)),

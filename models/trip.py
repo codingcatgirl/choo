@@ -14,8 +14,8 @@ class Trip(Searchable):
         self._parts = []
         self.tickets = None
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('_parts', None),
             ('tickets', (None, TicketList))
@@ -72,8 +72,8 @@ class Trip(Searchable):
             self.wayduration_via = timedelta(minutes=10)
             self.wayduration_destination = timedelta(minutes=10)
 
-        @classmethod
-        def _validate(cls):
+        @staticmethod
+        def _validate():
             return (
                 # ('walk_speed', None),
                 ('origin', (None, AbstractLocation, Ride, Trip)),
@@ -137,8 +137,8 @@ class Trip(Searchable):
             self.via = None
             self.destination = None
 
-        @classmethod
-        def _validate(cls):
+        @staticmethod
+        def _validate():
             return (
                 ('origin', Location),
                 ('via', (None, Location)),

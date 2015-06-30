@@ -12,8 +12,8 @@ class TimeAndPlace(Updateable):
         self.departure = departure
         self.passthrough = False
 
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('platform', Platform),
             ('arrival', (None, RealtimeTime)),

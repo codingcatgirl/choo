@@ -99,6 +99,10 @@ class Serializable:
                 if not hasattr(c, '_validate'):
                     continue
 
+                parent = c.__bases__[0]
+                if hasattr(parent, '_validate') and parent._validate == c._validate:
+                    continue
+
                 for name, allowed in c._validate():
                     value = getattr(self, name)
 
@@ -161,6 +165,10 @@ class Serializable:
                 if hasattr(c, '_validate'):
                     validate = dict(c._validate())
 
+                parent = c.__bases__[0]
+                if hasattr(parent, '_validate') and parent._validate == c._validate:
+                    continue
+
                 custom = hasattr(c, '_unserialize_custom')
 
                 if not validate and not custom:
@@ -219,6 +227,10 @@ class Serializable:
             if not hasattr(c, '_validate'):
                 continue
 
+            parent = c.__bases__[0]
+            if hasattr(parent, '_validate') and parent._validate == c._validate:
+                continue
+
             for name, allowed in c._validate():
                 value = getattr(self, name)
 
@@ -231,8 +243,8 @@ class Serializable:
 
 
 class Updateable(Serializable):
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('last_update', (datetime, None)),
             ('low_quality', (bool, None)),
@@ -272,8 +284,8 @@ class MetaSearchable(type):
 
 
 class Searchable(Updateable, metaclass=MetaSearchable):
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return ()
 
     def matches(self, request):
@@ -299,8 +311,8 @@ class Searchable(Updateable, metaclass=MetaSearchable):
             else:
                 self.results = [(r, None) for r in results]
 
-        @classmethod
-        def _validate(self):
+        @staticmethod
+        def _validate():
             return (
                 ('results', None),
             )
@@ -320,6 +332,7 @@ class Searchable(Updateable, metaclass=MetaSearchable):
                 return True
 
         def _serialize_custom(self, name, **kwargs):
+            print(self)
             if name == 'results':
                 typed = len(self._unfold_subclasses(self.Model)) > 0
                 return 'results', [(r[0].serialize(typed=typed, **kwargs), r[1]) for r in self.results]
@@ -374,8 +387,8 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
 
 class Collectable(Searchable):
-    @classmethod
-    def _validate(cls):
+    @staticmethod
+    def _validate():
         return (
             ('_ids', None),
         )
