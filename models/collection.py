@@ -94,5 +94,5 @@ class Collection(Serializable):
         result = {}
         myname = self.name
         for model, ids in all_ids.items():
-            result[model] = {id_: obj.serialize(children_refer_by=myname) for id_, obj in self.by_id[model][myname].items() if id_ in ids}
+            result[model] = {id_: obj.serialize(children_refer_by=myname) for id_, obj in self.by_id[model][myname].copy().items() if id_ in ids}
         return result
