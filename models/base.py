@@ -292,6 +292,16 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         return request.matches(self)
 
     class Request(Updateable):
+        def __init__(self):
+            super().__init__()
+            self.limit = None
+
+        @staticmethod
+        def _validate():
+            return (
+                ('limit', int),
+            )
+
         def matches(self, obj):
             if not isinstance(obj, self.Model):
                 raise TypeError('%s.Request can only match %s' % (self.Model.__name__, self.Model.__name__))
