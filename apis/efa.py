@@ -28,7 +28,7 @@ class EFA(API):
 
     def _get_location(self, location):
         if not isinstance(location, Stop):
-            raise NotImplementedError()
+            raise NotImplementedError
         result, now = self._get_stop_rides(location)
         if not isinstance(result, location.__class__):
             result = None
@@ -36,7 +36,7 @@ class EFA(API):
 
     def _search_locations(self, location):
         if type(location) != Location.Request:
-            raise NotImplementedError()
+            raise NotImplementedError
         return self._stop_finder_request(location)
 
     def _search_trips(self, triprequest: Trip.Request):
