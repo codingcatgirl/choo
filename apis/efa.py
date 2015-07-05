@@ -226,7 +226,6 @@ class EFA(API):
             'SpEncId': 0,
             'odvSugMacro': 'true',
             'useHouseNumberList': 'true',
-            'max': 1,
         }
         post.update(self._convert_location(stop, '%s_sf'))
 
