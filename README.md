@@ -8,7 +8,7 @@ choo is a python3 library providing a uniform interface for public transport API
 
 ## Install
 
-Just install it from the [Python Package Index](https://pypi.python.org/pypi/clifa):
+Just install it from the [Python Package Index](https://pypi.python.org/pypi/choo):
 
 ```
 sudo pip3 install choo
