@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from apis.efa import EFA
+from .apis.efa import EFA
 
 
 class VRR(EFA):

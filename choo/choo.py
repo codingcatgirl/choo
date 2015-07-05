@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from models import unserialize_typed, Collection, Collectable
+from .models import unserialize_typed, Collection, Collectable
 import sys
-import networks
+from . import networks
 import json
 import traceback
 import socketserver
