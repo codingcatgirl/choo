@@ -352,10 +352,11 @@ class EFA(API):
             else:
                 return
 
-        name = stop.name + ' '
+        name = stop.name
         for suffix, replacement in self.train_station_suffixes.items():
-            name = name.replace(suffix, replacement)
-        name = name[:-1]
+            if name.endswith(suffix):
+                name = name[:-len(suffix)]+replacement
+        name = name.strip()
         stop.train_station_name = ('%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)).strip()
 
     def _parse_stop_line(self, data):
