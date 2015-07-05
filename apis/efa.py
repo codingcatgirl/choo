@@ -221,7 +221,12 @@ class EFA(API):
             'language': 'de',
             'outputFormat': 'XML',
             'coordOutputFormat': 'WGS84',
-            'odvSugMacro': 'true'
+            'locationServerActive': 1,
+            #'regionID_sf': 1, // own region
+            'SpEncId': 0,
+            'odvSugMacro': 'true',
+            'useHouseNumberList': 'true',
+            'max': 1,
         }
         post.update(self._convert_location(stop, '%s_sf'))
 
