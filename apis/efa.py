@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from models import Searchable
 from models import Location, Stop, POI, Address
 from models import TimeAndPlace, Platform, RealtimeTime
 from models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
@@ -234,6 +235,10 @@ class EFA(API):
             return stop.Model.Results([results] if isinstance(results, stop.Model) else []), servernow
 
         results = [result for result in results if isinstance(result[0], stop.Model)]
+
+        if isinstance(stop, Searchable.Request) and stop.limit is not None:
+            results = results[:stop.limit]
+
         return stop.Model.Results(results, scored=True), servernow
 
     def _departure_monitor_request(self, stop: Stop, time: datetime=None):
