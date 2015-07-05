@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from models import Collection, Searchable
-from models import Trip, Ride, Line, Platform, Location
+from ..models import Collection, Searchable
+from ..models import Trip, Ride, Line, Platform, Location
 
 
 class API():

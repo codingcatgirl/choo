@@ -1,0 +1,2 @@
+include LICENSE choo/choo
+recursive-include docs *.py Makefile *.rst

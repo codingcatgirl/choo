@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from models import Searchable
-from models import Location, Stop, POI, Address
-from models import TimeAndPlace, Platform, RealtimeTime
-from models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
-from models import Line, LineType, LineTypes, Way, WayType, WayEvent
+from ..models import Searchable
+from ..models import Location, Stop, POI, Address
+from ..models import TimeAndPlace, Platform, RealtimeTime
+from ..models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
+from ..models import Line, LineType, LineTypes, Way, WayType, WayEvent
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
