@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from distutils.core import setup
+from setuptools import setup, find_packages
 setup(
     name='choo',
-    packages=['choo', 'choo.models', 'choo.apis'],
+    packages=find_packages(),
     py_modules=['choo.choo', 'choo.networks'],
     version='0.1.1',
     description='uniform interface for public transport APIs',
@@ -27,4 +27,5 @@ setup(
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator',
         'Topic :: Internet'],
+    include_package_data = True
 )
