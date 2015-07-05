@@ -231,7 +231,7 @@ class EFA(API):
 
         results = self._parse_odv(data.find('./itdOdv'))
         if type(results) != list:
-            return stop.Model.Results([results] if isinstance(results, stop.Model) else [])
+            return stop.Model.Results([results] if isinstance(results, stop.Model) else []), servernow
 
         results = [result for result in results if isinstance(result[0], stop.Model)]
         return stop.Model.Results(results, scored=True), servernow
@@ -438,7 +438,8 @@ class EFA(API):
             location = Address(None, city, name)
             location.street = data.attrib['streetName'] if 'streetName' in data.attrib else None
             location.number = data.attrib['buildingNumber'] if 'buildingNumber' in data.attrib else None
-            location.number = data.attrib['houseNumber'] if 'houseNumber' in data.attrib else None
+            if location.number is None:
+                location.number = data.attrib['houseNumber'] if 'houseNumber' in data.attrib else None
             location.name = '%s %s' % (location.street, location.number)
         else:
             raise NotImplementedError('Unknown odvtype: %s' % odvtype)
