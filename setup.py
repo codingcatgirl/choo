@@ -9,6 +9,7 @@ setup(
     author='Nils Martin Klünder',
     author_email='choo@nomoketo.de',
     url='https://github.com/NoMoKeTo/choo',
+    install_requires=['requests'],
     scripts=['choo/choo'],
     classifiers=[
         'Programming Language :: Python',
