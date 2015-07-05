@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from networks import VRR
-from models import Collection, Stop, Location, Trip, unserialize_typed
+from choo.networks import VRR
+from choo.models import Collection, Stop, Location, Trip, unserialize_typed
 import json
 
 collection = Collection('test')
