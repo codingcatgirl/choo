@@ -4,7 +4,7 @@ setup(
     name='choo',
     packages=find_packages(),
     py_modules=['choo.choo', 'choo.networks'],
-    version='0.1.1',
+    version='0.1.0',
     description='uniform interface for public transport APIs',
     author='Laura Klünder',
     author_email='choo@codingcatgirl.de',
