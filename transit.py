@@ -161,6 +161,7 @@ class TransitInstance():
         try:
             result, ids = self.network.query(query, get_ids=True)
         except NotImplementedError:
+            traceback.print_exc()
             return b'err network does not implement this'
         except:
             traceback.print_exc()
