@@ -1,7 +1,7 @@
 Model Serialization / JSON
 ==========================
 
-All transit models can be (un)serialized to/from a JSON-encodable format.
+All choo models can be (un)serialized to/from a JSON-encodable format.
 
 In Python
 ---------

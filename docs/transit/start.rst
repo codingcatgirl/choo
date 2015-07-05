@@ -1,10 +1,10 @@
 Getting Started
 ===============
 
-The Transit Data Model
+The Choo Data Model
 ----------------------
 
-Before we start using transit, you have to understand its underlying Models.
+Before we start using choo, you have to understand its underlying Models.
 
 **Stop**
     A Stop is a group of Platforms (e.g. Berlin Hbf).
@@ -25,12 +25,12 @@ The models **Stop**, **Adress** and **POI** (Point of Interest) are all subclass
 
 Also, **Location** and **Platform** are subclasses of **AbstractLocation** which describes anything that has a static position.
 
-Those models are called **Searchables** because you can search for them with transit. You can...
+Those models are called **Searchables** because you can search for them with choo. You can...
 
-* provide an instance of them. transit will try to retrieve it and return a more complete version of it to you
-* use their ``Request`` submodel to specify what you are looking. transit will use the ``Result`` submodel to give you the search results.
+* provide an instance of them. choo will try to retrieve it and return a more complete version of it to you
+* use their ``Request`` submodel to specify what you are looking. choo will use the ``Result`` submodel to give you the search results.
 
-Some other Models that are part of transit but can not be searched for:
+Some other Models that are part of choo but can not be searched for:
 
 **Way**
     A path between two AbstractLocation objects.
@@ -74,11 +74,11 @@ To do so, we first have to describe Essen Hauptbahnhof as a ``Stop``:
       "name": "Essen Hauptbahnhof"
     }]
 
-Now we pass this data to the API. For this, start the transit command line interface using:
+Now we pass this data to the API. For this, start the choo command line interface using:
 
 .. code-block:: none
 
-    ./transit --cli
+    ./choo --cli
 
 Set the data format (second line is the answer):
 
@@ -94,7 +94,7 @@ Set the network:
     format vrr
     ok "vrr"
 
-Pass the Stop to transit. It will try to get as much information as possible about that given stop with only one request to the server.
+Pass the Stop to choo. It will try to get as much information as possible about that given stop with only one request to the server.
 
 .. code-block:: none
 
@@ -126,7 +126,7 @@ Pass the Stop to transit. It will try to get as much information as possible abo
       }
     ]
 
-As you can see, the API returned a Stop with more information (indentation added for documentary purposes). You can now exit transit using Ctrl+C.
+As you can see, the API returned a Stop with more information (indentation added for documentary purposes). You can now exit choo using Ctrl+C.
 
 The stop now is defined by it’s correct country, city and name attribute. Also, we have its coordinates now. In the _ids attribute you can find its ids. This ID would be enough to identify the stop. Our input JSON could also have been ``["Stop", {"ids": {"vrr": 20009289}}]`` with the same result.
 
@@ -148,8 +148,8 @@ Let's see how you would access this via the Python interface.
 
 .. code-block:: python
 
-    from transit.models import Stop
-    import transit.networks
+    from choo.models import Stop
+    import choo.networks
 
     essen = Stop(name='Essen Hauptbahnhof')
     vrr = networks.network('vrr')

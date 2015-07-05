@@ -23,7 +23,7 @@ except ImportError:
 supported = networks.supported
 
 
-class TransitInstance():
+class ChooInstance():
     allowed_formats = ('json', 'msgpack')
 
     def __init__(self, write, default_format=None):
@@ -191,9 +191,9 @@ class TransitInstance():
             return None
 
 
-class TransitTCPHandler(socketserver.StreamRequestHandler):
+class ChooTCPHandler(socketserver.StreamRequestHandler):
     def handle(self):
-        instance = TransitInstance(lambda r: self.wfile.write(r + b'\r\n'))
+        instance = ChooInstance(lambda r: self.wfile.write(r + b'\r\n'))
         while self.rfile.readable():
             data = self.rfile.readline()
             result = instance.handle_msg(data)
@@ -206,12 +206,12 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 
 def ws_api():
-    class TransitWebsocketServerProtocol(WebSocketServerProtocol):
+    class ChooWebsocketServerProtocol(WebSocketServerProtocol):
         def onConnect(self, request):
             pass
 
         def onOpen(self):
-            self.instance = TransitInstance(lambda r: self.sendMessage(r))
+            self.instance = ChooInstance(lambda r: self.sendMessage(r))
 
         def onMessage(self, payload, isBinary):
             result = self.instance.handle_msg(payload)
@@ -225,7 +225,7 @@ def ws_api():
 
     factory = WebSocketServerFactory('ws://%s:%d' % (args.ws_host, args.ws_port))
 
-    factory.protocol = TransitWebsocketServerProtocol
+    factory.protocol = ChooWebsocketServerProtocol
     factory.setProtocolOptions(allowHixie76=True)
 
     loop = asyncio.get_event_loop()
@@ -235,7 +235,7 @@ def ws_api():
 
 
 def shell_api():
-    instance = TransitInstance(lambda r: sys.stdout.buffer.write(r + b'\r\n'))
+    instance = ChooInstance(lambda r: sys.stdout.buffer.write(r + b'\r\n'))
     while sys.stdin.buffer.readable():
         data = sys.stdin.buffer.readline()
         result = instance.handle_msg(data)
@@ -258,7 +258,7 @@ args = parser.parse_args()
 threads = []
 
 if args.tcp:
-    tcp_server = ThreadedTCPServer((args.tcp_host, args.tcp_port), TransitTCPHandler)
+    tcp_server = ThreadedTCPServer((args.tcp_host, args.tcp_port), ChooTCPHandler)
 
     ip, port = tcp_server.server_address
     print('tcp server running on %s:%d' % (ip, port))

@@ -1,8 +1,8 @@
-transit
-=======
+choo
+====
 
-transit is a python3 library providing a uniform interface for public transit APIs. A command line interface will be available to use it with other languages. transit is in development and not ready to be used yet.
+choo is a python3 library providing a uniform interface for public transport APIs. Command line, tcp and websocket interfaces are available to use it with other languages.
 
-Docs can be read at https://transit.readthedocs.org/.
+Docs can be read at https://choo.readthedocs.org/.
 
 ![UML Model Overview](uml.png)
