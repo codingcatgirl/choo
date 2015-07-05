@@ -4,12 +4,17 @@ setup(
     name='choo',
     packages=['choo', 'choo.models', 'choo.apis'],
     py_modules=['choo.choo', 'choo.networks'],
-    version='0.1.0',
+    version='0.1.1',
     description='uniform interface for public transport APIs',
     author='Nils Martin Klünder',
     author_email='choo@nomoketo.de',
     url='https://github.com/NoMoKeTo/choo',
     install_requires=['requests'],
+    license='Apache License 2.0',
+    extras_require={
+        'websockets': ['autobahn'],
+        'msgpack': ['msgpack']
+    },
     scripts=['choo/choo'],
     classifiers=[
         'Programming Language :: Python',
