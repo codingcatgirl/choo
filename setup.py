@@ -9,6 +9,7 @@ setup(
     author='Laura Klünder',
     author_email='choo@codingcatgirl.de',
     url='https://github.com/codingcatgirl/choo',
+    install_requires=['requests'],
     scripts=['choo/choo'],
     classifiers=[
         'Programming Language :: Python',
