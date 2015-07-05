@@ -1,7 +1,7 @@
-transit
+choo
 =======
 
-transit is a python3 library providing a uniform interface for public transit APIs.
+choo is a python3 library providing a uniform interface for public transport APIs.
 
 Contents:
 ---------
@@ -9,11 +9,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   transit/start
-   transit/networks
-   transit/api
-   transit/models
-   transit/serializing
+   choo/start
+   choo/networks
+   choo/api
+   choo/models
+   choo/serializing
 
 
 

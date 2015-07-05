@@ -7,7 +7,7 @@ Model Reference
 Base Classes
 ------------
 
-All transit models are based upon one of the following four base classes that build on top of each other.
+All choo models are based upon one of the following four base classes that build on top of each other.
 
 
 .. py:class:: Serializable
@@ -29,7 +29,7 @@ All transit models are based upon one of the following four base classes that bu
 
         Unserializes any kind of object from a JSON-encodable format.
 
-        :param data: A serialized representation of a transit object
+        :param data: A serialized representation of a choo object
         :rtype: the unserialized object
 
 .. _`Model Serialization`: serializing.html

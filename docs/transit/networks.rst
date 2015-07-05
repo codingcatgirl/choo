@@ -13,7 +13,7 @@ Network Interfaces
 
 .. py:class:: EFA
 
-    EFA is a public transit :py:class:`API` used world wide by many network operators.
+    EFA is a public transport :py:class:`API` used world wide by many network operators.
 
 
 Supported Networks

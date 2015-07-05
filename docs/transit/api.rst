@@ -1,7 +1,7 @@
-Transit API
+Choo API
 ===========
 
-Use the transit API to access transit's capabilities from other programming languages.
+Use the choo API to access choo's capabilities from other programming languages.
 
 * Each command starts with a keyword and is followed by a space and an argument.
 
@@ -11,7 +11,7 @@ Use the transit API to access transit's capabilities from other programming lang
 
 .. code-block:: none
 
-    usage: transit [-h] [--cli] [--tcp] [--tcp-host TCP_HOST]
+    usage: choo [-h] [--cli] [--tcp] [--tcp-host TCP_HOST]
                    [--tcp-port TCP_PORT] [--ws] [--ws-host WS_HOST]
                    [--ws-port WS_PORT]
 
