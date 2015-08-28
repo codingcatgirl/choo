@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 from .base import Serializable, Searchable, Collectable
+from . import fields
 
 
 class Coordinates(Serializable):
+    lat = fields.Field(float, none=False)
+    lon = fields.Field(float, none=False)
+
     def __init__(self, lat=None, lon=None):
+        super().__init__()
         self.lat = lat
         self.lon = lon
 
-    @staticmethod
-    def _validate():
-        return (
-            ('lat', float),
-            ('lon', float),
-        )
-
-    def _serialize(self):
+    def _serialize_instance(self):
         return [self.lat, self.lon]
 
     def _unserialize(self, data):
@@ -28,15 +26,11 @@ class Coordinates(Serializable):
 
 
 class AbstractLocation(Collectable):
+    coords = fields.Model(Coordinates)
+
     def __init__(self, coords=None):
         super().__init__()
         self.coords = coords
-
-    @staticmethod
-    def _validate():
-        return (
-            ('coords', (None, Coordinates)),
-        )
 
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
@@ -52,27 +46,17 @@ class AbstractLocation(Collectable):
 
     _update_default = ('coords', )
 
-    class Request(Searchable.Request):
-        pass
-
-    class Results(Searchable.Results):
-        pass
-
 
 class Platform(AbstractLocation):
+    stop = fields.Model('Stop', none=False)
+    name = fields.Field(str)
+    full_name = fields.Field(str)
+
     def __init__(self, stop=None, name=None, full_name=None):
         super().__init__()
         self.stop = stop
         self.name = name
         self.full_name = full_name
-
-    @staticmethod
-    def _validate():
-        return (
-            ('stop', Stop),
-            ('name', (str, None)),
-            ('full_name', (str, None)),
-        )
 
     _update_default = ('name', 'full_name')
 
@@ -104,29 +88,19 @@ class Platform(AbstractLocation):
 
         return False
 
-    class Request(Searchable.Request):
-        pass
-
-    class Results(Searchable.Results):
-        pass
-
 
 class Location(AbstractLocation):
+    country = fields.Field(str)
+    city = fields.Field(str)
+    name = fields.Field(str, none=False)
+    near_stops = fields.Model('Stop.Results')
+
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         self.country = country
         self.city = city
         self.name = name
         self.near_stops = None
-
-    @staticmethod
-    def _validate():
-        return (
-            ('country', (None, str)),
-            ('city', (None, str)),
-            ('name', str),
-            ('near_stops', (None, Stop.Results)),
-        )
 
     _update_default = ('country', )
 
@@ -193,39 +167,26 @@ class Location(AbstractLocation):
                 return near or self.city == other.city
 
     class Request(Searchable.Request):
+        name = fields.Field(str)
+        city = fields.Field(str)
+
         def __init__(self):
             super().__init__()
             self.name = None
             self.city = None
 
-        @staticmethod
-        def _validate():
-            return (
-                ('name', (None, str)),
-                ('city', (None, str))
-            )
-
-    class Results(Searchable.Results):
-        pass
-
 
 class Stop(Location):
+    rides = fields.Model('Ride.Results')
+    lines = fields.Model('Line.Results')
+    train_station_name = fields.Field(str)
+
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
         self.rides = None
         self.lines = None
         self.train_station_name = None
-
-    @staticmethod
-    def _validate():
-        from .ride import Ride
-        from .line import Line
-        return (
-            ('rides', (None, Ride.Results)),
-            ('lines', (None, Line.Results)),
-            ('train_station_name', (None, str)),
-        )
 
     def _update(self, other, better):
         if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
@@ -263,23 +224,11 @@ class Stop(Location):
 
         return self._location_eq(other)
 
-    class Request(Location.Request):
-        pass
-
-    class Results(Location.Results):
-        pass
-
 
 class POI(Location):
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
-
-    class Request(Location.Request):
-        pass
-
-    class Results(Location.Results):
-        pass
 
     def __eq__(self, other):
         if not isinstance(other, POI):
@@ -293,6 +242,9 @@ class POI(Location):
 
 
 class Address(Location):
+    street = fields.Field(str)
+    number = fields.Field(str)
+
     def __init__(self, country=None, city=None, name=None):
         super().__init__()
         Location.__init__(self, country, city, name)
@@ -300,13 +252,6 @@ class Address(Location):
         self.number = None
 
     _update_default = ('street', 'number')
-
-    @staticmethod
-    def _validate():
-        return (
-            ('street', (None, str)),
-            ('number', (None, str)),
-        )
 
     def __eq__(self, other):
         if not isinstance(other, POI):
@@ -317,9 +262,3 @@ class Address(Location):
             return byid
 
         return self._location_eq(other)
-
-    class Request(Location.Request):
-        pass
-
-    class Results(Location.Results):
-        pass

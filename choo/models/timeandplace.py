@@ -2,24 +2,21 @@
 from .base import Updateable
 from .locations import Platform
 from .realtime import RealtimeTime
+from . import fields
 
 
 class TimeAndPlace(Updateable):
+    platform = fields.Model(Platform, none=False)
+    arrival = fields.Model(RealtimeTime)
+    departure = fields.Model(RealtimeTime)
+    passthrough = fields.Field(bool, none=False)
+
     def __init__(self, platform=None, arrival=None, departure=None):
         super().__init__()
         self.platform = platform
         self.arrival = arrival
         self.departure = departure
         self.passthrough = False
-
-    @staticmethod
-    def _validate():
-        return (
-            ('platform', Platform),
-            ('arrival', (None, RealtimeTime)),
-            ('departure', (None, RealtimeTime)),
-            ('passthrough', bool),
-        )
 
     _update_default = ('platform', 'passthrough')
 

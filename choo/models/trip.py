@@ -5,36 +5,18 @@ from .locations import Location, AbstractLocation
 from .ride import Ride, RideSegment
 from .line import Line, LineType, LineTypes
 from .tickets import TicketList
+from . import fields
 from datetime import timedelta, datetime
 
 
 class Trip(Searchable):
+    _parts = fields.List(fields.Model(TripPart, none=False))
+    tickets = fields.Model(TicketList)
+
     def __init__(self):
         super().__init__()
         self._parts = []
         self.tickets = None
-
-    @staticmethod
-    def _validate():
-        return (
-            ('_parts', None),
-            ('tickets', (None, TicketList))
-        )
-
-    def _validate_custom(self, name, value):
-        if name == '_parts':
-            for v in value:
-                if not isinstance(v, TripPart):
-                    return False
-            return True
-
-    def _serialize_custom(self, name, **kwargs):
-        if name == '_parts':
-            return 'parts', [p.serialize(typed=True, **kwargs) for p in self._parts]
-
-    def _unserialize_custom(self, name, data):
-        if name == 'parts':
-            self.parts = [self._unserialize_typed(part, (RideSegment, Way)) for part in data]
 
     def _collect_children(self, collection, last_update=None, ids=None):
         super()._collect_children(collection, last_update, ids=ids)
@@ -131,19 +113,15 @@ class Trip(Searchable):
             return True
 
     class Results(Searchable.Results):
+        origin = fields.Model(Location, none=False)
+        via = fields.Model(Location)
+        destination = fields.Model(Location, none=False)
+
         def __init__(self, *args):
             super().__init__(*args)
             self.origin = None
             self.via = None
             self.destination = None
-
-        @staticmethod
-        def _validate():
-            return (
-                ('origin', Location),
-                ('via', (None, Location)),
-                ('destination', Location),
-            )
 
     @property
     def origin(self):

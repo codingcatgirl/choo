@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 from .base import Updateable
 from datetime import datetime, timedelta
+from . import fields
 
 
 class RealtimeTime(Updateable):
+    time = fields.DateTime(none=False)
+    delay = fields.Timedelta()
+
     def __init__(self, time=None, delay=None, livetime=None):
         super().__init__()
         if time is not None and livetime is not None:
@@ -16,13 +20,6 @@ class RealtimeTime(Updateable):
         self.delay = delay
 
     _update_default = ('delay', )
-
-    @staticmethod
-    def _validate():
-        return (
-            ('time', datetime),
-            ('delay', (None, timedelta))
-        )
 
     def __repr__(self):
         return '<RealtimeTime %s>' % (str(self))

@@ -3,9 +3,17 @@ from .base import Collectable, TripPart
 from .locations import Coordinates
 from .timeandplace import TimeAndPlace
 from .line import Line
+from . import fields
 
 
 class Ride(Collectable):
+    line = fields.Model(Line, none=False)
+    number = fields.Field(str)
+    direction = fields.Field(str)
+    canceled = fields.Field(bool)
+    bike_friendly = fields.Field(bool)
+    infotexts = fields.List(str)
+
     def __init__(self, line=None, number=None):
         super().__init__()
         self._stops = []
@@ -17,75 +25,34 @@ class Ride(Collectable):
         self.bike_friendly = None
         self.infotexts = []
 
-    @staticmethod
-    def _validate():
-        return (
-            ('line', Line),
-            ('number', (None, str)),
-            ('direction', (None, str)),
-            ('canceled', (None, bool)),
-            ('bike_friendly', (None, bool)),
-            ('infotexts', None),
-            ('_stops', None),
-            ('_paths', None),
-        )
-
     _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
+
+    def validate(self):
+        # _stops
+        assert isinstance(self._stops, list)
+        for k, v in self._stops:
+            assert isinstance(k, Ride.StopPointer)
+            assert v is None or isinstance(v, TimeAndPlace)
+
+        # _paths
+        assert isinstance(self._paths, dict)
+        for k, v in self._paths.items():
+            assert isinstance(k, Ride.StopPointer)
+            assert isinstance(v, list)
+            for item in v:
+                assert isinstance(item, Coordinates)
+
+        return super().validate()
+
+    def _serialize_instance(self):
+        data = super()._serialize_instance()
+        data['stops'] = [(s.serialize() if s else None) for i, s in self._stops]
+        data['paths'] = {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
+        return data
 
     def _update(self, other, better):
         # todo: stops, paths
         pass
-
-    def _validate_custom(self, name, value):
-        if name == 'infotexts':
-            for v in value:
-                if not isinstance(v, str):
-                    return False
-            return True
-        elif name == '_stops':
-            for v in value:
-                if type(v) != tuple or len(v) != 2:
-                    return False
-
-                if not isinstance(v[0], self.__class__.StopPointer):
-                    return False
-
-                if v[1] is not None and not isinstance(v[1], TimeAndPlace):
-                    return False
-            return True
-        elif name == '_paths':
-            if not isinstance(value, dict):
-                return False
-            for k, v in value.items():
-                if not isinstance(k, self.__class__.StopPointer):
-                    return False
-
-                try:
-                    v = list(v)
-                except:
-                    return False
-                for i in v:
-                    if not isinstance(i, Coordinates):
-                        return False
-            return True
-
-    def _serialize_custom(self, name, **kwargs):
-        if name == 'infotexts':
-            return 'infotexts', (self.infotexts if self.infotexts else None)
-        elif name == '_stops':
-            return 'stops', [(s.serialize(**kwargs) if s else None) for i, s in self._stops]
-        elif name == '_paths':
-            return 'paths', {int(i): [p.serialize(**kwargs) for p in path] for i, path in self._paths.items()}
-
-    def _unserialize_custom(self, name, data):
-        if name == 'infotexts':
-            self.infotexts = data
-        elif name == 'stops':
-            for s in data:
-                self.append(TimeAndPlace.unserialize(s) if s is not None else None)
-        elif name == 'paths':
-            for i, path in data.items():
-                self._paths[self._stops[i][0]] = [Coordinates.unserialize(p) for p in path]
 
     def _collect_children(self, collection, last_update=None, ids=None):
         super()._collect_children(collection, last_update, ids=ids)
@@ -206,44 +173,33 @@ class Ride(Collectable):
         def __repr__(self):
             return 'p:%d' % self._i
 
-    class Request(Collectable.Request):
-        pass
-
     class Results(Collectable.Results):
+        results = fields.List(fields.Tuple(fields.Model('RideSegment'), fields.Field(int)))
+        
         def __init__(self, results=[], scored=False):
             self.content = RideSegment
             super().__init__(results, scored)
 
 
 class RideSegment(TripPart):
+    ride = fields.Model(Ride, none=False)
+    _origin = fields.Field(Ride.StopPointer)
+    _destination = fields.Field(Ride.StopPointer)
+
     def __init__(self, ride=None, origin=None, destination=None):
+        super().__init__()
         self.ride = ride
         self._origin = origin
         self._destination = destination
 
-    @staticmethod
-    def _validate():
-        return (
-            ('ride', Ride),
-            ('_origin', None),
-            ('_destination', None),
-        )
+    def _serialize_instance(self):
+        data = super()._serialize_instance()
+        if self._origin is not None:
+            data['origin'] = int(self._origin)
 
-    def _validate_custom(self, name, value):
-        if name in ('_origin', '_destination'):
-            return value is None or isinstance(value, Ride.StopPointer)
-
-    def _serialize_custom(self, name, **kwargs):
-        if name == '_origin':
-            return 'origin', int(self._origin) if self._origin is not None else None
-        elif name == '_destination':
-            return 'destination', int(self._destination) if self._destination is not None else None
-
-    def _unserialize_custom(self, name, data):
-        if name == 'origin':
-            self._origin = self.ride.pointer(data)
-        elif name == 'destination':
-            self._destination = self.ride.pointer(data)
+        if self._destination is not None:
+            data['destination'] = int(self._destination)
+        return data
 
     def _stops(self):
         if self._destination is None:

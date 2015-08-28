@@ -1,148 +1,61 @@
 #!/usr/bin/env python3
-from collections import Iterable, OrderedDict
-from datetime import timedelta, datetime
+from collections import OrderedDict
+from . import fields
 import copy
 
 
-class Serializable:
+class MetaSerializable(type):
+    def __new__(mcs, name, bases, attrs):
+        class_ = super(MetaSerializable, mcs).__new__(mcs, name, bases, attrs)
+        class_._fields = class_._fields.copy()
+        class_._fields.update(OrderedDict(sorted(
+            [(n, v) for n, v in attrs.items() if isinstance(v, fields.Field)],
+            key=lambda v: v[1].i)
+        ))
+        return class_
+
+    def __init__(cls, name, bases, attrs):
+        if name not in ('Request', 'Results', 'Result'):
+            fields.Model.add_model(cls)
+
+
+class Serializable(metaclass=MetaSerializable):
+    _fields = OrderedDict()
+
+    def __init__(self, *args):
+        self.serialize = self._serialize_instance
+
     def validate(self):
-        myname = self.__class__._serialized_name()
-        for c in self.__class__.__mro__:
-            if not hasattr(c, '_validate'):
-                continue
-
-            added = ('(%s)' % c._serialized_name()) if c != self.__class__ else ''
-
-            for name, allowed in c._validate():
-                if not hasattr(self, name):
-                    raise AttributeError('%s%s.%s is missing' % (myname, added, name))
-
-                val = getattr(self, name)
-
-                if allowed is None:
-                    if val is not None and not isinstance(val, Iterable) and self.__class__.__name__ != 'RideSegment':
-                        raise ValueError('%s%s.%s has non-iterable value: %s' % (myname, added, name, repr(getattr(self, name))))
-                    if not c._validate_custom(self, name, val):
-                        raise ValueError('%s%s.%s has invalid complex value: %s' % (myname, added, name, repr(getattr(self, name))))
-                    continue
-
-                if type(allowed) != tuple:
-                    allowed = (allowed, )
-
-                for a in allowed:
-                    if a is None:
-                        if val is None:
-                            break
-                    elif isinstance(val, a):
-                        break
-                else:
-                    raise ValueError('%s%s.%s has to be %s, not %s' % (myname, added, name, self._validate_or(allowed), repr(getattr(self, name))))
+        for name, field in self._fields.items():
+            if not field.validate(getattr(self, name)):
+                return False
         return True
 
-    def _validate_or(self, items):
-        if type(items) != tuple:
-            return items.__name__
-        out = []
-        for item in items:
-            if item is None:
-                out.append('None')
-            elif type(item) is tuple:
-                out.append('Iterable(%s)' % self._validate_or(item))
-            else:
-                out.append(item.__name__)
+    @classmethod
+    def serialize(cls, obj):
+        assert isinstance(obj, cls)
+        if obj.__class__ is cls:
+            return obj.serialize()
+        else:
+            return [obj.__class__._serialized_name(), obj.serialize()]
 
-        out = [(', ' + o) for o in out]
-        if len(out) > 1:
-            out[-1] = ' or ' + out[-1][2:]
-        return ''.join(out)[2:]
+    def _serialize_instance(self):
+        self.validate()
 
-    def _unserialize_typed(self, data, types=None):
-        type_, data = data
-        for t in types:
-            if t._serialized_name() == type_:
-                return t.unserialize(data)
-        raise TypeError('Wrong datatype for unserialization')
+        data = {(name[1:] if name.startswith('_') else name): field.serialize(getattr(self, name))
+                for name, field in self._fields.items()}
+        return {name: field for name, field in data.items() if field is not None}
 
     @classmethod
-    def _unfold_subclasses(cls, allowed):
-        if type(allowed) is not tuple:
-            allowed = (allowed, )
-
-        l = 0
-        while len(allowed) != l:
-            l = len(allowed)
-            for a in allowed[:]:
-                if a is not None and issubclass(a, Serializable):
-                    allowed = tuple(set(allowed + tuple(a.__subclasses__())))
-        return allowed
-
-    def serialize(self, typed=False, **kwargs):
-        refer_by = kwargs.get('refer_by')
-        if refer_by is not None:
-            if isinstance(self, Collectable) and refer_by in self._ids:
-                if typed:
-                    return self.__class__._serialized_name(), self._ids[refer_by]
-                else:
-                    return self._ids[refer_by]
-        else:
-            kwargs['refer_by'] = kwargs.get('children_refer_by')
-
-        self.validate()
-        data = OrderedDict()
-
-        nostopresults = kwargs.get('nostopresults')
-
-        if hasattr(self, '_serialize'):
-            data = self._serialize()
-        else:
-            for c in self.__class__.__mro__:
-                if not hasattr(c, '_validate'):
-                    continue
-
-                parent = c.__bases__[0]
-                if hasattr(parent, '_validate') and parent._validate == c._validate:
-                    continue
-
-                for name, allowed in c._validate():
-                    value = getattr(self, name)
-
-                    if allowed is None:
-                        n, v = c._serialize_custom(self, name, **kwargs)
-                        if v is not None:
-                            data[n] = v
-                        continue
-
-                    allowed = c._unfold_subclasses(allowed)
-                    if c.__name__ == 'Stop' and isinstance(value, Searchable.Results):
-                        if nostopresults is True:
-                            continue
-                        kwargs['nostopresults'] = True
-
-                    if len(allowed) == 1:
-                        if isinstance(value, Serializable):
-                            value = value.serialize(**kwargs)
-                        elif isinstance(value, datetime):
-                            value = value.strftime('%Y-%m-%d %H:%M:%S')
-                        elif isinstance(value, timedelta):
-                            value = int(value.total_seconds())
-                    else:
-                        if value is None:
-                            continue
-
-                        if isinstance(value, Serializable):
-                            t = len([a for a in allowed if a is not None and issubclass(a, Serializable)]) > 1
-                            value = value.serialize(typed=t, **kwargs)
-                        elif isinstance(value, datetime):
-                            value = value.strftime('%Y-%m-%d %H:%M:%S')
-
-                    if isinstance(value, timedelta):
-                        value = value.total_seconds()
-                    data[name] = value
-
-        if typed:
-            return self.__class__._serialized_name(), data
-        else:
-            return data
+    def unserialize(cls, data):
+        if isinstance(data, list) and len(data) == 2:
+            model_, data = data
+            assert model_ in fields.Model._models
+            cls_ = fields.Model._models[model_]
+            assert issubclass(cls_, cls)
+            cls = cls_
+        return cls({name: field.unserialize(data.get(name[1:] if name.startswith('_') else name))
+                    for name, field in cls._fields.items()})
 
     @classmethod
     def _serialized_name(cls):
@@ -153,52 +66,6 @@ class Serializable:
 
     def __ne__(self, other):
         return not (self == other)
-
-    @classmethod
-    def unserialize(cls, data):
-        obj = cls()
-        if hasattr(obj, '_unserialize'):
-            obj._unserialize(data)
-        else:
-            for c in cls.__mro__:
-                validate = {}
-                if hasattr(c, '_validate'):
-                    parent = c.__bases__[0]
-                    if not hasattr(parent, '_validate') or parent._validate != c._validate:
-                        validate = dict(c._validate())
-
-                custom = hasattr(c, '_unserialize_custom')
-
-                if not validate and not custom:
-                    continue
-
-                for name, value in data.items():
-                    if name in validate and validate[name] is not None:
-                        allowed = validate[name]
-
-                        allowed = cls._unfold_subclasses(allowed)
-
-                        if len(allowed) == 1:
-                            if issubclass(allowed[0], Serializable):
-                                value = allowed[0].unserialize(value)
-                            elif issubclass(allowed[0], datetime):
-                                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
-                            elif issubclass(allowed[0], timedelta):
-                                value = timedelta(seconds=value)
-                        elif value is not None:
-                            serializables = [a for a in allowed if a is not None and issubclass(a, Serializable)]
-                            typed = len(serializables) > 1
-                            if typed:
-                                value = obj._unserialize_typed(value, serializables)
-                            elif serializables:
-                                value = serializables[0].unserialize(value)
-                        setattr(obj, name, value)
-
-                for name, value in data.items():
-                    if (name not in validate or validate[name] is None) and custom:
-                        c._unserialize_custom(obj, name, value)
-
-        return obj
 
     def _update_collect(self, collection, last_update=None, ids=None):
         if last_update is not None and isinstance(self, Updateable):
@@ -241,14 +108,11 @@ class Serializable:
 
 
 class Updateable(Serializable):
-    @staticmethod
-    def _validate():
-        return (
-            ('last_update', (datetime, None)),
-            ('low_quality', (bool, None)),
-        )
+    last_update = fields.DateTime()
+    low_quality = fields.Field(bool)
 
     def __init__(self):
+        super().__init__()
         self.last_update = None
         self.low_quality = None
 
@@ -274,33 +138,42 @@ class Updateable(Serializable):
             self._ids[name] = value
 
 
-class MetaSearchable(type):
-    def __init__(cls, a, b, c):
+class MetaSearchable(MetaSerializable):
+    def __new__(mcs, name, bases, attrs):
+        if 'Request' not in attrs:
+            attrs['Request'] = type('Request', (bases[0].Request,), {'__module__': attrs['__init__'].__module__})
+        if 'Results' not in attrs:
+            attrs['Results'] = type('Results', (bases[0].Results,), {'__module__': attrs['__init__'].__module__})
+
+        return super(MetaSearchable, mcs).__new__(mcs, name, bases, attrs)
+
+    def __init__(cls, name, bases, attrs):
         cls.Request.Model = cls
         cls.Results.Model = cls
-        cls.Results.content = cls
+        fields.Model.add_model(cls.Request)
+        fields.Model.add_model(cls.Results)
+        if name != 'Ride':
+            cls.Results._fields['results'] = fields.List(fields.Tuple(fields.Model(cls), fields.Field(int)))
+        MetaSerializable.__init__(cls, name, bases, attrs)
+
+
+class MetaSearchableInner(MetaSerializable):
+    def __repr__(cls):
+        return repr(cls.Model)[:-2] + '.' + cls.__name__ + "'>"
 
 
 class Searchable(Updateable, metaclass=MetaSearchable):
-    @staticmethod
-    def _validate():
-        return ()
-
     def matches(self, request):
         if not isinstance(request, Searchable.Request):
             raise TypeError('not a request')
         return request.matches(self)
 
-    class Request(Updateable):
+    class Request(Updateable, metaclass=MetaSearchableInner):
+        limit = fields.Field(int)
+
         def __init__(self):
             super().__init__()
             self.limit = None
-
-        @staticmethod
-        def _validate():
-            return (
-                ('limit', int),
-            )
 
         def matches(self, obj):
             if not isinstance(obj, self.Model):
@@ -311,7 +184,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         def _matches(self, obj):
             pass
 
-    class Results(Updateable):
+    class Results(Updateable, metaclass=MetaSearchableInner):
+        results = fields.List(fields.Model('Searchable.Result'))
+
         def __init__(self, results=[], scored=False):
             super().__init__()
             if scored:
@@ -319,40 +194,11 @@ class Searchable(Updateable, metaclass=MetaSearchable):
             else:
                 self.results = [(r, None) for r in results]
 
-        @staticmethod
-        def _validate():
-            return (
-                ('results', None),
-            )
-
         def _collect_children(self, collection, last_update=None, ids=None):
             super()._collect_children(collection, last_update, ids=ids)
             for i in range(len(self.results)):
                 r = self.results[i]
                 self.results[i] = (r[0]._update_collect(collection, last_update, ids=ids), r[1])
-
-        def _validate_custom(self, name, value):
-            if name == 'results':
-                type_ = self.content
-                for v in value:
-                    if type(v) != tuple or len(v) != 2 or not isinstance(v[0], type_):
-                        return False
-                return True
-
-        def _serialize_custom(self, name, **kwargs):
-            if name == 'results':
-                typed = len(self._unfold_subclasses(self.Model)) > 0
-                return 'results', [(r[0].serialize(typed=typed, **kwargs), r[1]) for r in self.results]
-
-        def _unserialize_custom(self, name, data):
-
-            if name == 'results':
-                possibilities = self._unfold_subclasses(self.Model)
-                typed = len(possibilities) > 1
-                if typed:
-                    self.results = [(self._unserialize_typed(d[0], possibilities), d[1]) for d in data]
-                else:
-                    self.results = [(self.Model.unserialize(d[0]), d[1]) for d in data]
 
         def filter(self, request):
             if not self.results:
@@ -394,28 +240,11 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
 
 class Collectable(Searchable):
-    @staticmethod
-    def _validate():
-        return (
-            ('_ids', None),
-        )
+    _ids = fields.Dict(fields.Field(str), fields.Any())
 
     def __init__(self):
         super().__init__()
         self._ids = {}
-
-    def _validate_custom(self, name, value):
-        if name == '_ids':
-            if not isinstance(value, dict):
-                return False
-
-            for name, data in value.items():
-                if not isinstance(name, str):
-                    return False
-
-                if not isinstance(data, (int, str, tuple)):
-                    return False
-            return True
 
     def _equal_by_id(self, other):
         for name, value in self._ids.items():
@@ -424,15 +253,6 @@ class Collectable(Searchable):
                 continue
             else:
                 return value == other_id
-
-    def _serialize_custom(self, name, **kwargs):
-        if name == '_ids':
-            return 'ids', self._ids
-
-    def _unserialize_custom(self, name, data):
-        if name == 'ids':
-            for name, value in data.items():
-                self._ids[name] = tuple(value) if isinstance(value, list) else value
 
 
 class TripPart(Serializable):
