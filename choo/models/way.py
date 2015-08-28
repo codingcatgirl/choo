@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from .base import Serializable, TripPart
 from .locations import AbstractLocation, Coordinates
-from datetime import timedelta
 from . import fields
 
 
@@ -14,15 +13,9 @@ class Way(TripPart):
     events = fields.List(fields.Model('WayEvent', none=False))
     path = fields.List(fields.Model(Coordinates, none=False))
 
-    def __init__(self, waytype=None, origin=None, destination=None, distance=None):
-        super().__init__()
-        self.waytype = WayType('walk') if waytype is None else waytype
-        self.origin = origin
-        self.destination = destination
-        self.distance = None
-        self.duration = None
-        self.events = None
-        self.path = None
+    def __init__(self, waytype=None, origin=None, destination=None, distance=None, **kwargs):
+        super().__init__(waytype=(WayType('walk') if waytype is None else waytype),
+                         origin=origin, destination=destination, distance=distance, **kwargs)
 
     def __eq__(self, other):
         return (isinstance(other, Way) and self.waytype == other.waytype and

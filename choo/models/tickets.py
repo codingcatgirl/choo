@@ -8,15 +8,11 @@ class TicketList(Updateable):
     level_name = fields.Field(str)
     single = fields.Model('TicketData', none=False)
     bike = fields.Model('TicketData')
-    other = fields.Dict(fields.Field(str), fields.Model('TicketData'))
+    other = fields.Dict(fields.Field(str), fields.Model('TicketData'), none=False)
 
-    def __init__(self):
-        super().__init__()
-        self.currency = None
-        self.level_name = None
-        self.single = None
-        self.bike = None
-        self.other = {}
+    def __init__(self, **kwargs):
+        # magic, do not remove
+        super().__init__(**kwargs)
 
     _update_default = ('currency', 'level_name', 'single', 'bike')
 
@@ -36,12 +32,8 @@ class TicketData(Serializable):
     price = fields.Field(float, none=False)
     price_child = fields.Field(float)
 
-    def __init__(self, authority=None, level=None, price=None, price_child=None):
-        super().__init__()
-        self.authority = authority
-        self.level = level
-        self.price = price
-        self.price_child = price_child
+    def __init__(self, authority=None, level=None, price=None, price_child=None, **kwargs):
+        super().__init__(authority=authority, level=level, price=price, price_child=price_child, **kwargs)
 
     def __eq__(self, other):
         if not isinstance(other, TicketData):

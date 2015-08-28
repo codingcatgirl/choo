@@ -222,7 +222,7 @@ class EFA(API):
             'outputFormat': 'XML',
             'coordOutputFormat': 'WGS84',
             'locationServerActive': 1,
-            #'regionID_sf': 1, // own region
+            # 'regionID_sf': 1, // own region
             'SpEncId': 0,
             'odvSugMacro': 'true',
             'useHouseNumberList': 'true',
@@ -354,7 +354,7 @@ class EFA(API):
         name = stop.name
         for suffix, replacement in self.train_station_suffixes.items():
             if name.endswith(suffix):
-                name = name[:-len(suffix)]+replacement
+                name = name[:-len(suffix)] + replacement
         name = name.strip()
         stop.train_station_name = ('%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)).strip()
 

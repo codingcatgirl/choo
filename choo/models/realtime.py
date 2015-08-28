@@ -8,16 +8,16 @@ class RealtimeTime(Updateable):
     time = fields.DateTime(none=False)
     delay = fields.Timedelta()
 
-    def __init__(self, time=None, delay=None, livetime=None):
-        super().__init__()
-        if time is not None and livetime is not None:
-            if delay is not None:
-                assert livetime - time == delay
-            else:
+    def __init__(self, time=None, delay=None, livetime=None, **kwargs):
+        if livetime is not None:
+            if time is None:
+                time = livetime - delay
+            elif delay is None:
                 delay = livetime - time
+            else:
+                assert livetime - time == delay
 
-        self.time = time
-        self.delay = delay
+        super().__init__(time=time, delay=delay, **kwargs)
 
     _update_default = ('delay', )
 

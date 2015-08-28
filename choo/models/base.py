@@ -22,8 +22,15 @@ class MetaSerializable(type):
 class Serializable(metaclass=MetaSerializable):
     _fields = OrderedDict()
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         self.serialize = self._serialize_instance
+        for name, field in self.__class__._fields.items():
+            if name in kwargs and (field.none or kwargs[name] is not None):
+                setattr(self, name, kwargs[name])
+            elif field.none:
+                setattr(self, name, None)
+            else:
+                setattr(self, name, field.type())
 
     def validate(self):
         for name, field in self._fields.items():
@@ -53,9 +60,17 @@ class Serializable(metaclass=MetaSerializable):
             assert model_ in fields.Model._models
             cls_ = fields.Model._models[model_]
             assert issubclass(cls_, cls)
-            cls = cls_
-        return cls({name: field.unserialize(data.get(name[1:] if name.startswith('_') else name))
-                    for name, field in cls._fields.items()})
+            return cls_.unserialize(data)
+        kwargs = {}
+        for name, field in cls._fields.items():
+            n = name[1:] if name.startswith('_') else name
+            if n in data:
+                kwargs[name] = field.unserialize(data[n])
+
+        if issubclass(cls, Searchable.Results):
+            return cls(scored=True, **kwargs)
+        else:
+            return cls(**kwargs)
 
     @classmethod
     def _serialized_name(cls):
@@ -111,10 +126,10 @@ class Updateable(Serializable):
     last_update = fields.DateTime()
     low_quality = fields.Field(bool)
 
-    def __init__(self):
-        super().__init__()
-        self.last_update = None
-        self.low_quality = None
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.last_update = kwargs.get('last_update')
+        self.low_quality = kwargs.get('low_quality')
 
     def update(self, other):
         better = (other.last_update and self.last_update and other.last_update > self.last_update and (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
@@ -185,14 +200,9 @@ class Searchable(Updateable, metaclass=MetaSearchable):
             pass
 
     class Results(Updateable, metaclass=MetaSearchableInner):
-        results = fields.List(fields.Model('Searchable.Result'))
-
-        def __init__(self, results=[], scored=False):
-            super().__init__()
-            if scored:
-                self.results = list(results)
-            else:
-                self.results = [(r, None) for r in results]
+        def __init__(self, results=[], scored=False, **kwargs):
+            results = list(results) if scored else [(r, None) for r in results]
+            super().__init__(results=results, **kwargs)
 
         def _collect_children(self, collection, last_update=None, ids=None):
             super()._collect_children(collection, last_update, ids=ids)
@@ -240,11 +250,10 @@ class Searchable(Updateable, metaclass=MetaSearchable):
 
 
 class Collectable(Searchable):
-    _ids = fields.Dict(fields.Field(str), fields.Any())
+    _ids = fields.Dict(fields.Field(str), fields.Any(), none=False)
 
-    def __init__(self):
-        super().__init__()
-        self._ids = {}
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _equal_by_id(self, other):
         for name, value in self._ids.items():
