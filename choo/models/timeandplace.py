@@ -11,12 +11,8 @@ class TimeAndPlace(Updateable):
     departure = fields.Model(RealtimeTime)
     passthrough = fields.Field(bool, none=False)
 
-    def __init__(self, platform=None, arrival=None, departure=None):
-        super().__init__()
-        self.platform = platform
-        self.arrival = arrival
-        self.departure = departure
-        self.passthrough = False
+    def __init__(self, platform=None, arrival=None, departure=None, **kwargs):
+        super().__init__(platform=platform, arrival=arrival, departure=departure, **kwargs)
 
     _update_default = ('platform', 'passthrough')
 

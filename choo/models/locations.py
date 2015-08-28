@@ -7,16 +7,15 @@ class Coordinates(Serializable):
     lat = fields.Field(float, none=False)
     lon = fields.Field(float, none=False)
 
-    def __init__(self, lat=None, lon=None):
-        super().__init__()
-        self.lat = lat
-        self.lon = lon
+    def __init__(self, lat=None, lon=None, **kwargs):
+        super().__init__(lat=lat, lon=lon, **kwargs)
 
     def _serialize_instance(self):
         return [self.lat, self.lon]
 
-    def _unserialize(self, data):
-        self.lat, self.lon = data
+    @classmethod
+    def unserialize(cls, data):
+        return cls(*data)
 
     def __eq__(self, other):
         return isinstance(other, Coordinates) and other.lat == self.lat and other.lon == self.lon
@@ -28,9 +27,9 @@ class Coordinates(Serializable):
 class AbstractLocation(Collectable):
     coords = fields.Model(Coordinates)
 
-    def __init__(self, coords=None):
-        super().__init__()
-        self.coords = coords
+    def __init__(self, **kwargs):
+        # magic, do not remove
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
@@ -52,11 +51,8 @@ class Platform(AbstractLocation):
     name = fields.Field(str)
     full_name = fields.Field(str)
 
-    def __init__(self, stop=None, name=None, full_name=None):
-        super().__init__()
-        self.stop = stop
-        self.name = name
-        self.full_name = full_name
+    def __init__(self, stop=None, name=None, full_name=None, **kwargs):
+        super().__init__(stop=stop, name=name, full_name=full_name, **kwargs)
 
     _update_default = ('name', 'full_name')
 
@@ -95,12 +91,8 @@ class Location(AbstractLocation):
     name = fields.Field(str, none=False)
     near_stops = fields.Model('Stop.Results')
 
-    def __init__(self, country=None, city=None, name=None):
-        super().__init__()
-        self.country = country
-        self.city = city
-        self.name = name
-        self.near_stops = None
+    def __init__(self, country=None, city=None, name=None, **kwargs):
+        super().__init__(country=country, city=city, name=name, **kwargs)
 
     _update_default = ('country', )
 
@@ -181,12 +173,8 @@ class Stop(Location):
     lines = fields.Model('Line.Results')
     train_station_name = fields.Field(str)
 
-    def __init__(self, country=None, city=None, name=None):
-        super().__init__()
-        Location.__init__(self, country, city, name)
-        self.rides = None
-        self.lines = None
-        self.train_station_name = None
+    def __init__(self, country=None, city=None, name=None, **kwargs):
+        super().__init__(country=country, city=city, name=name, **kwargs)
 
     def _update(self, other, better):
         if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
@@ -226,9 +214,8 @@ class Stop(Location):
 
 
 class POI(Location):
-    def __init__(self, country=None, city=None, name=None):
-        super().__init__()
-        Location.__init__(self, country, city, name)
+    def __init__(self, country=None, city=None, name=None, **kwargs):
+        super().__init__(country=country, city=city, name=name, **kwargs)
 
     def __eq__(self, other):
         if not isinstance(other, POI):
@@ -245,11 +232,8 @@ class Address(Location):
     street = fields.Field(str)
     number = fields.Field(str)
 
-    def __init__(self, country=None, city=None, name=None):
-        super().__init__()
-        Location.__init__(self, country, city, name)
-        self.street = None
-        self.number = None
+    def __init__(self, country=None, city=None, name=None, **kwargs):
+        super().__init__(country=country, city=city, name=name, **kwargs)
 
     _update_default = ('street', 'number')
 

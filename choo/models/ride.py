@@ -14,16 +14,10 @@ class Ride(Collectable):
     bike_friendly = fields.Field(bool)
     infotexts = fields.List(str)
 
-    def __init__(self, line=None, number=None):
-        super().__init__()
-        self._stops = []
-        self._paths = {}
-        self.line = line
-        self.number = number
-        self.direction = None
-        self.canceled = None
-        self.bike_friendly = None
-        self.infotexts = []
+    def __init__(self, line=None, number=None, **kwargs):
+        self._stops = kwargs.get('_stops', [])
+        self._paths = kwargs.get('_paths', {})
+        super().__init__(line=line, number=number, **kwargs)
 
     _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
 
@@ -49,6 +43,18 @@ class Ride(Collectable):
         data['stops'] = [(s.serialize() if s else None) for i, s in self._stops]
         data['paths'] = {int(i): [p.serialize() for p in path] for i, path in self._paths.items()}
         return data
+
+    @classmethod
+    def unserialize(cls, data):
+        self = super(Ride, cls).unserialize(data)
+
+        for s in data.get('stops', []):
+            self.append(TimeAndPlace.unserialize(s) if s is not None else None)
+
+        for i, path in data.get('paths', {}).items():
+            self._paths[self.pointer(int(i))] = [Coordinates.unserialize(p) for p in path]
+
+        return self
 
     def _update(self, other, better):
         # todo: stops, paths
@@ -175,7 +181,7 @@ class Ride(Collectable):
 
     class Results(Collectable.Results):
         results = fields.List(fields.Tuple(fields.Model('RideSegment'), fields.Field(int)))
-        
+
         def __init__(self, results=[], scored=False):
             self.content = RideSegment
             super().__init__(results, scored)
@@ -183,14 +189,16 @@ class Ride(Collectable):
 
 class RideSegment(TripPart):
     ride = fields.Model(Ride, none=False)
-    _origin = fields.Field(Ride.StopPointer)
-    _destination = fields.Field(Ride.StopPointer)
 
-    def __init__(self, ride=None, origin=None, destination=None):
-        super().__init__()
-        self.ride = ride
-        self._origin = origin
-        self._destination = destination
+    def __init__(self, ride=None, _origin=None, _destination=None, **kwargs):
+        self._origin = _origin
+        self._destination = _destination
+        super().__init__(ride=ride, **kwargs)
+
+    def validate(self):
+        assert self._origin is None or isinstance(self._origin, Ride.StopPointer)
+        assert self._destination is None or isinstance(self._destination, Ride.StopPointer)
+        return super().validate()
 
     def _serialize_instance(self):
         data = super()._serialize_instance()
@@ -200,6 +208,18 @@ class RideSegment(TripPart):
         if self._destination is not None:
             data['destination'] = int(self._destination)
         return data
+
+    @classmethod
+    def unserialize(cls, data):
+        self = super(RideSegment, cls).unserialize(data)
+
+        if 'origin' in data:
+            self._origin = self.ride.pointer(data['origin'])
+
+        if 'destination' in data:
+            self._destination = self.ride.pointer(data['destination'])
+
+        return self
 
     def _stops(self):
         if self._destination is None:

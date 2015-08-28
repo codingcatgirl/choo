@@ -14,18 +14,8 @@ class Line(Collectable):
     network = fields.Field(str)
     operator = fields.Field(str)
 
-    def __init__(self, linetype=None):
-        super().__init__()
-        self.linetype = linetype
-        self.product = None
-        self.name = None
-        self.shortname = None
-        self.route = None
-        self.first_stop = None
-        self.last_stop = None
-
-        self.network = None
-        self.operator = None
+    def __init__(self, linetype=None, **kwargs):
+        super().__init__(linetype=(LineType() if linetype is None else linetype), **kwargs)
 
     _update_default = ('product', 'name', 'shortname', 'route', 'network', 'operator')
 

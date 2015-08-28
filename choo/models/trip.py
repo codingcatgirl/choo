@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .base import Searchable, TripPart
-from .way import Way, WayType
+from .way import WayType
 from .locations import Location, AbstractLocation
 from .ride import Ride, RideSegment
 from .line import Line, LineType, LineTypes
@@ -13,10 +13,9 @@ class Trip(Searchable):
     _parts = fields.List(fields.Model(TripPart, none=False))
     tickets = fields.Model(TicketList)
 
-    def __init__(self):
-        super().__init__()
-        self._parts = []
-        self.tickets = None
+    def __init__(self, **kwargs):
+        # magic, do not remove
+        super().__init__(**kwargs)
 
     def _collect_children(self, collection, last_update=None, ids=None):
         super()._collect_children(collection, last_update, ids=ids)
@@ -73,7 +72,7 @@ class Trip(Searchable):
                 ('allow_escalators', bool),
                 ('allow_elevators', bool),
 
-                ('waytype_origin', WayType),
+                ('waytype_origin', fields.Field),
                 ('waytype_via', WayType),
                 ('waytype_destination', WayType),
 
@@ -117,11 +116,8 @@ class Trip(Searchable):
         via = fields.Model(Location)
         destination = fields.Model(Location, none=False)
 
-        def __init__(self, *args):
-            super().__init__(*args)
-            self.origin = None
-            self.via = None
-            self.destination = None
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
     @property
     def origin(self):
