@@ -1,6 +1,6 @@
-# choo
+# choo [![PyPI](https://img.shields.io/pypi/pyversions/choo.svg)]() [![GitHub release](https://img.shields.io/github/release/nomoketo/choo.svg)]() [![Docs](https://readthedocs.org/projects/choo/badge/?version=latest)](https://choo.readthedocs.org/)
 
-[![Docs](https://readthedocs.org/projects/choo/badge/?version=latest)](https://choo.readthedocs.org/)
+
 
 choo is a python3 library providing a uniform interface for public transport APIs. Command line, tcp and websocket interfaces are available to use it with other languages.
 
