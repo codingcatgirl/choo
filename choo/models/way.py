@@ -2,9 +2,18 @@
 from .base import Serializable, TripPart
 from .locations import AbstractLocation, Coordinates
 from datetime import timedelta
+from . import fields
 
 
 class Way(TripPart):
+    waytype = fields.Model('WayType', none=False)
+    origin = fields.Model(AbstractLocation, none=False)
+    destination = fields.Model(AbstractLocation, none=False)
+    distance = fields.Field(float)
+    duration = fields.Timedelta()
+    events = fields.List(fields.Model('WayEvent', none=False))
+    path = fields.List(fields.Model(Coordinates, none=False))
+
     def __init__(self, waytype=None, origin=None, destination=None, distance=None):
         super().__init__()
         self.waytype = WayType('walk') if waytype is None else waytype
@@ -14,46 +23,6 @@ class Way(TripPart):
         self.duration = None
         self.events = None
         self.path = None
-
-    @staticmethod
-    def _validate():
-        return (
-            ('waytype', WayType),
-            ('origin', AbstractLocation),
-            ('destination', AbstractLocation),
-            ('distance', (None, int, float)),
-            ('duration', timedelta),
-            ('events', None),
-            ('path', None),
-        )
-
-    def _validate_custom(self, name, value):
-        if name == 'path':
-            if value is None:
-                return True
-            for v in value:
-                if not isinstance(v, Coordinates):
-                    return False
-            return True
-        elif name == 'events':
-            if value is None:
-                return True
-            for v in value:
-                if not isinstance(v, WayEvent):
-                    return False
-            return True
-
-    def _serialize_custom(self, name, **kwargs):
-        if name == 'path':
-            return 'path', [p.serialize(**kwargs) for p in self.path] if self.path is not None else None
-        elif name == 'events':
-            return 'events', [e.serialize(**kwargs) for e in self.events] if self.events is not None else None
-
-    def _unserialize_custom(self, name, data):
-        if name == 'path':
-            self.path = [Coordinates.unserialize(p) for p in data]
-        if name == 'events':
-            self.events = [WayEvent.unserialize(e) for e in data]
 
     def __eq__(self, other):
         return (isinstance(other, Way) and self.waytype == other.waytype and
@@ -83,7 +52,7 @@ class WayType(Serializable):
             cls._created[value] = self
             return self
 
-    def _serialize(self):
+    def _serialize_instance(self):
         return self._value
 
     @classmethod
@@ -117,7 +86,7 @@ class WayEvent(Serializable):
             cls._created[value] = self
             return self
 
-    def _serialize(self):
+    def _serialize_instance(self):
         return self._value
 
     @classmethod
