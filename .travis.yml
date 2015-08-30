@@ -5,4 +5,4 @@ install:
     - pip install -e .
     - pip install flake8
 script:
-    - flake8 --ignore=W293,E501 choo
+    - flake8 choo --max-line-length 119

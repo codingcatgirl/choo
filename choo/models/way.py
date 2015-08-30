@@ -25,7 +25,9 @@ class Way(TripPart):
         distance = ''
         if self.distance:
             distance = ' %dm' % self.distance
-        return '<Way %s %dmin%s %s %s>' % (str(self.waytype), self.duration.total_seconds() / 60, distance, repr(self.origin), repr(self.destination))
+        return '<Way %s %dmin%s %s %s>' % (
+            str(self.waytype), self.duration.total_seconds() / 60,
+            distance, repr(self.origin), repr(self.destination))
 
 
 class WayType(Serializable):

@@ -35,10 +35,14 @@ class AbstractLocation(Collectable):
         return 'AbstractLocation(%s)' % (repr(self.coords) if self.coords else '')
 
     def _near(self, other):
-        return self.coords is not None and other.coords is not None and abs(self.coords.lat - other.coords.lat) < 0.02 and abs(self.coords.lon - other.coords.lon) < 0.02
+        return (self.coords is not None and other.coords is not None and
+                abs(self.coords.lat - other.coords.lat) < 0.02 and
+                abs(self.coords.lon - other.coords.lon) < 0.02)
 
     def _toofar(self, other):
-        return (self.coords is not None and other.coords is not None) and (abs(self.coords.lat - other.coords.lat) > 0.04 or abs(self.coords.lon - other.coords.lon) > 0.04)
+        return ((self.coords is not None and other.coords is not None) and
+                (abs(self.coords.lat - other.coords.lat) > 0.04 or
+                 abs(self.coords.lon - other.coords.lon) > 0.04))
 
     def __eq__(self, other):
         return self.coords == other.coords
@@ -131,19 +135,7 @@ class Location(AbstractLocation):
 
         near = self._near(other)
 
-        if self.city is None:
-            if other.city is None:
-                return near or self.name.replace(',', '').replace('  ', ' ') == other.name.replace(',', '').replace('  ', ' ')
-
-            else:
-                if not self.name.endswith(other.name):
-                    return False
-
-                if self.name.startswith(other.city):
-                    return True
-
-                return near
-        else:
+        if self.city is not None:
             if other.city is None:
                 if not other.name.endswith(self.name):
                     return False
@@ -157,6 +149,18 @@ class Location(AbstractLocation):
                     return False
 
                 return near or self.city == other.city
+
+        if other.city is None:
+            return (near or
+                    self.name.replace(',', '').replace('  ', ' ') == other.name.replace(',', '').replace('  ', ' '))
+        else:
+            if not self.name.endswith(other.name):
+                return False
+
+            if self.name.startswith(other.city):
+                return True
+
+            return near
 
     class Request(Searchable.Request):
         name = fields.Field(str)
@@ -207,7 +211,8 @@ class Stop(Location):
             if self.train_station_name.replace('-', ' ') == other.train_station_name.replace('-', ' '):
                 return True
 
-            if self._near(other) and (self.train_station_name.endswith(other.train_station_name) or other.train_station_name.endswith(self.train_station_name)):
+            if self._near(other) and (self.train_station_name.endswith(other.train_station_name) or
+                                      other.train_station_name.endswith(self.train_station_name)):
                 return True
 
         return self._location_eq(other)

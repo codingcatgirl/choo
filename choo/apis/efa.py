@@ -71,7 +71,8 @@ class EFA(API):
             if myid is not None:
                 r = {'type': 'stop', 'place': None, 'name': str(myid)}
             elif 'ifopt' in location._ids and None not in location._ids['ifopt'] and location.country is not None:
-                r = {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % ((location.country, ) + location._ids['ifopt'])}
+                r = {'type': 'stop', 'place': None,
+                     'name': '%s:%s:%s' % ((location.country, ) + location._ids['ifopt'])}
             else:
                 r = {'type': 'stop', 'place': city, 'name': name}
         elif issubclass(model, Address):
@@ -147,7 +148,8 @@ class EFA(API):
             'place_via': '',  # decode('utf-8').encode('iso-8859-1'),
             'ptOptionsActive': 1,
             'requestID': 0,
-            'routeType': 'LEASTTIME',  # {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
+            'routeType': 'LEASTTIME',
+            # {'speed':'LEASTTIME', 'waittime':'LEASTINTERCHANGE', 'distance':'LEASTWALKING'}[select_interchange_by],
             'sessionID': 0,
             'type_via': 'stop',
             'useRealtime': 1,
@@ -356,7 +358,9 @@ class EFA(API):
             if name.endswith(suffix):
                 name = name[:-len(suffix)] + replacement
         name = name.strip()
-        stop.train_station_name = ('%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)).strip()
+        stop.train_station_name = (
+            '%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)
+        ).strip()
 
     def _parse_stop_line(self, data):
         """ Parse an ODV line (for example an AssignedStop) """
@@ -531,7 +535,8 @@ class EFA(API):
                     delay = timedelta(minutes=delay)
 
             if delay is not None:
-                if (mypoint.arrival and servernow < mypoint.arrival.livetime) or (mypoint.departure and servernow < mypoint.departure.livetime):
+                if ((mypoint.arrival and servernow < mypoint.arrival.livetime) or
+                        (mypoint.departure and servernow < mypoint.departure.livetime)):
                     before_delay = delay
                 else:
                     after_delay = delay
@@ -541,9 +546,11 @@ class EFA(API):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
                     if before_delay is not None:
-                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time + before_delay >= servernow:
+                        if (point.arrival is not None and point.arrival.delay is None and
+                                point.arrival.time + before_delay >= servernow):
                             point.arrival.delay = before_delay
-                        if point.departure is not None and point.departure.delay is None and point.departure.time + before_delay >= servernow:
+                        if (point.departure is not None and point.departure.delay is None and
+                                point.departure.time + before_delay >= servernow):
                             point.departure.delay = before_delay
                     prevs = True
                     ride.append(point)
@@ -555,9 +562,11 @@ class EFA(API):
                 point = self._parse_trip_point(pointdata, train_line=train_line)
                 if point is not None:
                     if after_delay is not None:
-                        if point.arrival is not None and point.arrival.delay is None and point.arrival.time + after_delay >= servernow:
+                        if (point.arrival is not None and point.arrival.delay is None and
+                                point.arrival.time + after_delay >= servernow):
                             point.arrival.delay = after_delay
-                        if point.departure is not None and point.departure.delay is None and point.departure.time + after_delay >= servernow:
+                        if (point.departure is not None and point.departure.delay is None and
+                                point.departure.time + after_delay >= servernow):
                             point.departure.delay = after_delay
                     onwards = True
                     ride.append(point)
@@ -605,8 +614,14 @@ class EFA(API):
             tickets = route.find('./itdFare/itdSingleTicket')
             if tickets:
                 authority = tickets.attrib['net']
-                ticketlist.single = TicketData(authority, tickets.attrib['unitsAdult'], float(tickets.attrib['fareAdult']), float(tickets.attrib['fareChild']))
-                ticketlist.bike = TicketData(authority, tickets.attrib['unitsBikeAdult'], float(tickets.attrib['fareBikeAdult']), float(tickets.attrib['fareBikeChild']))
+                ticketlist.single = TicketData(authority,
+                                               tickets.attrib['unitsAdult'],
+                                               float(tickets.attrib['fareAdult']),
+                                               float(tickets.attrib['fareChild']))
+                ticketlist.bike = TicketData(authority,
+                                             tickets.attrib['unitsBikeAdult'],
+                                             float(tickets.attrib['fareBikeAdult']),
+                                             float(tickets.attrib['fareBikeChild']))
                 ticketlist.currency = tickets.attrib['currency']
                 ticketlist.level_name = tickets.attrib['unitName']
                 for ticket in tickets.findall('./itdGenericTicketList/itdGenericTicketGroup'):
@@ -659,7 +674,8 @@ class EFA(API):
         way.duration = timedelta(minutes=int(info.attrib.get('duration')))
 
         path = []
-        for coords in data.findall('./itdInterchangePathCoordinates/itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
+        for coords in data.findall('./itdInterchangePathCoordinates/itdPathCoordinates/'
+                                   '/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
             path.append(Coordinates(int(coords.find('y').text) / 1000000, int(coords.find('x').text) / 1000000))
 
         if path:
@@ -728,7 +744,8 @@ class EFA(API):
             last = None
             waypoints = False
             if data.find('./itdStopSeq'):
-                new_points = [self._parse_trip_point(point, train_line=train_line) for point in data.findall('./itdStopSeq/itdPoint')]
+                new_points = [self._parse_trip_point(point, train_line=train_line)
+                              for point in data.findall('./itdStopSeq/itdPoint')]
                 if not new_points or new_points[0].stop != new_points[0].stop:
                     new_points.insert(0, points[0])
                 if new_points[-1].stop != points[1].stop:
@@ -787,8 +804,8 @@ class EFA(API):
                     continue
 
                 # print([coord.serialize(), point.serialize(), lastcoord.serialize()])
-                # print(abs(math.atan2(coord.lat-point.lat, coord.lon-point.lon)-math.atan2(lastcoord.lat-point.lat, lastcoord.lon-point.lon)))
-                if 2.84 < abs(math.atan2(coord.lat - point.lat, coord.lon - point.lon) - math.atan2(lastcoord.lat - point.lat, lastcoord.lon - point.lon)) < 3.44:
+                if 2.84 < abs(math.atan2(coord.lat - point.lat, coord.lon - point.lon) -
+                              math.atan2(lastcoord.lat - point.lat, lastcoord.lon - point.lon)) < 3.44:
                     pointi[j] = (i, 1)
                     break
 
@@ -848,11 +865,13 @@ class EFA(API):
 
         train = data.find('./itdTrain')
         if train is not None:
-            line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA') else 'train.longdistance')
+            line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA')
+                                     else 'train.longdistance')
 
         traintype = data.attrib.get('trainType')
         if traintype is not None:
-            line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA') else 'train.longdistance')
+            line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA')
+                                     else 'train.longdistance')
 
         train_line = line.linetype in self.train_station_lines
 
@@ -861,7 +880,8 @@ class EFA(API):
         ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
-            line._ids[self.name] = (diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'], diva.attrib['direction'], diva.attrib['project'])
+            line._ids[self.name] = (diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'],
+                                    diva.attrib['direction'], diva.attrib['project'])
             ridedir = diva.attrib['direction'].strip()
             if not ridedir:
                 ridedir = None
