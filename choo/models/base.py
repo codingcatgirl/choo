@@ -132,7 +132,9 @@ class Updateable(Serializable):
         self.low_quality = kwargs.get('low_quality')
 
     def update(self, other):
-        better = (other.last_update and self.last_update and other.last_update > self.last_update and (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
+        better = (other.last_update and self.last_update and
+                  other.last_update > self.last_update and
+                  (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
 
         if not self.last_update or better:
             self.last_update = other.last_update
