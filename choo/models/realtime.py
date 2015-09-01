@@ -19,8 +19,6 @@ class RealtimeTime(Serializable):
 
         super().__init__(time=time, delay=delay, **kwargs)
 
-    _update_default = ('delay', )
-
     def __repr__(self):
         return '<RealtimeTime %s>' % (str(self))
 

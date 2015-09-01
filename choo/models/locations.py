@@ -47,8 +47,6 @@ class AbstractLocation(Collectable):
     def __eq__(self, other):
         return self.coords == other.coords
 
-    _update_default = ('coords', )
-
 
 class Platform(AbstractLocation):
     stop = fields.Model('Stop', none=False)
@@ -58,11 +56,6 @@ class Platform(AbstractLocation):
 
     def __init__(self, stop=None, name=None, full_name=None, **kwargs):
         super().__init__(stop=stop, name=name, full_name=full_name, **kwargs)
-
-    _update_default = ('name', 'full_name')
-
-    def _update(self, other, better):
-        self.stop.update(other.stop)
 
     def __repr__(self):
         return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
@@ -98,14 +91,6 @@ class Location(AbstractLocation):
 
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
-
-    _update_default = ('country', )
-
-    def _update(self, other, better):
-        if better or (self.city is None and other.city is not None):
-            if other.city is not None:
-                self.city = other.city
-            self.name = other.name
 
     def __repr__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))
@@ -176,10 +161,6 @@ class Stop(Location):
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
-    def _update(self, other, better):
-        if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
-            self.train_station_name = other.train_station_name
-
     def __repr__(self):
         return '<Stop %s>' % repr(self.full_name)
 
@@ -234,7 +215,6 @@ class Address(Location):
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
-    _update_default = ('street', 'number')
     @property
     def full_name(self):
         if self.city is None:

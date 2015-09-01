@@ -14,14 +14,6 @@ class TicketList(Serializable):
         # magic, do not remove
         super().__init__(**kwargs)
 
-    _update_default = ('currency', 'level_name', 'single', 'bike')
-
-    def _update(self, other, better):
-        if self.other is None:
-            self.other = other.other
-        else:
-            self.other.update(other.other)
-
     def __repr__(self):
         return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))
 

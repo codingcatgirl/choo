@@ -17,12 +17,6 @@ class Line(Collectable):
     def __init__(self, linetype=None, **kwargs):
         super().__init__(linetype=(LineType() if linetype is None else linetype), **kwargs)
 
-    _update_default = ('product', 'name', 'shortname', 'route', 'network', 'operator')
-
-    def _update(self, other, better):
-        if other.linetype in self.linetype:
-            self.linetype = other.linetype
-
     def __eq__(self, other):
         if not isinstance(other, Line):
             return False

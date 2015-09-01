@@ -20,8 +20,6 @@ class Ride(Collectable):
         self._paths = kwargs.get('_paths', {})
         super().__init__(line=line, number=number, **kwargs)
 
-    _update_default = ('line', 'number', 'direction', 'canceled', 'bike_friendly', 'infotexts')
-
     def validate(self):
         # _stops
         assert isinstance(self._stops, list)
@@ -56,10 +54,6 @@ class Ride(Collectable):
             self._paths[self.pointer(int(i))] = [Coordinates.unserialize(p) for p in path]
 
         return self
-
-    def _update(self, other, better):
-        # todo: stops, paths
-        pass
 
     def apply_recursive(self, **kwargs):
         if 'time' in kwargs:
