@@ -53,7 +53,7 @@ class AbstractLocation(Collectable):
 
 class Platform(AbstractLocation):
     stop = fields.Model('Stop', none=False)
-    ifopt = fields.Field(tuple)
+    ifopt = fields.Field(str)
     name = fields.Field(str)
     full_name = fields.Field(str)
 
