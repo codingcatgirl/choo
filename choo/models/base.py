@@ -186,16 +186,11 @@ class NetworkID(Serializable):
 class Collectable(Searchable):
     id = fields.Any()
     source = fields.Field(str, none=False)
-    time = fields.DateTime()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def apply_recursive(self, **kwargs):
-        # print(self)
-        if 'time' in kwargs:
-            self.time = kwargs['time']
-
         if 'source' in kwargs:
             self.source = kwargs['source']
 
