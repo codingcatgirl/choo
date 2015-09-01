@@ -49,9 +49,9 @@ class Serializable(metaclass=MetaSerializable):
     def _serialize_instance(self):
         self.validate()
 
-        data = {(name[1:] if name.startswith('_') else name): field.serialize(getattr(self, name))
-                for name, field in self._fields.items()}
-        return {name: field for name, field in data.items() if field is not None}
+        data = [((name[1:] if name.startswith('_') else name), field.serialize(getattr(self, name)))
+                for name, field in self._fields.items()]
+        return OrderedDict((n, v) for n, v in data if v is not None)
 
     @classmethod
     def unserialize(cls, data):
