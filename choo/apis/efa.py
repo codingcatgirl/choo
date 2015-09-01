@@ -742,12 +742,14 @@ class EFA(API):
                 ride.append(None)
 
             segment = ride[first:last]
-            paths = self._split_path(path, [p.platform.coords for p in segment])[:-1]
-            for i, point in segment.items():
-                if not paths:
-                    break
-                segment.ride._paths[i] = paths.pop(0)
-            return segment
+            platform_coords = [p.platform.coords for p in segment]
+            if None not in platform_coords:  # todo
+                paths = self._split_path(path, platform_coords)[:-1]
+                for i, point in segment.items():
+                    if not paths:
+                        break
+                    segment.ride._paths[i] = paths.pop(0)
+                return segment
 
     def _split_path(self, totalpath, points):
         pointi = [None for point in enumerate(points)]
