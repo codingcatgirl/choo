@@ -225,8 +225,9 @@ class Trip(Searchable):
             return False
 
         for i, part in enumerate(self):
-            if part != other[i]:
-                return False
+            compared = part == other[i]
+            if compared is not True:
+                return compared
         return True
 
     def __iter__(self):

@@ -131,19 +131,21 @@ class Ride(Collectable):
         if not isinstance(other, Ride):
             return False
 
-        byid = self._equal_by_id(other)
-        if byid is False:
+        by_id = self._same_by_id(other)
+        if by_id is not None:
+            return by_id
+
+        if self.line is not None and other.line is not None and self.line != other.line:
             return False
 
-        if byid is None:
-            if self.number is not None and other.number is not None and self.number != other.number:
-                return False
+        if self.number is not None and other.number is not None and self.number != other.number:
+            return False
 
-            if self[-1] is not None and other[-1] is not None and self[-1].stop != other[-1].stop:
-                return False
+        if self[-1] is not None and other[-1] is not None and self[-1].stop != other[-1].stop:
+            return False
 
-            if self[0] is not None and other[0] is not None and self[0].stop != other[0].stop:
-                return False
+        if self[0] is not None and other[0] is not None and self[0].stop != other[0].stop:
+            return False
 
         for stop in self._stops[1:-1]:
             if stop[1] is None:
@@ -154,7 +156,7 @@ class Ride(Collectable):
                 if stop[1] == stop2[1]:
                     return True
 
-        return False
+        return None
 
     @property
     def path(self, origin=None, destination=None):

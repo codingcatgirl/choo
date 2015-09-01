@@ -22,22 +22,21 @@ class TimeAndPlace(Serializable):
         if not isinstance(other, TimeAndPlace):
             return False
 
-        if self.arrival is not None and other.arrival is not None and self.arrival != other.arrival:
-            return False
+        sametimes = 0
+        if self.arrival is not None and other.arrival is not None:
+            if self.arrival != other.arrival:
+                return False
+            sametimes += 1
 
-        if self.departure is not None and other.departure is not None and self.departure != other.departure:
-            return False
+        if self.departure is not None and other.departure is not None:
+            if self.departure != other.departure:
+                return False
+            sametimes += 1
 
-        if self.platform != other.platform:
-            return False
+        if not sametimes:
+            return None
 
-        if self.arrival is not None and self.arrival == other.arrival:
-            return True
-
-        if self.departure is not None and self.departure == other.departure:
-            return True
-
-        return False
+        return self.platform != other.platform
 
     def __repr__(self):
         return ('<TimeAndPlace %s %s %s>' % (self.arrival, self.departure, self.platform))
