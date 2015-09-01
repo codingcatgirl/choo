@@ -166,15 +166,6 @@ class Searchable(Serializable, metaclass=MetaSearchable):
         def append(self, obj, score=None):
             self.results.append((obj, score))
 
-        def _update(self, obj, better):
-            for o in obj:
-                for myo in self:
-                    if o == myo:
-                        myo.update(o)
-                        break
-                else:
-                    self.append(myo)
-
         def __getitem__(self, key):
             return self.results[key]
 
@@ -195,33 +186,6 @@ class Collectable(Searchable):
             self.source = kwargs['source']
 
         super().apply_recursive(**kwargs)
-
-    def update(self, other):
-        # todo
-        """
-        better = (other.last_update and self.last_update and
-                  other.last_update > self.last_update and
-                  (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
-
-        if not self.last_update or better:
-            self.last_update = other.last_update
-            self.low_quality = other.low_quality
-
-        for c in self.__class__.__mro__:
-            if hasattr(c, '_update_default'):
-                for name in c._update_default:
-                    if getattr(self, name) is None or (better and getattr(other, name) is not None):
-                        setattr(self, name, getattr(other, name))
-
-            if hasattr(c, '_update'):
-                c._update(self, other, better)
-
-        for name, value in other._ids.items():
-            if name in self._ids and type(value) == tuple and None in value:
-                continue
-            self._ids[name] = value
-        """
-        pass
 
 
 class TripPart(Serializable):

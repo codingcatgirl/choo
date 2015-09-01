@@ -14,21 +14,6 @@ class TimeAndPlace(Serializable):
     def __init__(self, platform=None, arrival=None, departure=None, **kwargs):
         super().__init__(platform=platform, arrival=arrival, departure=departure, **kwargs)
 
-    _update_default = ('platform', 'passthrough')
-
-    def _update(self, other, better):
-        if self.arrival is None:
-            self.arrival = other.arrival
-        else:
-            self.arrival.update(other.arrival)
-
-        if self.departure is None:
-            self.departure = other.departure
-        else:
-            self.departure.update(other.departure)
-
-        self.platform.update(other.platform)
-
     @property
     def stop(self):
         return self.platform.stop
