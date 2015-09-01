@@ -850,12 +850,14 @@ class EFA(API):
                                   'ship', 'dialable', 'other')[mottype])
 
         train = data.find('./itdTrain')
+        traintype = None
         if train is not None:
-            line.linetype = LineType('train.longdistance.highspeed' if train.get('type') in ('ICE', 'THA')
-                                     else 'train.longdistance')
+            traintype = train.get('type')
 
-        traintype = data.attrib.get('trainType')
-        if traintype is not None:
+        if traintype is None:
+            traintype = data.attrib.get('trainType')
+
+        if traintype is not None and traintype not in ('RE', 'RB'):
             line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA')
                                      else 'train.longdistance')
 
