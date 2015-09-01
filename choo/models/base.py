@@ -186,7 +186,6 @@ class NetworkID(Serializable):
 class Collectable(Searchable):
     id = fields.Any()
     source = fields.Field(str, none=False)
-    network = fields.Field(str)
     time = fields.DateTime()
 
     def __init__(self, **kwargs):
