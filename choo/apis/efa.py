@@ -341,26 +341,6 @@ class EFA(API):
         else:
             self.cities[cityid] = (stop.country, stop.city)
 
-    def _make_train_station(self, stop, force=False):
-        if not isinstance(stop, Stop):
-            return
-
-        if not force:
-            for suffix in self.train_station_suffixes:
-                if stop.name.endswith(suffix):
-                    break
-            else:
-                return
-
-        name = stop.name
-        for suffix, replacement in self.train_station_suffixes.items():
-            if name.endswith(suffix):
-                name = name[:-len(suffix)] + replacement
-        name = name.strip()
-        stop.train_station_name = (
-            '%s %s' % ('' if stop.city is None or name.startswith(stop.city) else stop.city, name)
-        ).strip()
-
     def _parse_stop_line(self, data):
         """ Parse an ODV line (for example an AssignedStop) """
         city = data.attrib.get('locality', data.attrib.get('place', ''))
