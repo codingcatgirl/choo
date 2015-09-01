@@ -366,9 +366,11 @@ class EFA(API):
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
+        full_name = data.attrib.get('nameWithPlace')
+
         name = data.text
-        stop = Stop(country=self._get_country(data.attrib['stopID']),
-                    city=city, name=name, id=int(data.attrib['stopID']))
+        stop = Stop(country=self._get_country(data.attrib['stopID']), city=city,
+                    full_name=full_name, name=name, id=int(data.attrib['stopID']))
 
         gid = data.attrib.get('gid', '').split(':')
         if len(gid) == 3 and min(len(s) for s in gid):
@@ -922,11 +924,11 @@ class EFA(API):
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
-        origin = Stop(name=origin) if origin else None
+        origin = Stop(full_name=origin) if origin else None
         self._make_train_station(origin, train_line)
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
-        destination = Stop(name=destination) if destination else None
+        destination = Stop(full_name=destination) if destination else None
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination.id = int(data.attrib['destID'])
@@ -947,35 +949,14 @@ class EFA(API):
         name = data.attrib.get('nameWO', '')
         name = name if name else None
 
-        if name is None:
-            name = data.attrib.get('name', '')
-            if ', ' in name and (city is None or name.startswith(city)):
-                city, name = name.split(', ', 1)
+        full_name = data.attrib.get('name', data.attrib.get('stopName', ''))
+        full_name = full_name if full_name else None
 
-        if city is None:
-            tmp = data.attrib.get('stopName', '')
-            if not tmp:
-                tmp = data.attrib.get('name', '')
-                if ', ' in tmp:
-                    city, name = tmp.split(', ', 1)
-                elif tmp.endswith(' ' + name):
-                    tmp = tmp[:-len(name)].strip()
-                    if tmp:
-                        city = tmp
-
-                if city is None:
-                    name = tmp
-
-            elif city is None and tmp.endswith(' ' + name):
-                tmp = tmp[:-len(name)].strip()
-                if tmp:
-                    city = tmp
-
-        return city, name
+        return city, name, full_name
 
     def _parse_trip_point(self, data, walk=False, train_line=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
-        city, name = self._parse_trip_point_name(data)
+        city, name, full_name = self._parse_trip_point_name(data)
 
         if data.attrib['area'] == '' and data.attrib['stopID'] == '0':
             return None
@@ -984,7 +965,8 @@ class EFA(API):
         if walk and data.attrib['area'] == '0':
             location = Address(city=city, name=name)
         else:
-            location = Stop(country=self._get_country(data.attrib['stopID']), city=city, name=name)
+            location = Stop(country=self._get_country(data.attrib['stopID']), city=city,
+                            name=name, full_name=full_name)
             location.id = int(data.attrib['stopID'])
             self._make_train_station(location, train_line)
 
