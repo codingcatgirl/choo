@@ -156,7 +156,6 @@ class Stop(Location):
     lines = fields.Model('Line.Results')
     full_name = fields.Field(str)
     ifopt = fields.Any()
-    train_station_name = fields.Field(str)
 
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
@@ -174,14 +173,6 @@ class Stop(Location):
 
         if self.country is not None and other.country is not None and self.country != other.country:
             return False
-
-        if self.train_station_name is not None and other.train_station_name is not None:
-            if self.train_station_name.replace('-', ' ') == other.train_station_name.replace('-', ' '):
-                return True
-
-            if self._near(other) and (self.train_station_name.endswith(other.train_station_name) or
-                                      other.train_station_name.endswith(self.train_station_name)):
-                return True
 
         return self._location_eq(other)
 
