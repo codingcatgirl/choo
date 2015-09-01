@@ -2,59 +2,59 @@ Model Reference
 ===============
 
 .. note::
-    Attributes that may be ``None`` are marked with a ⁰-Symbol.
+    Every attribute can be None when no data is available, unless noted otherwise.
 
 Base Classes
 ------------
 
-All choo models are based upon one of the following four base classes that build on top of each other.
+All choo models are based upon one of the following three base classes that build on top of each other.
 
 
 .. py:class:: Serializable
 
-    All models are Serializables.
+    All models are Serializables. See `Model Serialization`_ for more information.
 
     .. method:: validate()
 
         Checks if all attributes have valid values. Raises an exception if the object is not valid. This method is also called by ``serialize()``.
 
-    .. method:: serialize(typed=False)
+    .. method:: serialize()
 
-        Serializes the object in a JSON-encodable format.
+        Serializes this object in a JSON-encodable format. This is a shortcut for Serializable.serialize(serializable).
 
-        :param typed: whether the output should contain the Model name
+        :rtype: the serialized object
+
+    .. classmethod:: serialize(obj)
+
+        Serializes the given instance of this model in a JSON-encodable format, using typed serialization if the given object is an instance of a submodel.
+
+        .. code-block:: python
+
+            >>> stop.serialize()
+            {…}
+            >>> Stop.serialize(stop) == stop.serialize()
+            True
+            >>> Location.serialize(stop)
+            ['Stop', {…}]
+            >>> Location.serialize(stop)[1] == stop.serialize()
+            True
+
+        :param obj: A serialized representation of a choo object
         :rtype: the serialized object
 
     .. classmethod:: unserialize(data)
 
-        Unserializes any kind of object from a JSON-encodable format.
+        Unserializes an object of this model or one of its child classes from a JSON-encodable format. Always use the same model for unserialization as you used for serialization.
 
-        :param data: A serialized representation of a choo object
+        :param data: A serialized representation of an object of this model or one of its submodels.
         :rtype: the unserialized object
 
 .. _`Model Serialization`: serializing.html
 
 
-.. py:class:: Updateable
-
-    A :py:class:`Serializable` that can be updated. It has information that can be incomplete or outdated.
-
-    .. py:attribute:: last_update⁰
-
-        The last update or creation date of this object as ``datetime``.
-
-    .. py:attribute:: low_quality⁰
-
-        ``True`` if this event has low quality (otherwise ``None`` or ``False``). This means that this data could be not completely correct (e.g. rarely updated realtime data for train companies that have their own better API) and should be confirmed by explicitly asking an API for it.
-
-    .. method:: update(obj)
-
-        Updates the instance with data from another instance. There are no checks performed whether the other object does indeed describe the same thing.
-
-
 .. py:class:: Searchable
 
-    An :py:class:`Updateable` that can be searched for. You can pass it to the API and to get its complete information.
+    An :py:class:`Serializable` that can be searched for. You can pass it to the API and to get its complete information.
 
     All subclasses have a ``Request`` and a ``Results`` subclass. You can pass the and instance of the Request subclass to the API to get search results in a Results subclass.
 
@@ -90,26 +90,26 @@ All choo models are based upon one of the following four base classes that build
 
     A :py:class:`Searchable` that can be collected. It has an ID and it really exists and is not some kind of data construct.
 
-    .. py:attribute:: _ids
+    .. py:attribute:: source
 
-        IDs of this object in different APIs as a dictionary.
+        Source Network of this object. All APIs set this attribute, but it is not mandatory for input.
 
-        * ``ifopt`` means *Identification of Fixed Objects in Public Transport* which is a gloablly unique ID supported by some APIs.
+    .. py:attribute:: id
 
-        * ``uic`` is the international train station id by the *International Union of Railways*.
+        ID of this object (as ``str``) in the source network.
 
 
 
 Main Models
 -----------
 
-Submodels of :py:class:``Collectable``.
+Submodels of :py:class:`Collectable`.
 
 .. py:class:: AbstractLocation
 
     Base class for everything that has a fixed position.
 
-    .. attribute:: coords⁰
+    .. attribute:: coords
 
         The :py:class:`Coordinates` of this location.
 
@@ -141,17 +141,17 @@ Submodels of :py:class:``Collectable``.
 
     .. attribute:: line
 
-        The :py:class:`Line` of this :py:class:`Ride`.
+        **Not None.** The :py:class:`Line` of this :py:class:`Ride`.
 
-    .. attribute:: number⁰
+    .. attribute:: number
 
         The number (train number or similar) of this :py:class:`Ride` as a string.
 
-    .. attribute:: canceled⁰
+    .. attribute:: canceled
 
         A boolean indicating whether this ride has been canceled.
 
-    .. attribute:: bike_friendly⁰
+    .. attribute:: bike_friendly
 
         A boolean indicating whether this is a bike-friendly vehicle.
 
@@ -175,7 +175,7 @@ Submodels of :py:class:``Collectable``.
     .. attention::
         The following attributes are **dynamic** and can not be set.
 
-    .. attribute:: path⁰
+    .. attribute:: path
 
         Get the geographic path of the ride as a list of :py:class:`Coordinates`.
 
@@ -209,37 +209,37 @@ Submodels of :py:class:``Collectable``.
 
     .. attribute:: linetype
 
-        The :py:class:`LineType` of this :py:class:`Line`.
+        **Not None.** The :py:class:`LineType` of this :py:class:`Line`.
 
-    .. attribute:: product⁰
+    .. attribute:: product
 
         The product name, for example `InterCity`, `Hamburg-Köln-Express` or `Niederflurbus`.
 
     .. attribute:: name
 
-        The long name of the :py:class:`Line`, for example `Rhein-Haardt-Express RE2`.
+        **Not None** The long name of the :py:class:`Line`, for example `Rhein-Haardt-Express RE2`.
 
     .. attribute:: shortname
 
-        The short name of the :py:class:`Line`, for example `RE2`.
+        **Not None** The short name of the :py:class:`Line`, for example `RE2`.
 
-    .. attribute:: route⁰
+    .. attribute:: route
 
         The route description.
 
-    .. attribute:: first_stop⁰
+    .. attribute:: first_stop
 
         The first :py:class:`Stop` of this :py:class:`Line`. Rides may start at a later station.
 
-    .. attribute:: last_stop⁰
+    .. attribute:: last_stop
 
         The last :py:class:`Stop` of this :py:class:`Line`. Rides may end at a earlier station.
 
-    .. attribute:: network⁰
+    .. attribute:: network
 
-        The name of the network this :py:class:`Line` is part of as a string.
+        The name of the network this :py:class:`Line` natively belongs to.
 
-    .. attribute:: operator⁰
+    .. attribute:: operator
 
         The name of the company that operates this line.
 
@@ -262,15 +262,19 @@ Submodels of :py:class:`AbstractLocation`.
 
     An :py:class:`AbstractLocation` where rides stop (e.g. Gleis 7). It belongs to one :py:class:`Stop`.
 
+    .. attribute:: ifopt
+
+        The globally unique ID of this Platform according to *Identification of Fixed Objects in Public Transport* supported by some APIs.
+
     .. attribute:: stop
 
-        The :py:class:`Stop` this platform belongs to.
+        **Not None.** The :py:class:`Stop` this platform belongs to.
 
-    .. attribute:: name⁰
+    .. attribute:: name
 
         The name of this Platform (e.g. 7 or 2b).
 
-    .. attribute:: full_name⁰
+    .. attribute:: full_name
 
         The full name of this Platform (e.g. Bussteig 7 or Gleis 2b)
 
@@ -287,11 +291,11 @@ Submodels of :py:class:`AbstractLocation`.
 
     An :py:class:`AbstractLocation` that is named and not a sublocation like a Platform.
 
-    .. attribute:: country⁰
+    .. attribute:: country
 
         The country of this location as a two-letter country code.
 
-    .. attribute:: city⁰
+    .. attribute:: city
 
         The name of the city this location is located in.
 
@@ -299,7 +303,7 @@ Submodels of :py:class:`AbstractLocation`.
 
         The name of this location. If the ``city`` attribute is ``None`` this it may also included in the name.
 
-    .. attribute:: near_stops⁰
+    .. attribute:: near_stops
 
         Other stops near this one as a ``Stop.Results``, if available. You can always search for Stops near an :py:class:`AbstractLocation` directly using ``AbstractLocation.Request``.
 
@@ -307,11 +311,11 @@ Submodels of :py:class:`AbstractLocation`.
 
         Submodel of :py:class:`AbstractLocation.Request`.
 
-        .. attribute:: name⁰
+        .. attribute:: name
 
             A search string for the name of the Location.
 
-        .. attribute:: city⁰
+        .. attribute:: city
 
             City of the Location.
 
@@ -324,15 +328,23 @@ Submodels of :py:class:`AbstractLocation`.
 
     A :py:class:`Location` describing a stop, for example: Düsseldorf Hbf.
 
-    .. attribute:: train_station_name⁰
+    .. attribute:: ifopt
 
-        The official train station name if this stop belongs to a train station. This is the difference between the Stop **Hauptbahnhof** in **Düsseldorf** and the name of the train station **Düsseldorf Hbf**.
+        The globally unique ID of this Stop according to *Identification of Fixed Objects in Public Transport* supported by some APIs.
 
-    .. attribute:: lines⁰
+    .. attribute:: uic
+
+        The is the international train station id by the *International Union of Railways*.
+
+    .. attribute:: full_name
+
+        The full name of this Stop. Can be just the city and the name, but does'nt have to.
+
+    .. attribute:: lines
 
          The Lines that are available at this stop as a ``Line.Results`` object, if available. You can always search for Lines at a :py:class:`Stop` using :py:class:`Line.Request`.
 
-    .. attribute:: rides⁰
+    .. attribute:: rides
 
         The next rides at this stop as a ``Ride.Results`` object, if available. You can always search for Rides at a :py:class:`Stop` using :py:class:`Ride.Request`.
 
@@ -349,11 +361,11 @@ Submodels of :py:class:`AbstractLocation`.
 
     A :py:class:`Location` describing an address. The ``name`` attribute contains the address in one string, but more detailed attributes may be available:
 
-    .. attribute:: street⁰
+    .. attribute:: street
 
         The name of the street.
 
-    .. attribute:: number⁰
+    .. attribute:: number
 
         The house number as a string.
 
@@ -391,10 +403,13 @@ Submodel of :py:class:`Searchable`.
 
     It consists of a list of :py:class:`RideSegment` and :py:class:`Way` objects. Just iterate over it to get its elements.
 
-    .. attribute:: tickets⁰
+    .. attribute:: time
+
+        The fetching time of this object as a ``datetime`` object. This is relevant to know how up to date the contained real time data (delays, cancellation, platform changes, etc.) is. All APIs set this attribute, but it is not mandatory for input.
+
+    .. attribute:: tickets
 
         :py:class:`TicketList` of available tickets for this trip.
-
 
     .. attention::
         The following attributes are **dynamic** and can not be set.
@@ -440,19 +455,19 @@ Submodel of :py:class:`Searchable`.
 
         .. attribute:: origin
 
-            The start :py:class:`AbstractLocation` of the trip.
+            **Not None.** The start :py:class:`AbstractLocation` of the trip.
 
         .. attribute:: destination
 
-            The end :py:class:`AbstractLocation` of the trip.
+            **Not None.** The end :py:class:`AbstractLocation` of the trip.
 
-        .. attribute:: departure⁰
+        .. attribute:: departure
 
             The minimum departure time as :py:class:`RealtimeTime` or ``datetime.datetime``.
 
             If both times are ``None`` the behaviour is as if you would have set the departure time to the current time right before sending the request. (Default: ``None``)
 
-        .. attribute:: arrival⁰
+        .. attribute:: arrival
 
             The latest allowed arrival as :py:class:`RealtimeTime` or ``datetime.datetime``. (Default: ``None``)
 
@@ -460,7 +475,7 @@ Submodel of :py:class:`Searchable`.
 
             The line types that are allowed as :py:class:`LineTypes`. (Default: all)
 
-        .. attribute:: max_changes⁰
+        .. attribute:: max_changes
 
             The maximum number of changes allowed or ``None`` for no limit. (Default: ``None``)
 
@@ -518,11 +533,11 @@ Submodel of :py:class:`Searchable`.
 
         .. attribute:: origin
 
-            The start :py:class:`AbstractLocation` of the trip.
+            **Not None.** The start :py:class:`AbstractLocation` of the trip.
 
         .. attribute:: destination
 
-            The end :py:class:`AbstractLocation` of the trip.
+            **Not None.** The end :py:class:`AbstractLocation` of the trip.
 
 
 
@@ -543,7 +558,7 @@ Submodels of :py:class:`Serializable`.
 
     .. attribute:: ride
 
-        The :py:class:`Ride` that this object is a segment of.
+        **Not None.** The :py:class:`Ride` that this object is a segment of.
 
     .. method:: items()
 
@@ -555,7 +570,7 @@ Submodels of :py:class:`Serializable`.
     .. attention::
         The following attributes are **dynamic** and can not be set.
 
-    .. attribute:: path⁰
+    .. attribute:: path
 
         Get the geographic path of the ride segment as a list of :py:class:`Coordinates`.
 
@@ -621,7 +636,7 @@ Submodels of :py:class:`Serializable`.
 Other Models
 ------------
 
-Submodels of :py:class:`Updateable`.
+Submodels of :py:class:`Serializable`.
 
 .. py:class:: TimeAndPlace(platform, arrival=None, departure=None)
 
@@ -629,17 +644,17 @@ Submodels of :py:class:`Updateable`.
 
     .. attribute:: platform
 
-        The :py:class:`Platform`.
+        **Not None.** The :py:class:`Platform`.
 
-    .. attribute:: arrival⁰
+    .. attribute:: arrival
 
         The arrival time of the :py:class:`Ride` as :py:class:`RealtimeTime`.
 
-    .. attribute:: departure⁰
+    .. attribute:: departure
 
         The departure time of the :py:class:`Ride` as :py:class:`RealtimeTime`.
 
-    .. attribute:: passthrough⁰
+    .. attribute:: passthrough
 
         A boolean indicating whether the ride does not actualle stop at this :py:class:`Stop` but pass through it.
 
@@ -653,15 +668,12 @@ Submodels of :py:class:`Updateable`.
 
     .. attribute:: time
 
-        The originally planned time as a `datetime.datetime` object.
+        **Not None.** The originally planned time as a `datetime.datetime` object.
 
-    .. attribute:: delay⁰
+    .. attribute:: delay
 
         The (expected) delay as a `datetime.timedelta` object or None.
         Please note that a zero delay is not the same as None. None stands for absence of real time information.
-
-    Note that the ``last_update`` attribute (inherited from :py:class:`Updateable`) tells you how up to date the real time information is.
-
 
     .. attention::
         The following attributes are **dynamic** and can not be set.
@@ -681,23 +693,23 @@ Submodels of :py:class:`Updateable`.
 
     .. attribute:: currency
 
-        The name or abbreviation of the currency.
+        **Not None.** The name or abbreviation of the currency.
 
-    .. attribute:: level_name⁰
+    .. attribute:: level_name
 
         How a level is named at this network.
 
     .. attribute:: single
 
-        The single ticket as :py:class:`TicketData`.
+        **Not None.** The single ticket as :py:class:`TicketData`.
 
-    .. attribute:: bike⁰
+    .. attribute:: bike
 
         The single ticket as :py:class:`TicketData`.
 
     .. attribute:: other
 
-        Other available tickets as a dictionary with the name of the tickets as keys and :py:class:`TicketData` objects as values.
+        **Not None.** Other available tickets as a dictionary with the name of the tickets as keys and :py:class:`TicketData` objects as values.
 
 
 
@@ -710,19 +722,19 @@ Submodels of :py:class:`Serializable`.
 
     Information about a ticket.
 
-    .. attribute:: authority⁰
+    .. attribute:: authority
 
         The name of the authority selling this ticket.
 
-    .. attribute:: level⁰
+    .. attribute:: level
 
         The level of this ticket, e.g. A or something similar, depending on the network
 
     .. attribute:: price
 
-        The price of this ticket as float.
+        **Not None.** The price of this ticket as float.
 
-    .. attribute:: price_child⁰
+    .. attribute:: price_child
 
         The children’s price for this ticket if this ticket is not a ticket for children only but has a different price for children.
 
@@ -850,11 +862,11 @@ Submodels of :py:class:`Serializable`.
 
     .. attribute:: name
 
-        ``stairs``, ``escalator`` or ``elevator``
+        **Not None.** ``stairs``, ``escalator`` or ``elevator``
 
     .. attribute:: direction
 
-        ``up`` or ``down``
+        **Not None.** ``up`` or ``down``
 
     .. note::
         The serialized representation of this model is a ``(name, direction)`` tuple.
