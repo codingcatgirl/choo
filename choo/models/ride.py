@@ -7,6 +7,7 @@ from . import fields
 
 
 class Ride(Collectable):
+    time = fields.DateTime()
     line = fields.Model(Line, none=False)
     number = fields.Field(str)
     direction = fields.Field(str)
@@ -61,6 +62,9 @@ class Ride(Collectable):
         pass
 
     def apply_recursive(self, **kwargs):
+        if 'time' in kwargs:
+            self.time = kwargs['time']
+
         for k, v in self._stops:
             if v is not None:
                 v.apply_recursive(**kwargs)
