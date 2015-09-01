@@ -21,6 +21,11 @@ class EFA(API):
     train_station_suffixes = {}
     train_station_lines = LineTypes(('train', 'urban'))
     encoding = 'ISO-8859-1'
+    replace_in_full_name = {
+        'Hauptbahnhof$': 'Hbf',
+        'Bahnhof$': '',
+        'S$': ''
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,6 +97,12 @@ class EFA(API):
             r = {wrap % n: v for n, v in r.items()}
 
         return r
+
+    def _clean_full_name(self, name):
+        name = name+'$'
+        for before, after in self.replace_in_full_name.items():
+            name = name.replace(before, after)
+        return name.replace('$', '').strip()
 
     def _trip_request(self, triprequest: Trip.Request):
         """ Searches connections/Trips; Returns a SearchResult(Trip) """
@@ -346,7 +357,7 @@ class EFA(API):
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
-        full_name = data.attrib.get('nameWithPlace')
+        full_name = self._clean_full_name(data.attrib.get('nameWithPlace'))
 
         name = data.text
         stop = Stop(country=self._get_country(data.attrib['stopID']), city=city,
@@ -904,11 +915,10 @@ class EFA(API):
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
-        origin = Stop(full_name=origin) if origin else None
-        self._make_train_station(origin, train_line)
+        origin = Stop(full_name=self._clean_full_name(origin)) if origin else None
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
-        destination = Stop(full_name=destination) if destination else None
+        destination = Stop(full_name=self._clean_full_name(destination)) if destination else None
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination.id = int(data.attrib['destID'])
@@ -930,7 +940,7 @@ class EFA(API):
         name = name if name else None
 
         full_name = data.attrib.get('name', data.attrib.get('stopName', ''))
-        full_name = full_name if full_name else None
+        full_name = self._clean_full_name(full_name) if full_name else None
 
         return city, name, full_name
 
