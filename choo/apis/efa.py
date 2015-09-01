@@ -874,6 +874,9 @@ class EFA(API):
         ridenum = data.attrib.get('tC', None)
         if ridenum is None:
             ridenum = data.attrib.get('key', None)
+        ride.number = ridenum
+        if line.id is not None and ridenum is not None:
+            ride.id = '%s:%s' % (line.id, ridenum)
 
         op = data.find('./itdOperator')
         if op is not None:
