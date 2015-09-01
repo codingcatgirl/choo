@@ -313,14 +313,6 @@ class EFA(API):
         departureslist = data.find('./itdDepartureList')
         stop.rides = self._parse_departures(departureslist, stop, servernow)
 
-        train_station = False
-        for line in stop.lines:
-            if line.linetype in self.train_station_lines:
-                train_station = True
-                break
-
-        self._make_train_station(stop, train_station)
-
         return stop, servernow
 
     def _get_country(self, i):
@@ -367,8 +359,6 @@ class EFA(API):
         if len(gid) == 3 and min(len(s) for s in gid):
             stop.country = 'de'
             stop.ifopt = ':'.join((gid[1], gid[2]))
-
-        self._make_train_station(stop)
 
         if 'x' in data.attrib:
             stop.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
@@ -474,8 +464,6 @@ class EFA(API):
         # Coordinates
         if 'x' in data.attrib:
             location.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
-
-        self._make_train_station(location)
 
         if cityid:
             self._process_stop_city(location, int(cityid))
@@ -854,8 +842,6 @@ class EFA(API):
             line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA')
                                      else 'train.longdistance')
 
-        train_line = line.linetype in self.train_station_lines
-
         # general Line and Ride attributes
         diva = data.find('./motDivaParams')
         if diva is not None:
@@ -922,7 +908,6 @@ class EFA(API):
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination.id = int(data.attrib['destID'])
-        self._make_train_station(destination, train_line)
 
         # route description
         routedescription = data.find('./itdRouteDescText')
@@ -958,7 +943,6 @@ class EFA(API):
             location = Stop(country=self._get_country(data.attrib['stopID']), city=city,
                             name=name, full_name=full_name)
             location.id = int(data.attrib['stopID'])
-            self._make_train_station(location, train_line)
 
             cityid = data.attrib.get('placeID')
             if cityid:
