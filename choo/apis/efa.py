@@ -291,7 +291,8 @@ class EFA(API):
             rlines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
-                origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
+                ride, origin, destination = self._parse_mot(line)
+                line = ride.line
                 line.first_stop = origin
                 line.last_stop = destination
                 # line.low_quality = True
@@ -495,26 +496,15 @@ class EFA(API):
         departures = data.findall('./itdDeparture')
         for departure in departures:
             # Get Line Information
-            origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(departure.find('./itdServingLine'))
+            ride, origin, destination = self._parse_mot(departure.find('./itdServingLine'))
 
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
-                line.linetype = LineType('train.longdistance.highspeed')
+                ride.line.linetype = LineType('train.longdistance.highspeed')
             elif departure.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAINS"]') is not None:
-                line.linetype = LineType('train.longdistance')
-
-            # if ridenum is None:
-            #     ridedata = departure.find('./itdServingTrip')
-            #     if ridedata is not None:
-            #         ridenum = ridedata.attrib.get('tripCode', None)
-            #         if ridenum is not None:
-            #             ridenum = ridenum.strip()
+                ride.line.linetype = LineType('train.longdistance')
 
             # Build Ride Objekt with known stops
-            ride = Ride(line, ridenum)
-            ride.direction = ridedir
-            ride.canceled = canceled
-
-            train_line = line.linetype in self.train_station_lines
+            train_line = ride.line.linetype in self.train_station_lines
 
             # todo: take delay and add it to next stops
             mypoint = self._parse_trip_point(departure, train_line=train_line)
@@ -722,19 +712,16 @@ class EFA(API):
             return way
 
         else:
-            origin, destination, line, ridenum, ridedir, canceled = motdata
+            ride, origin, destination = motdata
 
             if data.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
-                line.linetype = LineType('train.longdistance.highspeed')
+                ride.line.linetype = LineType('train.longdistance.highspeed')
             elif data.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAIN"]') is not None:
-                line.linetype = LineType('train.longdistance')
+                ride.line.linetype = LineType('train.longdistance')
 
-            train_line = line.linetype in self.train_station_lines
+            train_line = ride.line.linetype in self.train_station_lines
 
             # Build Ride Objekt with known stops
-            ride = Ride(line, ridenum)
-            ride.canceled = canceled
-            ride.direction = ridedir
             for infotext in data.findall('./infoTextList/infoTextListElem'):
                 ride.infotexts.append(infotext)
 
@@ -851,6 +838,7 @@ class EFA(API):
     def _parse_mot(self, data):
         """ Parse a itdServingLine Node into something nicer """
         line = Line()
+        ride = Ride(line=line)
 
         if 'motType' not in data.attrib:
             return None
@@ -875,14 +863,13 @@ class EFA(API):
 
         # general Line and Ride attributes
         diva = data.find('./motDivaParams')
-        ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
             line.id = ':'.join((diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'],
                                 diva.attrib['direction'], diva.attrib['project']))
             ridedir = diva.attrib['direction'].strip()
-            if not ridedir:
-                ridedir = None
+            if ridedir:
+                ride.direction = ridedir
 
         ridenum = data.attrib.get('tC', None)
         if ridenum is None:
@@ -924,9 +911,9 @@ class EFA(API):
             line.name = '%s %s' % (line.product, line.shortname)
 
         if data.find('./itdNoTrain'):
-            canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
+            ride.canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
         else:
-            canceled = None
+            ride.canceled = None
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
@@ -945,7 +932,7 @@ class EFA(API):
         if routedescription is not None:
             line.route = routedescription.text
 
-        return origin, destination, line, ridenum, ridedir, canceled
+        return ride, origin, destination
 
     def _parse_trip_point_name(self, data):
         # todo: this can be better
