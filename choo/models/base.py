@@ -82,77 +82,11 @@ class Serializable(metaclass=MetaSerializable):
     def __ne__(self, other):
         return not (self == other)
 
-    def _update_collect(self, collection, last_update=None, ids=None):
-        if last_update is not None and isinstance(self, Updateable):
-            self.last_update = last_update
-
-        newself = self
-        if isinstance(self, Collectable):
-            newself = collection.add(self)
-            if ids is not None and collection.name:
-                model = self.__class__._serialized_name()
-                myid = newself._ids.get(collection.name)
-                if myid is not None:
-                    if model not in ids:
-                        ids[model] = set()
-
-                    ids[model].add(myid)
-
-        if self is newself:
-            self._collect_children(collection, last_update, ids=ids)
-        return newself
-
-    def _collect_children(self, collection, last_update=None, ids=None):
-        for c in self.__class__.__mro__:
-            if not hasattr(c, '_validate'):
-                continue
-
-            parent = c.__bases__[0]
-            if hasattr(parent, '_validate') and parent._validate == c._validate:
-                continue
-
-            for name, allowed in c._validate():
-                value = getattr(self, name)
-
-                if isinstance(value, Serializable):
-                    newvalue = value._update_collect(collection, last_update, ids=ids)
-
-                    if isinstance(value, Collectable):
-                        if newvalue is not value:
-                            setattr(self, name, newvalue)
-
-
-class Updateable(Serializable):
-    last_update = fields.DateTime()
-    low_quality = fields.Field(bool)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.last_update = kwargs.get('last_update')
-        self.low_quality = kwargs.get('low_quality')
-
-    def update(self, other):
-        better = (other.last_update and self.last_update and
-                  other.last_update > self.last_update and
-                  (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
-
-        if not self.last_update or better:
-            self.last_update = other.last_update
-            self.low_quality = other.low_quality
-
-        for c in self.__class__.__mro__:
-            if hasattr(c, '_update_default'):
-                for name in c._update_default:
-                    if getattr(self, name) is None or (better and getattr(other, name) is not None):
-                        setattr(self, name, getattr(other, name))
-
-            if hasattr(c, '_update'):
-                c._update(self, other, better)
-
-        for name, value in other._ids.items():
-            if name in self._ids and type(value) == tuple and None in value:
-                continue
-            self._ids[name] = value
+    def apply_recursive(self, **kwargs):
+        # print(self.__class__)
+        for name, field in self.__class__._fields.items():
+            value = getattr(self, name)
+            field.apply_recursive(value, **kwargs)
 
 
 class MetaSearchable(MetaSerializable):
@@ -179,13 +113,13 @@ class MetaSearchableInner(MetaSerializable):
         return repr(cls.Model)[:-2] + '.' + cls.__name__ + "'>"
 
 
-class Searchable(Updateable, metaclass=MetaSearchable):
+class Searchable(Serializable, metaclass=MetaSearchable):
     def matches(self, request):
         if not isinstance(request, Searchable.Request):
             raise TypeError('not a request')
         return request.matches(self)
 
-    class Request(Updateable, metaclass=MetaSearchableInner):
+    class Request(Serializable, metaclass=MetaSearchableInner):
         limit = fields.Field(int)
 
         def __init__(self):
@@ -201,16 +135,10 @@ class Searchable(Updateable, metaclass=MetaSearchable):
         def _matches(self, obj):
             pass
 
-    class Results(Updateable, metaclass=MetaSearchableInner):
+    class Results(Serializable, metaclass=MetaSearchableInner):
         def __init__(self, results=[], scored=False, **kwargs):
             results = list(results) if scored else [(r, None) for r in results]
             super().__init__(results=results, **kwargs)
-
-        def _collect_children(self, collection, last_update=None, ids=None):
-            super()._collect_children(collection, last_update, ids=ids)
-            for i in range(len(self.results)):
-                r = self.results[i]
-                self.results[i] = (r[0]._update_collect(collection, last_update, ids=ids), r[1])
 
         def filter(self, request):
             if not self.results:
@@ -251,19 +179,55 @@ class Searchable(Updateable, metaclass=MetaSearchable):
             return self.results[key]
 
 
+class NetworkID(Serializable):
+    pass
+
+
 class Collectable(Searchable):
-    _ids = fields.Dict(fields.Field(str), fields.Any(), none=False)
+    id = fields.Any()
+    source = fields.Field(str, none=False)
+    network = fields.Field(str)
+    time = fields.DateTime()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def _equal_by_id(self, other):
-        for name, value in self._ids.items():
-            other_id = other._ids.get(name)
-            if other_id is None:
+    def apply_recursive(self, **kwargs):
+        # print(self)
+        if 'time' in kwargs:
+            self.time = kwargs['time']
+
+        if 'source' in kwargs:
+            self.source = kwargs['source']
+
+        super().apply_recursive(**kwargs)
+
+    def update(self, other):
+        # todo
+        """
+        better = (other.last_update and self.last_update and
+                  other.last_update > self.last_update and
+                  (not other.low_quality or self.low_quality)) or (not other.low_quality and self.low_quality)
+
+        if not self.last_update or better:
+            self.last_update = other.last_update
+            self.low_quality = other.low_quality
+
+        for c in self.__class__.__mro__:
+            if hasattr(c, '_update_default'):
+                for name in c._update_default:
+                    if getattr(self, name) is None or (better and getattr(other, name) is not None):
+                        setattr(self, name, getattr(other, name))
+
+            if hasattr(c, '_update'):
+                c._update(self, other, better)
+
+        for name, value in other._ids.items():
+            if name in self._ids and type(value) == tuple and None in value:
                 continue
-            else:
-                return value == other_id
+            self._ids[name] = value
+        """
+        pass
 
 
 class TripPart(Serializable):

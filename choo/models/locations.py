@@ -52,6 +52,7 @@ class AbstractLocation(Collectable):
 
 class Platform(AbstractLocation):
     stop = fields.Model('Stop', none=False)
+    ifopt = fields.Field(tuple)
     name = fields.Field(str)
     full_name = fields.Field(str)
 
@@ -175,6 +176,7 @@ class Location(AbstractLocation):
 class Stop(Location):
     rides = fields.Model('Ride.Results')
     lines = fields.Model('Line.Results')
+    ifopt = fields.Any()
     train_station_name = fields.Field(str)
 
     def __init__(self, country=None, city=None, name=None, **kwargs):

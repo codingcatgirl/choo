@@ -22,7 +22,7 @@ def unserialize_typed(data):
     else:
         return globals()[model].unserialize(data)
 
-__all__ = ['Serializable', 'Searchable', 'Collectable', 'Updateable',
+__all__ = ['Serializable', 'Searchable', 'Collectable',
            'Collection', 'TripPart', 'Coordinates', 'AbstractLocation',
            'Platform', 'Location', 'Stop', 'Address', 'POI', 'Line', 'LineType',
            'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Platform', 'Ride',

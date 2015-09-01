@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from .base import Updateable
+from .base import Serializable
 from .locations import Platform
 from .realtime import RealtimeTime
 from . import fields
 
 
-class TimeAndPlace(Updateable):
+class TimeAndPlace(Serializable):
     platform = fields.Model(Platform, none=False)
     arrival = fields.Model(RealtimeTime)
     departure = fields.Model(RealtimeTime)

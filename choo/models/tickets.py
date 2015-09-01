@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from .base import Updateable, Serializable
+from .base import Serializable
 from . import fields
 
 
-class TicketList(Updateable):
+class TicketList(Serializable):
     currency = fields.Field(str, none=False)
     level_name = fields.Field(str)
     single = fields.Model('TicketData', none=False)
