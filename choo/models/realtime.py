@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from .base import Updateable
+from .base import Serializable
 from datetime import datetime, timedelta
 from . import fields
 
 
-class RealtimeTime(Updateable):
+class RealtimeTime(Serializable):
     time = fields.DateTime(none=False)
     delay = fields.Timedelta()
 

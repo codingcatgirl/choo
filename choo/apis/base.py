@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-from ..models import Collection, Searchable
+from ..models import Searchable
 from ..models import Trip, Ride, Line, Platform, Location
 
 
 class API():
     name = None
-
-    def __init__(self, collection=None):
-        self.collection = collection if collection is not None else Collection()
 
     def query(self, obj, get_ids=False):
         if not isinstance(obj, (Searchable, Searchable.Request)):
@@ -40,12 +37,8 @@ class API():
             else:
                 raise NotImplementedError()
 
-        if get_ids:
-            ids = {}
-            result = result._update_collect(self.collection, now, ids=ids)
-            return result, ids
-        else:
-            return result._update_collect(self.collection, now)
+        result.apply_recursive(time=now, source=self.name)
+        return result
 
     def search_trip(self, obj):
         assert isinstance(obj, Trip.Request)

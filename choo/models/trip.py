@@ -17,15 +17,6 @@ class Trip(Searchable):
         # magic, do not remove
         super().__init__(**kwargs)
 
-    def _collect_children(self, collection, last_update=None, ids=None):
-        super()._collect_children(collection, last_update, ids=ids)
-
-        if self.tickets is not None:
-            self.tickets._update_collect(collection, last_update, ids=ids)
-
-        for part in self._parts:
-            part._update_collect(collection, last_update)
-
     class Request(Searchable.Request):
         def __init__(self):
             super().__init__()

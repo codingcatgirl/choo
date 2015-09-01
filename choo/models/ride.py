@@ -60,12 +60,12 @@ class Ride(Collectable):
         # todo: stops, paths
         pass
 
-    def _collect_children(self, collection, last_update=None, ids=None):
-        super()._collect_children(collection, last_update, ids=ids)
+    def apply_recursive(self, **kwargs):
+        for k, v in self._stops:
+            if v is not None:
+                v.apply_recursive(**kwargs)
 
-        for stop in self._stops:
-            if stop[1] is not None:
-                stop[1]._update_collect(collection, last_update, ids=ids)
+        super().apply_recursive(**kwargs)
 
     @property
     def is_complete(self):

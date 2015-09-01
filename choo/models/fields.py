@@ -20,6 +20,9 @@ class Field():
     def serialize(self, value):
         return value
 
+    def apply_recursive(self, value, **kwargs):
+        pass
+
     def unserialize(self, value):
         if self.none and value is None:
             return None
@@ -108,6 +111,10 @@ class Model(Field):
                 field.type = model
             del Model._waiting[name_]
 
+    def apply_recursive(self, value, **kwargs):
+        if value is not None:
+            value.apply_recursive(**kwargs)
+
     def validate(self, value):
         if self.none and value is None:
             return True
@@ -138,6 +145,10 @@ class List(Field):
         for item in value:
             assert self.field.validate(item)
         return True
+
+    def apply_recursive(self, value, **kwargs):
+        for item in value:
+            self.field.apply_recursive(item, **kwargs)
 
     def serialize(self, value):
         if self.none and value is None:
@@ -176,6 +187,10 @@ class Tuple(Field):
             assert type_.validate(value[i])
         return True
 
+    def apply_recursive(self, value, **kwargs):
+        for i, type_ in enumerate(self.types):
+            type_.apply_recursive(value[i], **kwargs)
+
     def serialize(self, value):
         if self.none and value is None:
             return None
@@ -201,6 +216,11 @@ class Dict(Field):
             assert self.key.validate(k)
             assert self.value.validate(v)
         return True
+
+    def apply_recursive(self, value, **kwargs):
+        for k, v in value.items():
+            self.key.apply_recursive(k, **kwargs)
+            self.value.apply_recursive(v, **kwargs)
 
     def serialize(self, value):
         if self.none and value is None:

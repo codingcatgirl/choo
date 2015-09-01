@@ -53,9 +53,7 @@ class EFA(API):
 
     def _convert_location(self, location: Location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
-        myid = None
-        if isinstance(location, Location):
-            myid = location._ids.get(self.name)
+        myid = location.id if location.source == self.name else None
 
         city = location.city.encode(self.encoding) if location.city is not None else None
         name = location.name.encode(self.encoding) if location.name is not None else None
@@ -70,9 +68,9 @@ class EFA(API):
         elif issubclass(model, Stop):
             if myid is not None:
                 r = {'type': 'stop', 'place': None, 'name': str(myid)}
-            elif 'ifopt' in location._ids and None not in location._ids['ifopt'] and location.country is not None:
+            elif location.ifopt is not None and location.country is not None:
                 r = {'type': 'stop', 'place': None,
-                     'name': '%s:%s:%s' % ((location.country, ) + location._ids['ifopt'])}
+                     'name': '%s:%s:%s' % ((location.country, ) + location.ifopt)}
             else:
                 r = {'type': 'stop', 'place': city, 'name': name}
         elif issubclass(model, Address):
@@ -296,7 +294,7 @@ class EFA(API):
                 origin, destination, line, ridenum, ridedir, canceled = self._parse_mot(line)
                 line.first_stop = origin
                 line.last_stop = destination
-                line.low_quality = True
+                # line.low_quality = True
                 rlines.append(line)
             stop.lines = Line.Results(rlines)
 
@@ -320,8 +318,8 @@ class EFA(API):
         return None
 
     def _process_stop_city(self, stop, cityid):
-        if (self.name not in stop._ids or self.place_id_safe_stop_id_prefix is None or
-                not str(stop._ids[self.name]).startswith(self.place_id_safe_stop_id_prefix)):
+        if (stop.id is None or self.place_id_safe_stop_id_prefix is None or
+                not str(stop.id).startswith(self.place_id_safe_stop_id_prefix)):
             return
 
         if cityid in self.cities:
@@ -368,13 +366,13 @@ class EFA(API):
         city = city if city else None
 
         name = data.text
-        stop = Stop(self._get_country(data.attrib['stopID']), city, name)
-        stop._ids[self.name] = int(data.attrib['stopID'])
+        stop = Stop(country=self._get_country(data.attrib['stopID']),
+                    city=city, name=name, id=int(data.attrib['stopID']))
 
         gid = data.attrib.get('gid', '').split(':')
         if len(gid) == 3 and min(len(s) for s in gid):
             stop.country = 'de'
-            stop.ifopt = (gid[1], gid[2])
+            stop.ifopt = ':'.join((gid[1], gid[2]))
 
         self._make_train_station(stop)
 
@@ -443,13 +441,13 @@ class EFA(API):
         location = None
         name = data.attrib.get('objectName', data.text)
         if odvtype == 'stop':
-            location = Stop(None, city, name)
+            location = Stop(city=city, name=name)
         elif odvtype == 'poi':
-            location = POI(None, city, name)
+            location = POI(city=city, name=name)
         elif odvtype == 'street':
-            location = Address(None, city, name)
+            location = Address(city=city, name=name)
         elif odvtype in ('singlehouse', 'coord', 'address'):
-            location = Address(None, city, name)
+            location = Address(city=city, name=name)
             location.street = data.attrib['streetName'] if 'streetName' in data.attrib else None
             location.number = data.attrib['buildingNumber'] if 'buildingNumber' in data.attrib else None
             if location.number is None:
@@ -463,18 +461,18 @@ class EFA(API):
         myid = data.attrib.get('id', '')
         if stopid:
             if location is None:
-                location = Stop(None, city, name)
+                location = Stop(city=city, name=name)
             if isinstance(location, Stop):
                 location.country = self._get_country(stopid)
-                location._ids[self.name] = int(stopid)
+                location.id = int(stopid)
         elif myid:
             if location is None:
-                location = POI(None, city, name)
+                location = POI(city=city, name=name)
             location.country = self._get_country(myid)
-            location._ids[self.name] = int(myid)
+            location.id = int(myid)
         elif location is None:
             # Still no clue about the Type? Well, it's an Address then.
-            location = Address(None, city, name)
+            location = Address(city=city, name=name)
 
         # This is used when we got more than one Location
         score = int(data.attrib.get('matchQuality', 0))
@@ -880,8 +878,8 @@ class EFA(API):
         ridedir = None
         if diva is not None:
             line.network = diva.attrib['network']
-            line._ids[self.name] = (diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'],
-                                    diva.attrib['direction'], diva.attrib['project'])
+            line.id = ':'.join((diva.attrib['network'], diva.attrib['line'], diva.attrib['supplement'],
+                                diva.attrib['direction'], diva.attrib['project']))
             ridedir = diva.attrib['direction'].strip()
             if not ridedir:
                 ridedir = None
@@ -932,14 +930,14 @@ class EFA(API):
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
-        origin = Stop(None, None, origin) if origin else None
+        origin = Stop(name=origin) if origin else None
         self._make_train_station(origin, train_line)
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
-        destination = Stop(None, None, destination) if destination else None
+        destination = Stop(name=destination) if destination else None
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
-            destination._ids[self.name] = int(data.attrib['destID'])
+            destination.id = int(data.attrib['destID'])
         self._make_train_station(destination, train_line)
 
         # route description
@@ -992,10 +990,10 @@ class EFA(API):
 
         # todo – what kind of location is this?
         if walk and data.attrib['area'] == '0':
-            location = Address(None, city, name)
+            location = Address(city=city, name=name)
         else:
-            location = Stop(self._get_country(data.attrib['stopID']), city, name)
-            location._ids[self.name] = int(data.attrib['stopID'])
+            location = Stop(country=self._get_country(data.attrib['stopID']), city=city, name=name)
+            location.id = int(data.attrib['stopID'])
             self._make_train_station(location, train_line)
 
             cityid = data.attrib.get('placeID')
