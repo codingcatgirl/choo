@@ -39,13 +39,16 @@ class AbstractLocation(Collectable):
                 abs(self.coords.lat - other.coords.lat) < 0.02 and
                 abs(self.coords.lon - other.coords.lon) < 0.02)
 
-    def _toofar(self, other):
+    def _not_too_far(self, other):
         return ((self.coords is not None and other.coords is not None) and
-                (abs(self.coords.lat - other.coords.lat) > 0.04 or
-                 abs(self.coords.lon - other.coords.lon) > 0.04))
+                (abs(self.coords.lat - other.coords.lat) < 0.04 or
+                 abs(self.coords.lon - other.coords.lon) < 0.04))
 
     def __eq__(self, other):
         return self.coords == other.coords
+
+    def __ne__(self, other):
+        return self.coords != other.coords
 
 
 class Platform(AbstractLocation):
@@ -64,23 +67,20 @@ class Platform(AbstractLocation):
         if not isinstance(other, Platform):
             return False
 
+        by_id = self._same_by_id(other)
+        if by_id is not None:
+            return by_id
+
+        if self.ifopt is not None and self.ifopt == other.ifopt:
+            return True
+
         if self.stop != other.stop:
             return False
-
-        byid = self._equal_by_id(other)
-        if byid is not None:
-            return byid
-
-        if self.name is not None and self.name == other.name:
-            return True
-
-        if self.full_name is not None and self.full_name == other.full_name:
-            return True
 
         if self.coords is not None and self.coords == other.coords:
             return True
 
-        return False
+        return None
 
 
 class Location(AbstractLocation):
@@ -99,47 +99,15 @@ class Location(AbstractLocation):
         if not isinstance(other, Location):
             return False
 
-        byid = self._equal_by_id(other)
-        if byid is not None:
-            return byid
+        by_id = self._same_by_id(other)
+        if by_id is not None:
+            return by_id
 
-        return self._location_eq(other)
-
-    def _location_eq(self, other):
-        if self.coords == other.coords and self.coords is not None:
-            return True
-
-        if self.country is not None and other.country is not None and self.country != other.country:
-            return False
-
-        near = self._near(other)
-
-        if self.city is not None:
-            if other.city is None:
-                if not other.name.endswith(self.name):
-                    return False
-
-                if other.name.startswith(self.city):
-                    return True
-
-                return near
-            else:
-                if self.name != other.name:
-                    return False
-
-                return near or self.city == other.city
-
-        if other.city is None:
-            return (near or
-                    self.name.replace(',', '').replace('  ', ' ') == other.name.replace(',', '').replace('  ', ' '))
-        else:
-            if not self.name.endswith(other.name):
-                return False
-
-            if self.name.startswith(other.city):
+        if (self.city is not None and self.city == other.city) or self._not_too_far(other):
+            if self.name is not None and self.name == other.name:
                 return True
 
-            return near
+        return None
 
     class Request(Searchable.Request):
         name = fields.Field(str)
@@ -167,14 +135,22 @@ class Stop(Location):
         if not isinstance(other, Stop):
             return False
 
-        byid = self._equal_by_id(other)
-        if byid is not None:
-            return byid
+        by_id = self._same_by_id(other)
+        if by_id is True:
+            return True
 
-        if self.country is not None and other.country is not None and self.country != other.country:
-            return False
+        if (self.full_name is not None and
+                self.full_name.replace(',', '') == other.full_name.replace(',', '')):
+            return True
 
-        return self._location_eq(other)
+        if self.city is not None and other.city is not None:
+            if self.city.split(' ')[0].lower() != other.city.split(' ')[0].lower():
+                return False
+
+            if self.city.startswith(other.city) and other.city.startswith(self.city):
+                return self.name == other.name
+
+        return None
 
 
 class POI(Location):
@@ -192,11 +168,7 @@ class POI(Location):
         if not isinstance(other, POI):
             return False
 
-        byid = self._equal_by_id(other)
-        if byid is not None:
-            return byid
-
-        return self._location_eq(other)
+        return super().__eq__(other)
 
 
 class Address(Location):
@@ -214,11 +186,7 @@ class Address(Location):
             return '%s, %s' % (self.city, self.name)
 
     def __eq__(self, other):
-        if not isinstance(other, POI):
+        if not isinstance(other, Address):
             return False
 
-        byid = self._equal_by_id(other)
-        if byid is not None:
-            return byid
-
-        return self._location_eq(other)
+        return super().__eq__(other)

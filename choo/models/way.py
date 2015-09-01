@@ -18,8 +18,21 @@ class Way(TripPart):
                          origin=origin, destination=destination, distance=distance, **kwargs)
 
     def __eq__(self, other):
-        return (isinstance(other, Way) and self.waytype == other.waytype and
-                self.origin == other.origin and self.destination == other.destination)
+        if not isinstance(other, Way):
+            return False
+
+        if self.waytype != other.waytype:
+            return False
+
+        compared = self.origin == other.origin
+        if compared is not True:
+            return compared
+
+        compared = self.destination == other.destination
+        if compared is not True:
+            return compared
+
+        return True
 
     def __repr__(self):
         distance = ''

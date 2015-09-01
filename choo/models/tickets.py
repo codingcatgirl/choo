@@ -31,14 +31,19 @@ class TicketData(Serializable):
         if not isinstance(other, TicketData):
             return False
 
-        if self.authority is None or self.level is None:
+        if self.price != other.price:
             return False
 
-        if self.authority == other.authority and self.level == other.level:
-            if self.price == other.price and self.price_child == other.price_child:
-                return True
+        if self.price_child is not None and other.price_child is not None and self.price_child != other.price_child:
+            return False
 
-        return False
+        if self.authority is None or self.level is None:
+            return None
+
+        if self.authority == other.authority and self.level == other.level:
+            return True
+
+        return None
 
     def __repr__(self):
         childprice = ''

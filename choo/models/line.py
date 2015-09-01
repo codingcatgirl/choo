@@ -24,20 +24,26 @@ class Line(Collectable):
         if self.linetype not in other.linetype and other.linetype not in self.linetype:
             return False
 
-        byid = self._equal_by_id(other)
-        if byid is not None:
-            return byid
+        by_id = self._same_by_id(other)
+        if by_id is not None:
+            return by_id
 
-        if self.route == other.route and self.name == other.name:
-            return True
+        first = None
+        if self.first_stop is not None and other.first_stop is not None:
+            first = self.first_stop == other.first_stop
+        if first is False:
+            return False
 
-        if (self.shortname is not None and other.shortname is not None and
-                len([s for s in self.shortname if s.isdigit()]) and
-                self.operator is not None and self.operator == other.operator and
-                self.network is not None and self.network == other.network):
-            return True
+        last = None
+        if self.last_stop is not None and other.last_stop is not None:
+            last = self.last_stop == other.last_stop
+        if last is False:
+            return False
 
-        return False
+        if self.route != other.route:
+            return False
+
+        return None
 
     def __repr__(self):
         return '<Line %s %s>' % (str(self.linetype), repr(self.name))

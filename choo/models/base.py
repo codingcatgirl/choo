@@ -80,7 +80,10 @@ class Serializable(metaclass=MetaSerializable):
             return cls.__name__
 
     def __ne__(self, other):
-        return not (self == other)
+        compared = self == other
+        if compared is None:
+            return None
+        return not compared
 
     def apply_recursive(self, **kwargs):
         # print(self.__class__)
@@ -180,6 +183,15 @@ class Collectable(Searchable):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def _same_by_id(self, other):
+        if self.source is None or other.source is None or self.source != other.source:
+            return None
+
+        if self.id is None or other.id is None:
+            return None
+
+        return self.id == other.id
 
     def apply_recursive(self, **kwargs):
         if 'source' in kwargs:
