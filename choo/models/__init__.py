@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .base import Serializable, Updateable, Searchable, Collectable, TripPart
+from .base import Serializable, Searchable, Collectable, TripPart
 from .locations import Coordinates, AbstractLocation, Platform, Stop, Location, Address, POI
 from .line import Line, LineType, LineTypes
 from .trip import Trip

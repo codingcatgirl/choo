@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from choo.networks import VRR
-from choo.models import Serializable, Stop, Location, Trip, unserialize_typed
+from choo.models import *
 import json
 
 # collection = Collection('test')
@@ -21,17 +21,18 @@ location.name = 'Borbeck'
 
 unserialize_typed
 
-result, ids = vrr.query(bs, get_ids=True)
+result = vrr.query(bs)
 
 # import pprint
 # pp = pprint.PrettyPrinter(indent=1)
 # pp.pprint(result.serialize())
 # print(result.results)
 serialized = json.dumps(Serializable.serialize(result), indent=2)
-#open('test1.json', 'w').write(serialized)
-#unserialized = Serializable.unserialize(json.loads(serialized))
-#reserialized = json.dumps(Serializable.serialize(unserialized), indent=2)
-#open('test2.json', 'w').write(reserialized)
+print(serialized)
+# open('test1.json', 'w').write(serialized)
+# unserialized = Serializable.unserialize(json.loads(serialized))
+# reserialized = json.dumps(Serializable.serialize(unserialized), indent=2)
+# open('test2.json', 'w').write(reserialized)
 # print(json.dumps(result.serialize(), indent=2))
 
 # stops = sorted(vrr.collection.known['Stop'], key=lambda s: s.name)

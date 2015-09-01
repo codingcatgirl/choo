@@ -39,11 +39,11 @@ class EFA(API):
             raise NotImplementedError
         return self._stop_finder_request(location)
 
-    def _search_trips(self, triprequest: Trip.Request):
+    def _search_trips(self, triprequest):
         return self._trip_request(triprequest)
 
     # Internal methods start here
-    def _get_stop_rides(self, stop: Stop):
+    def _get_stop_rides(self, stop):
         return self._departure_monitor_request(stop)
 
     def _post(self, endpoint, data):
@@ -51,7 +51,7 @@ class EFA(API):
         open('dump.xml', 'w').write(text)
         return ET.fromstring(text)
 
-    def _convert_location(self, location: Location, wrap=''):
+    def _convert_location(self, location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
         myid = location.id if location.source == self.name else None
 
