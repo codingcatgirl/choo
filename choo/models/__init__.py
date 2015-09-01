@@ -11,20 +11,9 @@ from .realtime import RealtimeTime
 from .collection import Collection
 
 
-def unserialize_typed(data):
-    if not isinstance(data, (tuple, list)) or len(data) != 2:
-        raise TypeError('Not a typed serialization')
-
-    model, data = data
-    if '.' in model:
-        model = model.split('.')
-        return getattr(globals()[model[0]], model[1]).unserialize(data)
-    else:
-        return globals()[model].unserialize(data)
-
 __all__ = ['Serializable', 'Searchable', 'Collectable',
            'Collection', 'TripPart', 'Coordinates', 'AbstractLocation',
            'Platform', 'Location', 'Stop', 'Address', 'POI', 'Line', 'LineType',
            'LineTypes', 'RealtimeTime', 'TimeAndPlace', 'Platform', 'Ride',
            'RideSegment', 'Trip', 'Way', 'WayType', 'WayEvent', 'TicketList',
-           'TicketData', 'unserialize_typed']
+           'TicketData']
