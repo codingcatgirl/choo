@@ -93,20 +93,13 @@ class Platform(AbstractLocation):
 class Location(AbstractLocation):
     country = fields.Field(str)
     city = fields.Field(str)
-    name = fields.Field(str, none=False)
+    name = fields.Field(str)
     near_stops = fields.Model('Stop.Results')
 
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
     _update_default = ('country', )
-
-    @property
-    def full_name(self):
-        if self.city is None:
-            return self.name
-        else:
-            return '%s, %s' % (self.city, self.name)
 
     def _update(self, other, better):
         if better or (self.city is None and other.city is not None):
@@ -176,6 +169,7 @@ class Location(AbstractLocation):
 class Stop(Location):
     rides = fields.Model('Ride.Results')
     lines = fields.Model('Line.Results')
+    full_name = fields.Field(str)
     ifopt = fields.Any()
     train_station_name = fields.Field(str)
 
@@ -185,15 +179,6 @@ class Stop(Location):
     def _update(self, other, better):
         if ('uic' not in self._ids and 'uic' in self._ids) or self.train_station_name is None:
             self.train_station_name = other.train_station_name
-
-    @property
-    def full_name(self):
-        if self.train_station_name is not None:
-            return self.train_station_name
-        elif self.city is None:
-            return self.name
-        else:
-            return '%s, %s' % (self.city, self.name)
 
     def __repr__(self):
         return '<Stop %s>' % repr(self.full_name)
@@ -224,6 +209,13 @@ class POI(Location):
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
+    @property
+    def full_name(self):
+        if self.city is None:
+            return self.name
+        else:
+            return '%s, %s' % (self.city, self.name)
+
     def __eq__(self, other):
         if not isinstance(other, POI):
             return False
@@ -243,6 +235,12 @@ class Address(Location):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
     _update_default = ('street', 'number')
+    @property
+    def full_name(self):
+        if self.city is None:
+            return self.name
+        else:
+            return '%s, %s' % (self.city, self.name)
 
     def __eq__(self, other):
         if not isinstance(other, POI):
