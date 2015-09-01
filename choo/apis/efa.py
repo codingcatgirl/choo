@@ -1017,17 +1017,23 @@ class EFA(API):
         if not full_platform:
             full_platform = None
 
-        platform = Platform(location, platform, full_platform)
+        platform = Platform(stop=location, name=platform, full_name=full_platform)
         if full_platform is not None:
-            platform._ids[self.name] = (location._ids[self.name], data.attrib['area'], data.attrib['platform'])
+            platform.id = ':'.join((str(location.id), data.attrib['area'], data.attrib['platform']))
 
         ifopt = data.attrib.get('gid', '').split(':')
-        if len(ifopt) == 5 and str(location._ids[self.name]).endswith(ifopt[2]):
+        if len(ifopt) == 3:
             location.country = ifopt[0]
-            location._ids['ifopt'] = (ifopt[1], ifopt[2])
+            location.ifopt = ':'.join(ifopt)
+            ifopt = data.attrib.get('pointGid', '').split(':')
+
+        if len(ifopt) == 5 and str(location.id).endswith(ifopt[2]):
+            if location.ifopt is None:
+                location.country = ifopt[0]
+                location.ifopt = ':'.join(ifopt[:3])
 
             if full_platform is not None:
-                platform._ids['ifopt'] = (ifopt[1], ifopt[2], ifopt[3], ifopt[4])
+                platform.ifopt = ':'.join(ifopt)
 
         result = TimeAndPlace(platform)
 
