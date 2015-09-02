@@ -39,8 +39,12 @@ class API():
                 raise NotImplementedError()
 
         collect = WeakValueDictionary({})
-
         newresult = result.apply_recursive(time=now, source=self.name, collect=collect)
+
+        for key, value in collect.items():
+            if key[0] == 'Stop':
+                self._finalize_stop(value)
+
         return result if newresult is None else newresult
 
     def search_trip(self, obj):
@@ -112,3 +116,6 @@ class API():
 
     def _get_location(self, obj):
         raise NotImplementedError()
+
+    def _finalize_stop(self, stop):
+        pass

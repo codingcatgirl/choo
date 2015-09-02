@@ -47,6 +47,26 @@ class EFA(API):
     def _search_trips(self, triprequest):
         return self._trip_request(triprequest)
 
+    def _finalize_stop(self, stop):
+        if stop.full_name is None:
+            return
+
+        if stop.name is not None and stop.city is None and stop.full_name.endswith(' '+stop.name):
+            stop.city = stop.full_name[:-len(stop.name)].strip()
+
+        stop.full_name = stop.full_name+'$'
+        for before, after in self.replace_in_full_name.items():
+            stop.full_name = stop.full_name.replace(before, after)
+        stop.full_name = stop.full_name.replace('$', '').strip()
+
+        if stop.name is not None and stop.city is not None:
+            if stop.full_name == stop.city+' '+stop.name:
+                stop.full_name = stop.city+', '+stop.name
+
+        # yes, again. exactly at this position, to not strigger
+        if stop.name is not None and stop.city is None and stop.full_name.endswith(' '+stop.name):
+            stop.city = stop.full_name[:-len(stop.name)].strip()
+
     # Internal methods start here
     def _get_stop_rides(self, stop):
         return self._departure_monitor_request(stop)
@@ -97,12 +117,6 @@ class EFA(API):
             r = {wrap % n: v for n, v in r.items()}
 
         return r
-
-    def _clean_full_name(self, name):
-        name = name+'$'
-        for before, after in self.replace_in_full_name.items():
-            name = name.replace(before, after)
-        return name.replace('$', '').strip()
 
     def _trip_request(self, triprequest: Trip.Request):
         """ Searches connections/Trips; Returns a SearchResult(Trip) """
@@ -321,35 +335,12 @@ class EFA(API):
                 return country
         return None
 
-    def _process_stop_city(self, stop, cityid):
-        if (stop.id is None or self.place_id_safe_stop_id_prefix is None or
-                not str(stop.id).startswith(self.place_id_safe_stop_id_prefix)):
-            return
-
-        if cityid in self.cities:
-            country, city = self.cities[cityid]
-            if stop.city is None:
-                stop.city = city
-                if city is not None and stop.name.startswith(city + ' '):
-                    stop.name = stop.name[len(city) + 1:]
-            elif city is None:
-                self.cities[cityid] = (country, stop.city)
-                city = stop.city
-
-            if stop.country is None:
-                stop.country = country
-            elif country is None:
-                self.cities[cityid] = (stop.country, city)
-                country = stop.country
-        else:
-            self.cities[cityid] = (stop.country, stop.city)
-
     def _parse_stop_line(self, data):
         """ Parse an ODV line (for example an AssignedStop) """
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
 
-        full_name = self._clean_full_name(data.attrib.get('nameWithPlace'))
+        full_name = data.attrib.get('nameWithPlace', None)
 
         name = data.text
         stop = Stop(country=self._get_country(data.attrib['stopID']), city=city,
@@ -903,10 +894,10 @@ class EFA(API):
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
-        origin = Stop(full_name=self._clean_full_name(origin)) if origin else None
+        origin = Stop(full_name=origin) if origin else None
 
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
-        destination = Stop(full_name=self._clean_full_name(destination)) if destination else None
+        destination = Stop(full_name=destination) if destination else None
         if data.attrib.get('destID', ''):
             destination.country = self._get_country(data.attrib['destID'])
             destination.id = int(data.attrib['destID'])
@@ -927,7 +918,7 @@ class EFA(API):
         name = name if name else None
 
         full_name = data.attrib.get('name', data.attrib.get('stopName', ''))
-        full_name = self._clean_full_name(full_name) if full_name else None
+        full_name = full_name if full_name else None
 
         return city, name, full_name
 
