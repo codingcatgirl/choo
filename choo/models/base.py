@@ -91,6 +91,17 @@ class Serializable(metaclass=MetaSerializable):
             value = getattr(self, name)
             field.apply_recursive(value, **kwargs)
 
+    def update(self, other):
+        if other.__class__ != self.__class__:
+            raise ValueError
+
+        for name, field in self.__class__._fields.items():
+            myvalue = getattr(self, name)
+            if myvalue is None:
+                othervalue = getattr(other, name)
+                if othervalue is not None:
+                    setattr(self, name, othervalue)
+
 
 class MetaSearchable(MetaSerializable):
     def __new__(mcs, name, bases, attrs):
