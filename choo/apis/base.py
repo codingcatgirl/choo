@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from ..models import Searchable
 from ..models import Trip, Ride, Line, Platform, Location
-
+from weakref import WeakValueDictionary
 
 class API():
     name = None
@@ -37,8 +37,10 @@ class API():
             else:
                 raise NotImplementedError()
 
-        result.apply_recursive(time=now, source=self.name)
-        return result
+        collect = WeakValueDictionary({})
+
+        newresult = result.apply_recursive(time=now, source=self.name, collect=collect)
+        return result if newresult is None else newresult
 
     def search_trip(self, obj):
         assert isinstance(obj, Trip.Request)

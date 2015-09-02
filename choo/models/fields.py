@@ -17,7 +17,7 @@ class Field():
             return True
         return isinstance(value, self.type)
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         return value
 
     def apply_recursive(self, value, **kwargs):
@@ -37,7 +37,7 @@ class Any(Field):
     def validate(self, value):
         return True
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         return value
 
     def unserialize(self, value):
@@ -53,7 +53,7 @@ class DateTime(Field):
             return True
         return isinstance(value, datetime)
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None
         return value.strftime('%Y-%m-%d %H:%M:%S')
@@ -73,7 +73,7 @@ class Timedelta(Field):
             return True
         return isinstance(value, timedelta)
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None
         return int(value.total_seconds())
@@ -113,7 +113,7 @@ class Model(Field):
 
     def apply_recursive(self, value, **kwargs):
         if value is not None:
-            value.apply_recursive(**kwargs)
+            return value.apply_recursive(**kwargs)
 
     def validate(self, value):
         if self.none and value is None:
@@ -121,10 +121,10 @@ class Model(Field):
         assert isinstance(value, self.type)
         return value.validate()
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None
-        return self.type.serialize(value)
+        return self.type.serialize(value, **kwargs)
 
     def unserialize(self, value):
         if self.none and value is None:
@@ -147,13 +147,21 @@ class List(Field):
         return True
 
     def apply_recursive(self, value, **kwargs):
+        has_new_value = False
+        newvalue = []
         for item in value:
-            self.field.apply_recursive(item, **kwargs)
+            newitem = self.field.apply_recursive(item, **kwargs)
+            if newitem is not None:
+                has_new_value = True
+            newvalue.append(item if newitem is None else newitem)
 
-    def serialize(self, value):
+        if has_new_value:
+            return newvalue
+
+    def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None
-        return [self.field.serialize(item) for item in value]
+        return [self.field.serialize(item, **kwargs) for item in value]
 
     def unserialize(self, value):
         if self.none and value is None:
@@ -188,13 +196,22 @@ class Tuple(Field):
         return True
 
     def apply_recursive(self, value, **kwargs):
+        has_new_value = False
+        newvalue = []
         for i, type_ in enumerate(self.types):
-            type_.apply_recursive(value[i], **kwargs)
+            newitem = type_.apply_recursive(value[i], **kwargs)
+            if newitem is not None:
+                has_new_value = True
+            newvalue.append(value[i] if newitem is None else newitem)
 
-    def serialize(self, value):
+        if has_new_value:
+            return tuple(newvalue)
+
+
+    def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None
-        return [type_.serialize(value[i]) for i, type_ in enumerate(self.types)]
+        return [type_.serialize(value[i], **kwargs) for i, type_ in enumerate(self.types)]
 
     def unserialize(self, value):
         if self.none and value is None:
@@ -222,10 +239,10 @@ class Dict(Field):
             self.key.apply_recursive(k, **kwargs)
             self.value.apply_recursive(v, **kwargs)
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None
-        return {self.key.serialize(k): self.value.serialize(v) for k, v in value.items()}
+        return {self.key.serialize(k, **kwargs): self.value.serialize(v, **kwargs) for k, v in value.items()}
 
     def unserialize(self, value):
         if self.none and value is None:
