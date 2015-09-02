@@ -120,11 +120,11 @@ class Location(AbstractLocation):
 
 
 class Stop(Location):
-    rides = fields.Model('Ride.Results')
-    lines = fields.Model('Line.Results')
     full_name = fields.Field(str)
     ifopt = fields.Field(str)
     uic = fields.Field(str)
+    rides = fields.Model('Ride.Results')
+    lines = fields.Model('Line.Results')
 
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
