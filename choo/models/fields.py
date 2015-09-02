@@ -207,7 +207,6 @@ class Tuple(Field):
         if has_new_value:
             return tuple(newvalue)
 
-
     def serialize(self, value, **kwargs):
         if self.none and value is None:
             return None

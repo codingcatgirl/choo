@@ -3,6 +3,7 @@ from ..models import Searchable
 from ..models import Trip, Ride, Line, Platform, Location
 from weakref import WeakValueDictionary
 
+
 class API():
     name = None
 
