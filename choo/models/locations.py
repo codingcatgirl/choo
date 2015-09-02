@@ -130,7 +130,7 @@ class Stop(Location):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
     def __repr__(self):
-        return '<Stop %s>' % repr(self.full_name)
+        return '<Stop %s>' % repr(self.full_name if self.full_name else (self.city, self.name))
 
     def __eq__(self, other):
         if not isinstance(other, Stop):
