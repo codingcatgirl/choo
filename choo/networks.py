@@ -5,9 +5,7 @@ from .apis.efa import EFA
 class VRR(EFA):
     name = 'vrr'
     base_url = 'http://app.vrr.de/standard/'
-    country_by_id = (('2', 'de'), )
-    ifopt_platforms = True
-    place_id_safe_stop_id_prefix = '2'
+    country_by_id = ()
     train_station_suffixes = {
         ' S': ' ',
         ' Bf': ' ',

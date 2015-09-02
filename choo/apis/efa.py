@@ -16,10 +16,6 @@ class EFA(API):
     name = 'efa'
     base_url = None
     country_by_id = ()
-    ifopt_platforms = False
-    place_id_safe_stop_id_prefix = None
-    train_station_suffixes = {}
-    train_station_lines = LineTypes(('train', 'urban'))
     encoding = 'ISO-8859-1'
     replace_in_full_name = {
         ' Hauptbahnhof$': ' Hbf',
