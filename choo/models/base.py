@@ -46,11 +46,11 @@ class Serializable(metaclass=MetaSerializable):
         else:
             return [obj.__class__._serialized_name(), obj.serialize(**kwargs)]
 
-    def _serialize_instance(self, **kwargs):
+    def _serialize_instance(self, exclude=[], **kwargs):
         self.validate()
 
         data = [((name[1:] if name.startswith('_') else name), field.serialize(getattr(self, name), **kwargs))
-                for name, field in self._fields.items()]
+                for name, field in self._fields.items() if name not in exclude]
         return OrderedDict((n, v) for n, v in data if v is not None)
 
     @classmethod
@@ -164,16 +164,6 @@ class Searchable(Serializable, metaclass=MetaSearchable):
                 raise TypeError('%s.Results can be filtered with %s' % (self.Model.__name__, self.Model.__name__))
 
             self.results = [r for r in self.results if request.matches(r)]
-
-        def _serialize_instance(self, **kwargs):
-            if 'had_results' not in kwargs:
-                kwargs['had_results'] = []
-
-            if id(self) in kwargs['had_results']:
-                return None
-            kwargs['had_results'].append(id(self))
-
-            return super()._serialize_instance(**kwargs)
 
         def filtered(self, request):
             obj = copy.copy(self)

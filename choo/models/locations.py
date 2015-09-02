@@ -129,6 +129,17 @@ class Stop(Location):
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
+    def _serialize_instance(self, **kwargs):
+        if 'stops_had_results' not in kwargs:
+            kwargs['stops_had_results'] = []
+
+        if self.id not in kwargs['stops_had_results']:
+            kwargs['stops_had_results'].append(self.id)
+        else:
+            kwargs['exclude'] = ['rides', 'lines']
+
+        return super()._serialize_instance(**kwargs)
+
     def __repr__(self):
         return '<Stop %s>' % repr(self.full_name if self.full_name else (self.city, self.name))
 
