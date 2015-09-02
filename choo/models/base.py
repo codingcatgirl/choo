@@ -39,17 +39,17 @@ class Serializable(metaclass=MetaSerializable):
         return True
 
     @classmethod
-    def serialize(cls, obj):
+    def serialize(cls, obj, **kwargs):
         assert isinstance(obj, cls)
         if obj.__class__ is cls:
-            return obj.serialize()
+            return obj.serialize(**kwargs)
         else:
-            return [obj.__class__._serialized_name(), obj.serialize()]
+            return [obj.__class__._serialized_name(), obj.serialize(**kwargs)]
 
-    def _serialize_instance(self):
+    def _serialize_instance(self, **kwargs):
         self.validate()
 
-        data = [((name[1:] if name.startswith('_') else name), field.serialize(getattr(self, name)))
+        data = [((name[1:] if name.startswith('_') else name), field.serialize(getattr(self, name), **kwargs))
                 for name, field in self._fields.items()]
         return OrderedDict((n, v) for n, v in data if v is not None)
 
@@ -86,10 +86,12 @@ class Serializable(metaclass=MetaSerializable):
         return not compared
 
     def apply_recursive(self, **kwargs):
-        # print(self.__class__)
         for name, field in self.__class__._fields.items():
             value = getattr(self, name)
-            field.apply_recursive(value, **kwargs)
+
+            newvalue = field.apply_recursive(value, **kwargs)
+            if newvalue is not None:
+                setattr(self, name, newvalue)
 
     def update(self, other):
         if other.__class__ != self.__class__:
@@ -163,6 +165,16 @@ class Searchable(Serializable, metaclass=MetaSearchable):
 
             self.results = [r for r in self.results if request.matches(r)]
 
+        def _serialize_instance(self, **kwargs):
+            if 'had_results' not in kwargs:
+                kwargs['had_results'] = []
+
+            if id(self) in kwargs['had_results']:
+                return None
+            kwargs['had_results'].append(id(self))
+
+            return super()._serialize_instance(**kwargs)
+
         def filtered(self, request):
             obj = copy.copy(self)
             obj.filter(request)
@@ -209,6 +221,16 @@ class Collectable(Searchable):
             self.source = kwargs['source']
 
         super().apply_recursive(**kwargs)
+
+        collect = kwargs.get('collect')
+        if collect is not None and self.id is not None:
+            myid = (self._serialized_name(), self.id)
+            replace_with = collect.get(myid)
+            if replace_with is None:
+                collect[myid] = self
+            else:
+                replace_with.update(self)
+                return replace_with
 
 
 class TripPart(Serializable):

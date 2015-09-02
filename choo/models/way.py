@@ -60,7 +60,7 @@ class WayType(Serializable):
             cls._created[value] = self
             return self
 
-    def _serialize_instance(self):
+    def _serialize_instance(self, **kwargs):
         return self._value
 
     @classmethod
@@ -94,7 +94,7 @@ class WayEvent(Serializable):
             cls._created[value] = self
             return self
 
-    def _serialize_instance(self):
+    def _serialize_instance(self, **kwargs):
         return self._value
 
     @classmethod

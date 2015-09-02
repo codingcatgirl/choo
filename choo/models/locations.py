@@ -10,7 +10,7 @@ class Coordinates(Serializable):
     def __init__(self, lat=None, lon=None, **kwargs):
         super().__init__(lat=lat, lon=lon, **kwargs)
 
-    def _serialize_instance(self):
+    def _serialize_instance(self, **kwargs):
         return [self.lat, self.lon]
 
     @classmethod
