@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from choo.networks import VRR
-from choo.models import Serializable, Stop, Location, Trip, unserialize_typed
+from choo.models import Serializable, Stop, Location, Trip
 import json
 
 # collection = Collection('test')
 
 vrr = VRR()
-bs = Stop(city='essen', name='fliegenbusch')
+bs = Stop(city='essen', name='borbeck sued')
 bo = Stop(city='essen', name='hbf')
+# bo = Stop(city='heidelberg', name='hbf')
 
 trip = Trip.Request()
 trip.origin = bs
@@ -16,10 +17,6 @@ trip.destination = bo
 location = Location.Request()
 location.name = 'Borbeck'
 
-
-# result = vrr.search_trips(trip)
-
-unserialize_typed
 
 result = vrr.query(bs)
 
