@@ -29,7 +29,6 @@ class EFA(API):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.cities = {}
 
     def _get_location(self, location):
         if not isinstance(location, Stop):
@@ -455,9 +454,6 @@ class EFA(API):
         # Coordinates
         if 'x' in data.attrib:
             location.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
-
-        if cityid:
-            self._process_stop_city(location, int(cityid))
 
         return location, score
 
@@ -937,9 +933,7 @@ class EFA(API):
                             name=name, full_name=full_name)
             location.id = int(data.attrib['stopID'])
 
-            cityid = data.attrib.get('placeID')
-            if cityid:
-                self._process_stop_city(location, int(cityid))
+            # cityid = data.attrib.get('placeID')
 
         # get and clean the platform
         platform = data.attrib['platform']
