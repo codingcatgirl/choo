@@ -472,10 +472,7 @@ class EFA(API):
                 ride.line.linetype = LineType('train.longdistance')
 
             # Build Ride Objekt with known stops
-            train_line = ride.line.linetype in self.train_station_lines
-
-            # todo: take delay and add it to next stops
-            mypoint = self._parse_trip_point(departure, train_line=train_line)
+            mypoint = self._parse_trip_point(departure)  # todo: take delay and add it to next stops
 
             before_delay = None
             if mypoint.arrival:
@@ -499,7 +496,7 @@ class EFA(API):
 
             prevs = False
             for pointdata in departure.findall('./itdPrevStopSeq/itdPoint'):
-                point = self._parse_trip_point(pointdata, train_line=train_line)
+                point = self._parse_trip_point(pointdata)
                 if point is not None:
                     if before_delay is not None:
                         if (point.arrival is not None and point.arrival.delay is None and
@@ -515,7 +512,7 @@ class EFA(API):
 
             onwards = False
             for pointdata in departure.findall('./itdOnwardStopSeq/itdPoint'):
-                point = self._parse_trip_point(pointdata, train_line=train_line)
+                point = self._parse_trip_point(pointdata)
                 if point is not None:
                     if after_delay is not None:
                         if (point.arrival is not None and point.arrival.delay is None and
