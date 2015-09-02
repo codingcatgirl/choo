@@ -22,9 +22,10 @@ class EFA(API):
     train_station_lines = LineTypes(('train', 'urban'))
     encoding = 'ISO-8859-1'
     replace_in_full_name = {
-        'Hauptbahnhof$': 'Hbf',
-        'Bahnhof$': '',
-        'S$': ''
+        ' Hauptbahnhof$': ' Hbf',
+        ' Bahnhof$': '',
+        ' Bf$': '',
+        ' S$': ''
     }
 
     def __init__(self, *args, **kwargs):
