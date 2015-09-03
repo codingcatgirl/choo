@@ -549,6 +549,8 @@ class EFA(API):
             interchange = None
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
                 part = self._parse_routepart(routepart)
+                if part is None:
+                    continue
                 if interchange is not None:
                     if isinstance(part, RideSegment):
                         interchange.destination = part[0].platform
@@ -659,6 +661,10 @@ class EFA(API):
         motdata = self._parse_mot(data.find('./itdMeansOfTransport'))
 
         if motdata is None or data.attrib['type'] == 'IT':
+            type_ = data.find('./itdMeansOfTransport').attrib['type']
+            if type_ == '97':
+                # Nicht umsteigen!
+                return None
             waytype = {
                 '98': 'walk',
                 '99': 'walk',
@@ -666,7 +672,7 @@ class EFA(API):
                 '101': 'bike',
                 '104': 'car',
                 '105': 'taxi'
-            }[data.find('./itdMeansOfTransport').attrib['type']]
+            }[type_]
             # 98 = gesichter anschluss
 
             way = Way(WayType(waytype), points[0].stop, points[1].stop)
