@@ -53,7 +53,7 @@ class LineType(Serializable):
     _known = (
         '', 'train', 'train.local', 'train.longdistance', 'train.longdistance.highspeed',
         'urban', 'metro', 'tram',
-        'bus', 'bus.regional', 'bus.city', 'bus.express',
+        'bus', 'bus.regional', 'bus.city', 'bus.express', 'bus.longdistance',
         'suspended', 'ship', 'dialable', 'other'
     )
     _created = {}

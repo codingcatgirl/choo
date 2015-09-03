@@ -879,6 +879,8 @@ class EFA(API):
             line.product = data.attrib.get('productName', '')
             if not line.product:
                 line.product = data.find('./itdNoTrain').attrib['name']
+            if line.product == 'Fernbus':
+                line.linetype = LineType('bus.longdistance')
             line.shortname = data.attrib['symbol']
             line.name = '%s %s' % (line.product, line.shortname)
 
