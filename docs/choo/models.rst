@@ -742,7 +742,7 @@ Submodels of :py:class:`Serializable`.
 .. py:class:: LineType(name)
 
     Each :py:class:`Line` has a line type. A line type has one of the values ``(empty string)``, ``train``, ``train.local``, ``train.longdistance``, ``train.longdistance.highspeed``,
-    ``urban``, ``metro``, ``tram``, ``bus``, ``bus.regional``, ``bus.city``, ``bus.express``, ``suspended``, ``ship``, ``dialable``, or ``other``.
+    ``urban``, ``metro``, ``tram``, ``bus``, ``bus.regional``, ``bus.city``, ``bus.express``, ``bus.longdistance``, ``suspended``, ``ship``, ``dialable``, or ``other``.
 
     An empty string means that it can be anyone of the other linetypes, The linetype ``bus`` means that it could be any of the bus-subtypes. The reason for this is that
     not all networks differentiate between some subtyes (e.g. bus types). See the network reference for which linetypes it may output.
