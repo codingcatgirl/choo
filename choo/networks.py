@@ -5,18 +5,16 @@ from .apis.efa import EFA
 class VRR(EFA):
     name = 'vrr'
     base_url = 'http://app.vrr.de/standard/'
-    country_by_id = ()
-    train_station_suffixes = {
-        ' S': ' ',
-        ' Bf': ' ',
-        'Hauptbahnhof': 'Hbf',
-        ' Bahnhof': '',
-        'Hbf': 'Hbf',
-    }
+
+
+class VRN(EFA):
+    name = 'vrn'
+    base_url = 'http://fahrplanauskunft.vrn.de/vrn/'
 
 
 _names = {
     'vrr': VRR,
+    'vrn': VRN,
 }
 supported = tuple(_names)
 
