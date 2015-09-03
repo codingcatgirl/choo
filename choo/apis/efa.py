@@ -18,10 +18,12 @@ class EFA(API):
     country_by_id = ()
     encoding = 'ISO-8859-1'
     replace_in_full_name = {
+        ', Hauptbahnhof$': ' Hbf',
         ' Hauptbahnhof$': ' Hbf',
         ' Bahnhof$': '',
         ' Bf$': '',
-        ' S$': ''
+        ' S$': '',
+        ', Hbf%': ' Hbf'
     }
 
     def __init__(self, *args, **kwargs):
@@ -49,11 +51,15 @@ class EFA(API):
 
         if stop.name is not None and stop.city is None and stop.full_name.endswith(' '+stop.name):
             stop.city = stop.full_name[:-len(stop.name)].strip()
+            if stop.city.endswith(','):
+                stop.city = stop.city[:-1]
 
         stop.full_name = stop.full_name+'$'
         for before, after in self.replace_in_full_name.items():
             stop.full_name = stop.full_name.replace(before, after)
         stop.full_name = stop.full_name.replace('$', '').strip()
+        if stop.full_name.endswith(','):
+            stop.full_name = stop.full_name[:-1]
 
         if stop.name is not None and stop.city is not None:
             if stop.full_name == stop.city+' '+stop.name:
