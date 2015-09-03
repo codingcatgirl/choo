@@ -937,25 +937,25 @@ class EFA(API):
             # cityid = data.attrib.get('placeID')
 
         # get and clean the platform
-        platform = data.attrib['platform']
-        if not platform.strip():
-            platform = data.attrib['platformName']
+        name_platform = data.attrib['platform']
+        if not name_platform.strip():
+            name_platform = data.attrib['platformName']
         match = re.search(r'[0-9].*$', data.attrib['platformName'])
-        platform = match.group(0) if match is not None else platform
-        if not platform:
-            platform = None
+        name_platform = match.group(0) if match is not None else name_platform
+        if not name_platform:
+            name_platform = None
 
         full_platform = data.attrib['platformName']
         if not full_platform:
-            full_platform = platform
-        if platform == full_platform and 'pointType' in data.attrib:
-            full_platform = '%s %s' % (data.attrib['pointType'], platform)
+            full_platform = name_platform
+        if name_platform == full_platform and 'pointType' in data.attrib:
+            full_platform = '%s %s' % (data.attrib['pointType'], name_platform)
         if not full_platform:
             full_platform = None
 
-        platform = Platform(stop=location, name=platform, full_name=full_platform)
-        if full_platform is not None:
-            platform.id = ':'.join((str(location.id), data.attrib['area'], data.attrib['platform']))
+        platform = Platform(stop=location, name=name_platform, full_name=full_platform)
+        if name_platform is not None:
+            platform.id = ':'.join((str(location.id), data.attrib['area'], name_platform))
 
         ifopt = data.attrib.get('gid', '').split(':')
         if len(ifopt) == 3:
