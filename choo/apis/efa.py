@@ -688,8 +688,6 @@ class EFA(API):
             elif data.find('./genAttrList/genAttrElem[value="LONG_DISTANCE_TRAIN"]') is not None:
                 ride.line.linetype = LineType('train.longdistance')
 
-            train_line = ride.line.linetype in self.train_station_lines
-
             # Build Ride Objekt with known stops
             for infotext in data.findall('./infoTextList/infoTextListElem'):
                 ride.infotexts.append(infotext)
@@ -698,7 +696,7 @@ class EFA(API):
             last = None
             waypoints = False
             if data.find('./itdStopSeq'):
-                new_points = [self._parse_trip_point(point, train_line=train_line)
+                new_points = [self._parse_trip_point(point)
                               for point in data.findall('./itdStopSeq/itdPoint')]
                 if not new_points or new_points[0].stop != new_points[0].stop:
                     new_points.insert(0, points[0])
