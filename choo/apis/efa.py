@@ -882,7 +882,7 @@ class EFA(API):
             if line.product == 'Fernbus':
                 line.linetype = LineType('bus.longdistance')
             line.shortname = data.attrib['symbol']
-            line.name = '%s %s' % (line.product, line.shortname)
+            line.name = ('%s %s' % (line.product, line.shortname)).strip()
 
         if data.find('./itdNoTrain'):
             ride.canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
