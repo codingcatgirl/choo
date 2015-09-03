@@ -574,10 +574,11 @@ class EFA(API):
                                                tickets.attrib['unitsAdult'],
                                                float(tickets.attrib['fareAdult']),
                                                float(tickets.attrib['fareChild']))
-                ticketlist.bike = TicketData(authority,
-                                             tickets.attrib['unitsBikeAdult'],
-                                             float(tickets.attrib['fareBikeAdult']),
-                                             float(tickets.attrib['fareBikeChild']))
+                if tickets.get('fareBikeAdult'):
+                    ticketlist.bike = TicketData(authority,
+                                                 tickets.attrib['unitsBikeAdult'],
+                                                 float(tickets.attrib['fareBikeAdult']),
+                                                 float(tickets.attrib['fareBikeChild']))
                 ticketlist.currency = tickets.attrib['currency']
                 ticketlist.level_name = tickets.attrib['unitName']
                 for ticket in tickets.findall('./itdGenericTicketList/itdGenericTicketGroup'):
