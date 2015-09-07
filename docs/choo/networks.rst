@@ -3,17 +3,15 @@ Network Reference
 
 .. py:class:: API
 
+    The base class for all other APIs.
+
     .. py:method:: query(obj)
 
         Pass a Searchable and it will return a Searchable from the API or None/null if it could not be found. Pass a Searchable.Request and you will get a corresponding Searchable.Results.
 
-
-Network APIs
-------------------
-
 .. py:class:: EFA
 
-    EFA is a public transport :py:class:`API` used world wide by many network operators.
+    Public transport API used world wide by many network operators.
 
 
 Supported Networks
