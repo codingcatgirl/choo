@@ -4,8 +4,9 @@ from weakref import WeakValueDictionary
 
 
 class API():
-    def __init__(self, name):
+    def __init__(self, name, dump_raw=False):
         self.name = name
+        self.dump_raw = dump_raw
 
     def query(self, obj, get_ids=False):
         if isinstance(obj, Searchable):

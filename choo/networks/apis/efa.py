@@ -13,8 +13,9 @@ import math
 
 
 class EFA(API):
-    def __init__(self, name, base_url, preset='de', country_by_id=(), encoding='ISO-8859-1', replace_in_full_name={}):
-        super().__init__(name)
+    def __init__(self, name, base_url, preset='de', country_by_id=(),
+                 encoding='ISO-8859-1', replace_in_full_name={}, **kwargs):
+        super().__init__(name, **kwargs)
         self.base_url = base_url
         self.country_by_id = () if country_by_id is None else country_by_id
         self.encoding = encoding
@@ -116,7 +117,8 @@ class EFA(API):
 
     def _request(self, endpoint, data):
         text = requests.post(self.base_url + endpoint, data=data).text
-        open('dump.xml', 'w').write(text)
+        if self.dump_raw:
+            open('dump.xml', 'w').write(text)
         xml = ET.fromstring(text)
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
         return xml, servernow
