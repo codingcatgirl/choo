@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from ..models import Searchable
-from ..models import Location, Stop, POI, Address
-from ..models import TimeAndPlace, Platform, RealtimeTime
-from ..models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
-from ..models import Line, LineType, LineTypes, Way, WayType, WayEvent
+from ...models import Searchable
+from ...models import Location, Stop, POI, Address
+from ...models import TimeAndPlace, Platform, RealtimeTime
+from ...models import Trip, Ride, RideSegment, Coordinates, TicketList, TicketData
+from ...models import Line, LineType, LineTypes, Way, WayType, WayEvent
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from .base import API
@@ -13,18 +13,22 @@ import math
 
 
 class EFA(API):
-    name = 'efa'
-    base_url = None
-    country_by_id = ()
-    encoding = 'ISO-8859-1'
-    replace_in_full_name = {
-        ', Hauptbahnhof$': ' Hbf',
-        ' Hauptbahnhof$': ' Hbf',
-        ' Bahnhof$': '',
-        ' Bf$': '',
-        ' S$': '',
-        ', Hbf%': ' Hbf'
-    }
+    def __init__(self, name, base_url, preset='de', country_by_id=(), encoding='ISO-8859-1', replace_in_full_name={}):
+        super().__init__(name)
+        self.base_url = base_url
+        self.country_by_id = () if country_by_id is None else country_by_id
+        self.encoding = encoding
+        self.replace_in_full_name = {}
+        if preset == 'de':
+            self.replace_in_full_name = {
+                ', Hauptbahnhof$': ' Hbf',
+                ' Hauptbahnhof$': ' Hbf',
+                ' Bahnhof$': '',
+                ' Bf$': '',
+                ' S$': '',
+                ', Hbf%': ' Hbf'
+            }
+        self.replace_in_full_name.update(replace_in_full_name)
 
     def _query_get(self, obj):
         if isinstance(obj, Stop):

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-from choo.networks import VRN
+from choo.networks.de import vrn
 from choo.models import Serializable, Stop, Location, Trip
 import json
 
 # collection = Collection('test')
 
-vrr = VRN()
-bs = Stop(city='mannheim', name='hbf')
-bo = Stop(city='heidelberg', name='kirchheim/rohrbach')
+bs = Stop(city='heidelberg', name='kirchheim/rohrbach')
+bo = Stop(city='feudenheim', name='ziethenstr')
 # bo = Stop(city='heidelberg', name='hbf')
 
 trip = Trip.Request()
@@ -18,7 +17,7 @@ location = Location.Request()
 location.name = 'Borbeck'
 
 
-result = vrr.query(trip)
+result = vrn.query(trip)
 
 # import pprint
 # pp = pprint.PrettyPrinter(indent=1)

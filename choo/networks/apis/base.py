@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-from ..models import Searchable
+from ...models import Searchable
 from weakref import WeakValueDictionary
 
 
 class API():
-    name = None
+    def __init__(self, name):
+        self.name = name
 
     def query(self, obj, get_ids=False):
         if isinstance(obj, Searchable):
