@@ -8,7 +8,7 @@ Network Reference
         Pass a Searchable and it will return a Searchable from the API or None/null if it could not be found. Pass a Searchable.Request and you will get a corresponding Searchable.Results.
 
 
-Network Interfaces
+Network APIs
 ------------------
 
 .. py:class:: EFA
@@ -19,10 +19,8 @@ Network Interfaces
 Supported Networks
 ------------------
 
-.. py:class:: VRR
+**VRR: Verkehrsverbund Rhein Ruhr**
+    ``de.vrr`` (:py:class:`EFA`) – ifopt available. Also supports all of NRW and some parts of Germany.
 
-    The :py:class:`EFA` instance of the **Verkehrsverbund Rhein Ruhr** in Germany.
-
-    Information for all of NRW is available, but real time data for local operators only in the VRR area.
-
-    Some Information for the rest of Germany is also available.
+**VRN: Verkehrsverbund Rhein-Neckar** ``de.vrn``
+    ``de.vrn`` (:py:class:`EFA`) – ifopt available. Also supports all of NRW and some parts of Germany.
