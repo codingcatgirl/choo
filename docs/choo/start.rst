@@ -149,11 +149,9 @@ Let's see how you would access this via the Python interface.
 .. code-block:: python
 
     from choo.models import Stop
-    import choo.networks
+    from choo.networks.de import vrr
 
     essen = Stop(name='Essen Hauptbahnhof')
-    vrr = networks.network('vrr')
-
     essen = vrr.query(essen)
 
 We created the Stop, got the network and used the generic .query() function of the VRR api wich gave us the same result as above.
