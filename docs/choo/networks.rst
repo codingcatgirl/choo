@@ -19,8 +19,8 @@ Network APIs
 Supported Networks
 ------------------
 
-**VRR: Verkehrsverbund Rhein Ruhr**
-    ``de.vrr`` (:py:class:`EFA`) – ifopt available. Also supports all of NRW and some parts of Germany.
+**VRR – Verkehrsverbund Rhein Ruhr** (``de.vrr`` :py:class:`EFA`)
+    ifopt available. Also supports all of NRW and some parts of Germany.
 
-**VRN: Verkehrsverbund Rhein-Neckar** ``de.vrn``
-    ``de.vrn`` (:py:class:`EFA`) – ifopt available. Also supports all of NRW and some parts of Germany.
+**VRN – Verkehrsverbund Rhein-Neckar** (``de.vrn`` :py:class:`EFA`)
+    ifopt available. Also supports some parts of Germany and Europe.
