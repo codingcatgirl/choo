@@ -113,7 +113,9 @@ class EFA(API):
     def _request(self, endpoint, data):
         text = requests.post(self.base_url + endpoint, data=data).text
         open('dump.xml', 'w').write(text)
-        return ET.fromstring(text)
+        xml = ET.fromstring(text)
+        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
+        return xml, servernow
 
     def _request_trips(self, triprequest):
         """ Searches connections/Trips; Returns a SearchResult(Trip) """
@@ -226,9 +228,7 @@ class EFA(API):
         post.update(self._convert_location(triprequest.origin, '%s_origin'))
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
 
-        xml = self._request('XSLT_TRIP_REQUEST2', post)
-        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
-
+        xml, servernow = self._request('XSLT_TRIP_REQUEST2', post)
         data = xml.find('./itdTripRequest')
 
         results = Trip.Results(self._parse_trips(data.find('./itdItinerary/itdRouteList')))
@@ -251,9 +251,7 @@ class EFA(API):
         }
         post.update(self._convert_location(stop, '%s_sf'))
 
-        xml = self._request('XSLT_STOPFINDER_REQUEST', post)
-        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
-
+        xml, servernow = self._request('XSLT_STOPFINDER_REQUEST', post)
         data = xml.find('./itdStopFinderRequest')
 
         results = self._parse_odv(data.find('./itdOdv'))
@@ -297,9 +295,7 @@ class EFA(API):
         }
         post.update(self._convert_location(stop, '%s_dm'))
 
-        xml = self._request('XSLT_DM_REQUEST', post)
-        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
-
+        xml, servernow = self._request('XSLT_DM_REQUEST', post)
         data = xml.find('./itdDepartureMonitorRequest')
 
         stop = self._parse_odv(data.find('./itdOdv'))
