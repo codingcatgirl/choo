@@ -26,24 +26,21 @@ class EFA(API):
         ', Hbf%': ' Hbf'
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _get_location(self, location):
-        if not isinstance(location, Stop):
+    def _query_get(self, obj):
+        if isinstance(obj, Stop):
+            result, now = self._request_departures(obj)
+            if not isinstance(result, obj.__class__):
+                result = None
+        else:
             raise NotImplementedError
-        result, now = self._get_stop_rides(location)
-        if not isinstance(result, location.__class__):
-            result = None
         return result, now
 
-    def _search_locations(self, location):
-        if type(location) != Location.Request:
-            raise NotImplementedError
-        return self._stop_finder_request(location)
-
-    def _search_trips(self, triprequest):
-        return self._trip_request(triprequest)
+    def _query_search(self, model, request):
+        if model == Location:
+            return self._request_stops(request)
+        elif model == Trip:
+            return self._request_trips(request)
+        raise NotImplementedError
 
     def _finalize_stop(self, stop):
         if stop.full_name is None:
@@ -70,13 +67,6 @@ class EFA(API):
             stop.city = stop.full_name[:-len(stop.name)].strip()
 
     # Internal methods start here
-    def _get_stop_rides(self, stop):
-        return self._departure_monitor_request(stop)
-
-    def _post(self, endpoint, data):
-        text = requests.post(self.base_url + endpoint, data=data).text
-        open('dump.xml', 'w').write(text)
-        return ET.fromstring(text)
 
     def _convert_location(self, location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
@@ -120,7 +110,12 @@ class EFA(API):
 
         return r
 
-    def _trip_request(self, triprequest: Trip.Request):
+    def _request(self, endpoint, data):
+        text = requests.post(self.base_url + endpoint, data=data).text
+        open('dump.xml', 'w').write(text)
+        return ET.fromstring(text)
+
+    def _request_trips(self, triprequest):
         """ Searches connections/Trips; Returns a SearchResult(Trip) """
         now = datetime.now()
 
@@ -231,18 +226,18 @@ class EFA(API):
         post.update(self._convert_location(triprequest.origin, '%s_origin'))
         post.update(self._convert_location(triprequest.destination, '%s_destination'))
 
-        xml = self._post('XSLT_TRIP_REQUEST2', post)
+        xml = self._request('XSLT_TRIP_REQUEST2', post)
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdTripRequest')
 
-        results = Trip.Results(self._parse_routes(data.find('./itdItinerary/itdRouteList')))
-        results.origin = self._parse_odv(data.find('./itdOdv[@usage="origin"]'))
-        results.destination = self._parse_odv(data.find('./itdOdv[@usage="destination"]'))
+        results = Trip.Results(self._parse_trips(data.find('./itdItinerary/itdRouteList')))
+        results.origin = self._parse_location(data.find('./itdOdv[@usage="origin"]'))
+        results.destination = self._parse_location(data.find('./itdOdv[@usage="destination"]'))
 
         return results, servernow
 
-    def _stop_finder_request(self, stop):
+    def _request_stops(self, stop):
         """ Searches a Stop; Returns a SearchResult(Stop) """
         post = {
             'language': 'de',
@@ -256,7 +251,7 @@ class EFA(API):
         }
         post.update(self._convert_location(stop, '%s_sf'))
 
-        xml = self._post('XSLT_STOPFINDER_REQUEST', post)
+        xml = self._request('XSLT_STOPFINDER_REQUEST', post)
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdStopFinderRequest')
@@ -272,7 +267,7 @@ class EFA(API):
 
         return stop.Model.Results(results, scored=True), servernow
 
-    def _departure_monitor_request(self, stop: Stop, time: datetime=None):
+    def _request_departures(self, stop: Stop, time=None):
         """ Fills in Stop.rides; Can Return A SearchResult(Stop) without rides. """
         if time is None:
             time = datetime.now()
@@ -302,7 +297,7 @@ class EFA(API):
         }
         post.update(self._convert_location(stop, '%s_dm'))
 
-        xml = self._post('XSLT_DM_REQUEST', post)
+        xml = self._request('XSLT_DM_REQUEST', post)
         servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdDepartureMonitorRequest')
@@ -318,7 +313,7 @@ class EFA(API):
             rlines = []
             lines = lineslist.findall('./itdServingLine')
             for line in lines:
-                ride, origin, destination = self._parse_mot(line)
+                ride, origin, destination = self._parse_ride(line)
                 line = ride.line
                 line.first_stop = origin
                 line.last_stop = destination
@@ -331,7 +326,7 @@ class EFA(API):
 
         return stop, servernow
 
-    def _get_country(self, i):
+    def _parse_stopid_country(self, i):
         for s, country in self.country_by_id:
             if i.startswith(s):
                 return country
@@ -345,7 +340,7 @@ class EFA(API):
         full_name = data.attrib.get('nameWithPlace', None)
 
         name = data.text
-        stop = Stop(country=self._get_country(data.attrib['stopID']), city=city,
+        stop = Stop(country=self._parse_stopid_country(data.attrib['stopID']), city=city,
                     full_name=full_name, name=name, id=int(data.attrib['stopID']))
 
         gid = data.attrib.get('gid', '').split(':')
@@ -358,7 +353,7 @@ class EFA(API):
 
         return stop
 
-    def _parse_odv(self, data):
+    def _parse_location(self, data):
         """ Parse an ODV (OriginDestinationVia) XML node """
         odvtype = data.attrib['type']
         results = []
@@ -390,12 +385,12 @@ class EFA(API):
         elif n.attrib['state'] != 'identified':
             if n.attrib['state'] == 'list':
                 ne = n.findall('./odvNameElem')
-                results = [self._name_elem(item, city, cityid, odvtype) for item in ne]
+                results = [self._parse_location_name(item, city, cityid, odvtype) for item in ne]
                 results.sort(key=lambda odv: odv[1], reverse=True)
             return results
         else:
             ne = n.find('./odvNameElem')
-            result = self._name_elem(ne, city, cityid, odvtype)[0]
+            result = self._parse_location_name(ne, city, cityid, odvtype)[0]
             near_stops = []
             for near_stop in data.findall('./itdOdvAssignedStops/itdOdvAssignedStop'):
                 stop = self._parse_stop_line(near_stop)
@@ -404,7 +399,7 @@ class EFA(API):
             result.near_stops = Stop.Results(near_stops)
             return result
 
-    def _name_elem(self, data, city, cityid, odvtype):
+    def _parse_location_name(self, data, city, cityid, odvtype):
         """ Parses the odvNameElem of an ODV """
         # AnyTypes are used in some EFA instances instead of ODV types
         anytype = data.attrib.get('anyType', '')
@@ -440,12 +435,12 @@ class EFA(API):
             if location is None:
                 location = Stop(city=city, name=name)
             if isinstance(location, Stop):
-                location.country = self._get_country(stopid)
+                location.country = self._parse_stopid_country(stopid)
                 location.id = int(stopid)
         elif myid:
             if location is None:
                 location = POI(city=city, name=name)
-            location.country = self._get_country(myid)
+            location.country = self._parse_stopid_country(myid)
             location.id = int(myid)
         elif location is None:
             # Still no clue about the Type? Well, it's an Address then.
@@ -467,7 +462,7 @@ class EFA(API):
         departures = data.findall('./itdDeparture')
         for departure in departures:
             # Get Line Information
-            ride, origin, destination = self._parse_mot(departure.find('./itdServingLine'))
+            ride, origin, destination = self._parse_ride(departure.find('./itdServingLine'))
 
             if departure.find('./genAttrList/genAttrElem[value="HIGHSPEEDTRAIN"]') is not None:
                 ride.line.linetype = LineType('train.longdistance.highspeed')
@@ -475,7 +470,7 @@ class EFA(API):
                 ride.line.linetype = LineType('train.longdistance')
 
             # Build Ride Objekt with known stops
-            mypoint = self._parse_trip_point(departure)  # todo: take delay and add it to next stops
+            mypoint = self._parse_timeandplace(departure)  # todo: take delay and add it to next stops
 
             before_delay = None
             if mypoint.arrival:
@@ -499,7 +494,7 @@ class EFA(API):
 
             prevs = False
             for pointdata in departure.findall('./itdPrevStopSeq/itdPoint'):
-                point = self._parse_trip_point(pointdata)
+                point = self._parse_timeandplace(pointdata)
                 if point is not None:
                     if before_delay is not None:
                         if (point.arrival is not None and point.arrival.delay is None and
@@ -515,7 +510,7 @@ class EFA(API):
 
             onwards = False
             for pointdata in departure.findall('./itdOnwardStopSeq/itdPoint'):
-                point = self._parse_trip_point(pointdata)
+                point = self._parse_timeandplace(pointdata)
                 if point is not None:
                     if after_delay is not None:
                         if (point.arrival is not None and point.arrival.delay is None and
@@ -540,7 +535,7 @@ class EFA(API):
             results.append(ride[pointer:])
         return Ride.Results(results)
 
-    def _parse_routes(self, data):
+    def _parse_trips(self, data):
         """ Parses itdRoute into a Trip """
         trips = []
         routes = data.findall('./itdRoute')
@@ -548,7 +543,7 @@ class EFA(API):
             trip = Trip()
             interchange = None
             for routepart in route.findall('./itdPartialRouteList/itdPartialRoute'):
-                part = self._parse_routepart(routepart)
+                part = self._parse_trippart(routepart)
                 if part is None:
                     continue
                 if interchange is not None:
@@ -558,7 +553,7 @@ class EFA(API):
                         interchange.destination = part[0].origin
                 trip._parts.append(part)
 
-                interchange = self._parse_interchange(routepart)
+                interchange = self._parse_trip_interchange(routepart)
                 if isinstance(part, RideSegment):
                     if interchange is not None:
                         interchange.origin = part[-1].platform
@@ -623,42 +618,15 @@ class EFA(API):
 
         return trips
 
-    def _parse_interchange(self, data):
-        """ Parses an optional interchange path of a itdPartialRoute into a Way """
-        info = data.find('./itdFootPathInfo')
-        if info is None:
-            return None
-
-        way = Way()
-        way.duration = timedelta(minutes=int(info.attrib.get('duration')))
-
-        path = []
-        for coords in data.findall('./itdInterchangePathCoordinates/itdPathCoordinates/'
-                                   '/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
-            path.append(Coordinates(float(coords.find('y').text) / 1000000, float(coords.find('x').text) / 1000000))
-
-        if path:
-            way.path = path
-
-        events = []
-        for event in data.findall('./itdFootPathInfo/itdFootPathElem'):
-            name = event.attrib['type'].lower()
-            direction = event.attrib['level'].lower()
-            if name in ('elevator', 'escalator', 'stairs') and direction in ('up', 'down'):
-                events.append(WayEvent(name, direction))
-        way.events = events
-
-        return way
-
-    def _parse_routepart(self, data):
+    def _parse_trippart(self, data):
         """ Parses itdPartialRoute into a RideSegment or Way """
-        points = [self._parse_trip_point(point) for point in data.findall('./itdPoint')]
+        points = [self._parse_timeandplace(point) for point in data.findall('./itdPoint')]
 
         path = []
         for coords in data.findall('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
             path.append(Coordinates(float(coords.find('y').text) / 1000000, float(coords.find('x').text) / 1000000))
 
-        motdata = self._parse_mot(data.find('./itdMeansOfTransport'))
+        motdata = self._parse_ride(data.find('./itdMeansOfTransport'))
 
         if motdata is None or data.attrib['type'] == 'IT':
             type_ = data.find('./itdMeansOfTransport').attrib['type']
@@ -702,7 +670,7 @@ class EFA(API):
             last = None
             waypoints = False
             if data.find('./itdStopSeq'):
-                new_points = [self._parse_trip_point(point)
+                new_points = [self._parse_timeandplace(point)
                               for point in data.findall('./itdStopSeq/itdPoint')]
                 if not new_points or new_points[0].stop != new_points[0].stop:
                     new_points.insert(0, points[0])
@@ -736,14 +704,41 @@ class EFA(API):
             segment = ride[first:last]
             platform_coords = [p.platform.coords for p in segment]
             if None not in platform_coords:  # todo
-                paths = self._split_path(path, platform_coords)[:-1]
+                paths = self._parse_path(path, platform_coords)[:-1]
                 for i, point in segment.items():
                     if not paths:
                         break
                     segment.ride._paths[i] = paths.pop(0)
                 return segment
 
-    def _split_path(self, totalpath, points):
+    def _parse_trip_interchange(self, data):
+        """ Parses an optional interchange path of a itdPartialRoute into a Way """
+        info = data.find('./itdFootPathInfo')
+        if info is None:
+            return None
+
+        way = Way()
+        way.duration = timedelta(minutes=int(info.attrib.get('duration')))
+
+        path = []
+        for coords in data.findall('./itdInterchangePathCoordinates/itdPathCoordinates'
+                                   '/itdCoordinateBaseElemList/itdCoordinateBaseElem'):
+            path.append(Coordinates(float(coords.find('y').text) / 1000000, float(coords.find('x').text) / 1000000))
+
+        if path:
+            way.path = path
+
+        events = []
+        for event in data.findall('./itdFootPathInfo/itdFootPathElem'):
+            name = event.attrib['type'].lower()
+            direction = event.attrib['level'].lower()
+            if name in ('elevator', 'escalator', 'stairs') and direction in ('up', 'down'):
+                events.append(WayEvent(name, direction))
+        way.events = events
+
+        return way
+
+    def _parse_path(self, totalpath, points):
         pointi = [None for point in enumerate(points)]
 
         # Find Points that are too close to not be right
@@ -810,7 +805,7 @@ class EFA(API):
             result += timedelta(hours=1)
         return result
 
-    def _parse_mot(self, data):
+    def _parse_ride(self, data):
         """ Parse a itdServingLine Node into something nicer """
         line = Line()
         ride = Ride(line=line)
@@ -902,7 +897,7 @@ class EFA(API):
         destination = data.attrib.get('destination', data.attrib.get('direction', None))
         destination = Stop(full_name=destination) if destination else None
         if data.attrib.get('destID', ''):
-            destination.country = self._get_country(data.attrib['destID'])
+            destination.country = self._parse_stopid_country(data.attrib['destID'])
             destination.id = int(data.attrib['destID'])
 
         # route description
@@ -912,7 +907,7 @@ class EFA(API):
 
         return ride, origin, destination
 
-    def _parse_trip_point_name(self, data):
+    def _parse_timeandplace_name(self, data):
         # todo: this can be better
         city = data.attrib.get('locality', data.attrib.get('place', ''))
         city = city if city else None
@@ -925,9 +920,9 @@ class EFA(API):
 
         return city, name, full_name
 
-    def _parse_trip_point(self, data, walk=False, train_line=False):
+    def _parse_timeandplace(self, data, walk=False, train_line=False):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
-        city, name, full_name = self._parse_trip_point_name(data)
+        city, name, full_name = self._parse_timeandplace_name(data)
 
         if data.attrib['area'] == '' and data.attrib['stopID'] == '0':
             return None
@@ -936,7 +931,7 @@ class EFA(API):
         if walk and data.attrib['area'] == '0':
             location = Address(city=city, name=name)
         else:
-            location = Stop(country=self._get_country(data.attrib['stopID']), city=city,
+            location = Stop(country=self._parse_stopid_country(data.attrib['stopID']), city=city,
                             name=name, full_name=full_name)
             location.id = int(data.attrib['stopID'])
 
@@ -988,10 +983,10 @@ class EFA(API):
         # 	if name == 'platformChange' and value == 'changed':
         # 		result.changed_platform = True
 
-        self._parse_trip_point_time(data, result, walk)
+        self._parse_timeandplace_time(data, result, walk)
         return result
 
-    def _parse_trip_point_time(self, data, point, walk=False):
+    def _parse_timeandplace_time(self, data, point, walk=False):
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):
             # Used for routes (only arrival or departure time)
