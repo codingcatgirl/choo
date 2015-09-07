@@ -328,16 +328,23 @@ class EFA(API):
                 return country
         return None
 
+    def _get_attrib(self, xml, *keys, noempty=True, default=None, strip=False):
+        attrib = xml.attrib
+        for key in keys:
+            value = attrib.get(key)
+            if strip:
+                value = value.strip()
+            if value or (not noempty and value == ''):
+                return value
+        return default
+
     def _parse_stop_line(self, data):
         """ Parse an ODV line (for example an AssignedStop) """
-        city = data.attrib.get('locality', data.attrib.get('place', ''))
-        city = city if city else None
-
-        full_name = data.attrib.get('nameWithPlace', None)
-
-        name = data.text
-        stop = Stop(country=self._parse_stopid_country(data.attrib['stopID']), city=city,
-                    full_name=full_name, name=name, id=int(data.attrib['stopID']))
+        stop = Stop(country=self._parse_stopid_country(data.attrib['stopID']),
+                    name=data.text,
+                    city=self._get_attrib(data, 'locality', 'place'),
+                    full_name=self._get_attrib(data, 'nameWithPlace'),
+                    id=int(data.attrib['stopID']))
 
         gid = data.attrib.get('gid', '').split(':')
         if len(gid) == 3 and min(len(s) for s in gid):
@@ -398,15 +405,12 @@ class EFA(API):
     def _parse_location_name(self, data, city, cityid, odvtype):
         """ Parses the odvNameElem of an ODV """
         # AnyTypes are used in some EFA instances instead of ODV types
-        anytype = data.attrib.get('anyType', '')
-        odvtype = anytype if anytype else odvtype
+        odvtype = self._get_attrib(data, 'anyType', default=odvtype)
 
         # Even though we got the city, some APIs deliver it only in the odvNameElem…
-        locality = data.attrib.get('locality', '')
-        city = locality if locality else city
+        city = self._get_attrib(data, 'locality', default=city)
 
         # What kind of location is it? Fill in attributes.
-        location = None
         name = data.attrib.get('objectName', data.text)
         if odvtype == 'stop':
             location = Stop(city=city, name=name)
@@ -425,22 +429,10 @@ class EFA(API):
             raise NotImplementedError('Unknown odvtype: %s' % odvtype)
 
         # IDs can come in different ways… Sometimes this is the only way to determine the Location type…
-        stopid = data.attrib.get('stopID', '')
-        myid = data.attrib.get('id', '')
-        if stopid:
-            if location is None:
-                location = Stop(city=city, name=name)
-            if isinstance(location, Stop):
-                location.country = self._parse_stopid_country(stopid)
-                location.id = int(stopid)
-        elif myid:
-            if location is None:
-                location = POI(city=city, name=name)
-            location.country = self._parse_stopid_country(myid)
-            location.id = int(myid)
-        elif location is None:
-            # Still no clue about the Type? Well, it's an Address then.
-            location = Address(city=city, name=name)
+        id_ = self._get_attrib(data, 'stopID', 'id')
+        if id_:
+            location.country = self._parse_stopid_country(id_)
+            location.id = int(id_)
 
         # This is used when we got more than one Location
         score = int(data.attrib.get('matchQuality', 0))
@@ -468,10 +460,9 @@ class EFA(API):
             # Build Ride Objekt with known stops
             mypoint = self._parse_timeandplace(departure)  # todo: take delay and add it to next stops
 
-            before_delay = None
+            before_delay = after_delay = None
             if mypoint.arrival:
                 before_delay = mypoint.arrival.delay
-            after_delay = None
             if mypoint.departure:
                 after_delay = mypoint.departure.delay
 
@@ -637,7 +628,7 @@ class EFA(API):
                 '104': 'car',
                 '105': 'taxi'
             }[type_]
-            # 98 = gesichter anschluss
+            # 98 = gesicherter anschluss
 
             way = Way(WayType(waytype), points[0].stop, points[1].stop)
             way.distance = data.attrib.get('distance')
@@ -662,8 +653,7 @@ class EFA(API):
             for infotext in data.findall('./infoTextList/infoTextListElem'):
                 ride.infotexts.append(infotext)
 
-            first = None
-            last = None
+            first = last = None
             waypoints = False
             if data.find('./itdStopSeq'):
                 new_points = [self._parse_timeandplace(point)
@@ -816,12 +806,7 @@ class EFA(API):
                                   'ship', 'dialable', 'other')[mottype])
 
         train = data.find('./itdTrain')
-        traintype = None
-        if train is not None:
-            traintype = train.get('type')
-
-        if traintype is None:
-            traintype = data.attrib.get('trainType')
+        traintype = (train is not None and train.get('type')) or data.attrib.get('trainType')
 
         if traintype is not None and traintype not in ('RE', 'RB'):
             line.linetype = LineType('train.longdistance.highspeed' if traintype in ('ICE', 'THA', 'TGV')
@@ -837,33 +822,28 @@ class EFA(API):
             if ridedir:
                 ride.direction = ridedir
 
-        ridenum = data.attrib.get('tC', None)
-        if ridenum is None:
-            ridenum = data.attrib.get('key', None)
-        ride.number = ridenum
-        if line.id is not None and ridenum is not None:
-            ride.id = '%s:%s' % (line.id, ridenum)
+        ride.number = self._get_attrib(data, 'tC', 'key')
+        if line.id is not None and ride.number is not None:
+            ride.id = '%s:%s' % (line.id, ride.number)
 
         op = data.find('./itdOperator')
         if op is not None:
             line.operator = op.find('./name').text
 
         # We behave different for trains and non-trains
+        notrain = data.find('./itdNoTrain')
         if mottype == 0:
             line.name = data.attrib['symbol']
-            line.product = data.attrib.get('trainName', '')
+            line.product = self._get_attrib(data, 'trainName', 'productName')
 
             if not line.product:
-                line.product = data.attrib.get('productName', '')
+                line.product = notrain.attrib['name']
 
-            if not line.product:
-                line.product = data.find('./itdNoTrain').attrib['name']
-
-            if 'trainNum' in data.attrib:
-                ridenum = data.attrib['trainNum']  # overwrites the diva one
+            # overrides the diva one
+            ride.number = data.attrib.get('trainNum', ride.number)
 
             prefix = data.attrib.get('trainType', '')
-            line.shortname = (prefix + ridenum) if prefix else line.name
+            line.shortname = (prefix + ride.number) if prefix else line.name
 
             if not line.shortname:
                 train = data.find('./itdTrain')
@@ -881,16 +861,13 @@ class EFA(API):
             line.shortname = data.attrib['symbol']
             line.name = ('%s %s' % (line.product, line.shortname)).strip()
 
-        if data.find('./itdNoTrain'):
-            ride.canceled = data.find('./itdNoTrain').attrib.get('delay', '') == '-9999'
-        else:
-            ride.canceled = None
+        ride.canceled = (notrain.attrib.get('delay', '') == '-9999') if notrain else None
 
         # origin and destination
         origin = data.attrib.get('directionFrom')
         origin = Stop(full_name=origin) if origin else None
 
-        destination = data.attrib.get('destination', data.attrib.get('direction', None))
+        destination = self._get_attrib(data, 'destination', 'direction')
         destination = Stop(full_name=destination) if destination else None
         if data.attrib.get('destID', ''):
             destination.country = self._parse_stopid_country(data.attrib['destID'])
@@ -903,56 +880,33 @@ class EFA(API):
 
         return ride, origin, destination
 
-    def _parse_timeandplace_name(self, data):
-        # todo: this can be better
-        city = data.attrib.get('locality', data.attrib.get('place', ''))
-        city = city if city else None
-
-        name = data.attrib.get('nameWO', '')
-        name = name if name else None
-
-        full_name = data.attrib.get('name', data.attrib.get('stopName', ''))
-        full_name = full_name if full_name else None
-
-        return city, name, full_name
-
-    def _parse_timeandplace(self, data, walk=False, train_line=False):
+    def _parse_timeandplace(self, data):
         """ Parse a trip Point into a TimeAndPlace (including the Location) """
-        city, name, full_name = self._parse_timeandplace_name(data)
+        city = self._get_attrib(data, 'locality', 'place')
+        name = self._get_attrib(data, 'nameWO')
+        full_name = self._get_attrib(data, 'name', 'stopName')
 
         if data.attrib['area'] == '' and data.attrib['stopID'] == '0':
             return None
 
-        # todo – what kind of location is this?
-        if walk and data.attrib['area'] == '0':
-            location = Address(city=city, name=name)
-        else:
-            location = Stop(country=self._parse_stopid_country(data.attrib['stopID']), city=city,
-                            name=name, full_name=full_name)
-            location.id = int(data.attrib['stopID'])
-
-            # cityid = data.attrib.get('placeID')
+        location = Stop(country=self._parse_stopid_country(data.attrib['stopID']), city=city,
+                        name=name, full_name=full_name)
+        location.id = int(data.attrib['stopID'])
 
         # get and clean the platform
-        name_platform = data.attrib['platform']
-        if not name_platform.strip():
-            name_platform = data.attrib['platformName']
+        platform_id = data.attrib['platform'].strip()
+        name_platform = platform_id or data.get('platformName')
+
         match = re.search(r'[0-9].*$', data.attrib['platformName'])
         name_platform = match.group(0) if match is not None else name_platform
-        if not name_platform:
-            name_platform = None
 
-        full_platform = data.attrib['platformName']
-        if not full_platform:
-            full_platform = name_platform
+        full_platform = data.attrib['platformName'].strip() or name_platform
         if name_platform == full_platform and 'pointType' in data.attrib:
             full_platform = '%s %s' % (data.attrib['pointType'], name_platform)
-        if not full_platform:
-            full_platform = None
 
         platform = Platform(stop=location, name=name_platform, full_name=full_platform)
-        if name_platform is not None:
-            platform.id = ':'.join((str(location.id), data.attrib['area'], name_platform))
+        if platform_id:
+            platform.id = ':'.join((str(location.id), data.attrib['area'], platform_id))
 
         ifopt = data.attrib.get('gid', '').split(':')
         if len(ifopt) == 3:
@@ -968,21 +922,14 @@ class EFA(API):
             if full_platform is not None:
                 platform.ifopt = ':'.join(ifopt)
 
-        result = TimeAndPlace(platform)
-
         if data.attrib.get('x'):
             platform.coords = Coordinates(float(data.attrib['y']) / 1000000, float(data.attrib['x']) / 1000000)
 
-        # for genattr in data.findall('./genAttrList/genAttrElem'):
-        #  	name = genattr.find('name').text
-        # 	value = genattr.find('value').text
-        # 	if name == 'platformChange' and value == 'changed':
-        # 		result.changed_platform = True
-
-        self._parse_timeandplace_time(data, result, walk)
+        result = TimeAndPlace(platform)
+        result.arrival, result.departure, result.passthrough = self._parse_timeandplace_time(data)
         return result
 
-    def _parse_timeandplace_time(self, data, point, walk=False):
+    def _parse_timeandplace_time(self, data):
         # There are three ways to describe the time
         if data.attrib.get('usage', ''):
             # Used for routes (only arrival or departure time)
@@ -996,13 +943,13 @@ class EFA(API):
             livetime = None
             if len(times) > 0:
                 plantime = times[0]
-            if len(times) == 2 and not walk:
+            if len(times) == 2:
                 livetime = times[1]
 
             if data.attrib['usage'] == 'departure':
-                point.departure = RealtimeTime(time=plantime, livetime=livetime)
-            elif data.attrib['usage'] == 'arival':
-                point.arrival = RealtimeTime(time=plantime, livetime=livetime)
+                return None, RealtimeTime(time=plantime, livetime=livetime), None
+            elif data.attrib['usage'] == 'arrival':
+                return RealtimeTime(time=plantime, livetime=livetime), None, None
 
         elif 'countdown' in data.attrib:
             # Used for departure lists
@@ -1012,13 +959,12 @@ class EFA(API):
             if data.find('./itdRTDateTime'):
                 times.append(self._parse_datetime(data.find('./itdRTDateTime')))
 
-            plantime = None
-            livetime = None
+            plantime = livetime = None
             if len(times) > 0:
                 plantime = times[0]
-            if len(times) == 2 and not walk:
+            if len(times) == 2:
                 livetime = times[1]
-            point.departure = RealtimeTime(time=plantime, livetime=livetime)
+            return None, RealtimeTime(time=plantime, livetime=livetime), None
 
         else:
             # Also used for routes (arrival and departure time – most times)
@@ -1026,15 +972,17 @@ class EFA(API):
             for itddatetime in data.findall('./itdDateTime'):
                 times.append(self._parse_datetime(itddatetime))
 
-            if not [t for t in times if t is not None]:
-                point.passthrough = True
+            passthrough = not [t for t in times if t is not None]
 
+            arrival = departure = None
             if len(times) > 0 and times[0] is not None:
                 delay = int(data.attrib.get('arrDelay', '-1'))
                 delay = timedelta(minutes=delay) if delay >= 0 else None
-                point.arrival = RealtimeTime(time=times[0], delay=delay)
+                arrival = RealtimeTime(time=times[0], delay=delay)
 
             if len(times) > 1 and times[1] is not None:
                 delay = int(data.attrib.get('depDelay', '-1'))
                 delay = timedelta(minutes=delay) if delay >= 0 else None
-                point.departure = RealtimeTime(time=times[1], delay=delay)
+                departure = RealtimeTime(time=times[1], delay=delay)
+
+            return arrival, departure, passthrough
