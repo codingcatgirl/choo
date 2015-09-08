@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from setuptools import setup, find_packages
+from choo import version
 setup(
     name='choo',
     packages=find_packages(),
     py_modules=['choo.choo', 'choo.networks'],
-    version='0.1.0',
+    version=version,
     description='uniform interface for public transport APIs',
     author='Nils Martin Klünder',
     author_email='choo@nomoketo.de',
