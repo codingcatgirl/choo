@@ -64,6 +64,19 @@ For more information, see `Model Reference`_.
 Command Line Interface
 ----------------------
 
+.. code-block:: none
+
+    usage: choo [-h] [--pretty] network query
+
+    positional arguments:
+      network     network to use, e.g. vrr
+      query       any Searchable or Searchable.Request as JSON
+
+    optional arguments:
+      -h, --help  show this help message and exit
+      --pretty    pretty-print output JSON
+
+
 To get startet, let's look up Essen Hauptbahnhof in the VRR network using the command line interface.
 
 To do so, we first have to describe Essen Hauptbahnhof as a ``Stop``:
@@ -175,11 +188,16 @@ For more information, see `Model Reference`_.
 HTTP API
 --------
 
-Just start it and open it in your browser to see the API.
-
 .. code-block:: none
 
-    $ choo-server
+    usage: choo-server [-h] [--host HOST] [--port PORT]
+
+    optional arguments:
+      -h, --help   show this help message and exit
+      --host HOST  set address to listen on (default: 0.0.0.0)
+      --port PORT  set tcp port (default: random unused port)
+
+Just start it and open it in your browser to see the API.
 
 
 How to search for a Trip
