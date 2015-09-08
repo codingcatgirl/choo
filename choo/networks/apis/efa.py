@@ -537,6 +537,9 @@ class EFA(API):
     def _parse_trips(self, data):
         """ Parses itdRoute into a Trip """
         trips = []
+        if data is None:
+            return trips
+
         routes = data.findall('./itdRoute')
         for route in routes:
             trip = Trip()
