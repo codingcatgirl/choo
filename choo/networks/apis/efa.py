@@ -239,6 +239,13 @@ class EFA(API):
         results.origin = self._parse_location(data.find('./itdOdv[@usage="origin"]'))
         results.destination = self._parse_location(data.find('./itdOdv[@usage="destination"]'))
 
+        # todo – better exceptions here
+        if isinstance(results.origin, list):
+            raise ValueError('origin not found')
+
+        if isinstance(results.destination, list):
+            raise ValueError('destination not found')
+
         return results, servernow
 
     def _request_stops(self, stop):
