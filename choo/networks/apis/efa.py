@@ -75,8 +75,11 @@ class EFA(API):
         """ Convert a Location into POST parameters for the EFA Requests """
         myid = location.id if location.source == self.name else None
 
-        city = location.city if location.city is not None else None
-        name = location.name if location.name is not None else None
+        city = location.city
+        name = location.name
+
+        if city is None and location.full_name is not None:
+            name = location.full_name
 
         model = location.Model if isinstance(location, Location.Request) else location.__class__
 
