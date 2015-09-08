@@ -5,11 +5,20 @@ from datetime import datetime, timedelta
 class Field():
     _i = 0
 
-    def __init__(self, type_, none=True):
+    def __init__(self, type_, none=True, default=None):
         self.type = type_
         self.i = Field._i
         Field._i += 1
         self.none = none
+        self.default = default
+
+    def get_default(self):
+        if self.default is not None:
+            return self.default
+        elif self.none:
+            return None
+        else:
+            return self.type()
 
     def validate(self, value):
         if self.none and value is None:
@@ -30,8 +39,8 @@ class Field():
 
 
 class Any(Field):
-    def __init__(self, none=True):
-        super().__init__(None, none)
+    def __init__(self, none=True, default=None):
+        super().__init__(None, none, default)
 
     def validate(self, value):
         return True
@@ -44,8 +53,8 @@ class Any(Field):
 
 
 class DateTime(Field):
-    def __init__(self, none=True):
-        super().__init__(None, none)
+    def __init__(self, none=True, default=None):
+        super().__init__(None, none, default)
 
     def validate(self, value):
         if self.none and value is None:
@@ -64,8 +73,8 @@ class DateTime(Field):
 
 
 class Timedelta(Field):
-    def __init__(self, none=True):
-        super().__init__(None, none)
+    def __init__(self, none=True, default=None):
+        super().__init__(None, none, default)
 
     def validate(self, value):
         if self.none and value is None:
@@ -87,8 +96,8 @@ class Model(Field):
     _waiting = {}
     _models = {}
 
-    def __init__(self, type_, none=True):
-        super().__init__(type_, none=none)
+    def __init__(self, type_, none=True, default=None):
+        super().__init__(type_, none=none, default=default)
         if isinstance(type_, str):
             if type_ in Model._models:
                 type_ = Model._models[type_]
@@ -132,8 +141,8 @@ class Model(Field):
 
 
 class List(Field):
-    def __init__(self, field, none=False, set_=False):
-        super().__init__(list, none)
+    def __init__(self, field, none=False, set_=False, default=None):
+        super().__init__(list, none, default)
         self.field = field
         self.set = set_
 
@@ -170,7 +179,7 @@ class List(Field):
 
 
 class Set(List):
-    def validate(self, value):
+    def validate(self, value, default=None):
         assert super().validate(value)
         for item in value:
             assert self.field.validate(item)
@@ -182,8 +191,8 @@ class Set(List):
 
 
 class Tuple(Field):
-    def __init__(self, *types, none=False):
-        super().__init__(tuple, none)
+    def __init__(self, *types, none=False, default=None):
+        super().__init__(tuple, none, default)
         self.types = types
 
     def validate(self, value):
@@ -219,8 +228,8 @@ class Tuple(Field):
 
 
 class Dict(Field):
-    def __init__(self, key, value, none=True):
-        super().__init__(dict, none)
+    def __init__(self, key, value, none=True, default=None):
+        super().__init__(dict, none, default)
         self.key = key
         self.value = value
 
