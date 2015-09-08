@@ -260,7 +260,7 @@ class EFA(API):
         xml, servernow = self._request('XSLT_STOPFINDER_REQUEST', post)
         data = xml.find('./itdStopFinderRequest')
 
-        results = self._parse_odv(data.find('./itdOdv'))
+        results = self._parse_location(data.find('./itdOdv'))
         if type(results) != list:
             return stop.Model.Results([results] if isinstance(results, stop.Model) else []), servernow
 
@@ -304,7 +304,7 @@ class EFA(API):
         xml, servernow = self._request('XSLT_DM_REQUEST', post)
         data = xml.find('./itdDepartureMonitorRequest')
 
-        stop = self._parse_odv(data.find('./itdOdv'))
+        stop = self._parse_location(data.find('./itdOdv'))
 
         if type(stop) == list:
             return Stop.Results(stop)
