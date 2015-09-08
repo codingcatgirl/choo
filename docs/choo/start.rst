@@ -74,70 +74,46 @@ To do so, we first have to describe Essen Hauptbahnhof as a ``Stop``:
       "name": "Essen Hauptbahnhof"
     }]
 
-Now we pass this data to the API. For this, start the choo command line interface using:
+Now we pass this data to the API. We use the network ``vrr``. ``--pretty`` means that the resulting JSON should be pretty printed.
 
 .. code-block:: none
 
-    ./choo --cli
+    choo --pretty vrr '["Stop", {"name": "Essen Hauptbahnhof"}]'
 
-Set the data format (second line is the answer):
+We get the following result:
 
-.. code-block:: none
+.. code-block:: json
 
-    format json
-    ok "json"
-
-Set the network:
-
-.. code-block:: none
-
-    format vrr
-    ok "vrr"
-
-Pass the Stop to choo. It will try to get as much information as possible about that given stop with only one request to the server.
-
-.. code-block:: none
-
-    query ["Stop", {"name": "Essen Hauptbahnhof"}]
-    ok ["Stop",
+    [
+      "Stop",
       {
-        "train_station_name": "Essen Hbf",
-        "country": "de",
-        "city": "Essen",
-        "name": "Hauptbahnhof",
-        "near_stops": {
-          "results": [],
-          "last_update": "2015-06-17 15:49:12"
-        },
+        "id": 20009289,
+        "source": "vrr",
         "coords": [
           51.451137,
           7.012941
         ],
-        "ids": {
-          "ifopt": [
-            null,
-            "9289"
-          ],
-          "vrr": 20009289
-        },
-        "last_update": "2015-06-17 15:49:12",
+        "country": "de",
+        "city": "Essen",
+        "name": "Hauptbahnhof",
+        "full_name": "Essen Hbf",
+        "ifopt": "de:5113:9289",
         "rides": {  },
         "lines": {  }
       }
     ]
 
-As you can see, the API returned a Stop with more information (indentation added for documentary purposes). You can now exit choo using Ctrl+C.
+As you can see, the API returned a Stop with more information.
 
-The stop now is defined by it’s correct country, city and name attribute. Also, we have its coordinates now. In the _ids attribute you can find its ids. This ID would be enough to identify the stop. Our input JSON could also have been ``["Stop", {"ids": {"vrr": 20009289}}]`` with the same result.
+The stop now is defined by it’s correct country, city, name and full_name attribute. Also, we have its coordinates now. ``source`` contains the name of the network that gave us this data. ``id`` is the ID of the Stop in this network.
 
-The ``rides`` and ``lines`` attributes were shortened in this example but will give you ``Ride.Results`` and ``Line.Results`` if the API provides this information. (If not, you can still use a ``Ride.Request`` oder ``Line.Request`` to request it explicitely.
-
-For more information about the command line syntax, see `Command Line Usage`_.
+The ``rides`` and ``lines`` attributes were shortened in this example but will give you ``Ride.Results`` and ``Line.Results`` if the API provides this information. If not, you can still use a ``Ride.Request`` oder ``Line.Request`` to request it explicitely.
 
 For more information about the JSON format, see `Model Reference`_ and `Model Serialization`_.
 
-.. _`Command Line Usage`: cli.html
-.. _`Network API`: api.html
+For more information about how to query information, see `Network API`_.
+
+.. _`Network API`: networks.html
 .. _`Model Reference`: models.html
 .. _`Model Serialization`: serializing.html
 
@@ -160,6 +136,7 @@ We created the Stop, got the network and used the generic .query() function of t
 
     print(essen.city)  # Essen
     print(essen.name)  # Hauptbahnhof
+    print(essen.full_name)  # Essen Hbf
 
     # iterates through all lines
     for line in essen.lines:
