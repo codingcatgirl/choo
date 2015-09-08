@@ -24,5 +24,5 @@ setup(
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator',
         'Topic :: Internet'],
-    include_package_data = True
+    include_package_data=True
 )
