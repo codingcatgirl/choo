@@ -213,8 +213,8 @@ class Collectable(Searchable):
         super().apply_recursive(**kwargs)
 
         collect = kwargs.get('collect')
-        if collect is not None and self.id is not None:
-            myid = (self._serialized_name(), self.id)
+        if collect is not None and self.id is not None and self.source is not None:
+            myid = (self._serialized_name(), self.source, self.id)
             replace_with = collect.get(myid)
             if replace_with is None:
                 collect[myid] = self
