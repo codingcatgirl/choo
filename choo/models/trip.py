@@ -5,8 +5,8 @@ from .locations import Location, AbstractLocation
 from .ride import Ride, RideSegment
 from .line import Line, LineType, LineTypes
 from .tickets import TicketList
-from . import fields
 from datetime import timedelta, datetime
+from . import fields
 
 
 class Trip(Searchable):
@@ -18,59 +18,33 @@ class Trip(Searchable):
         super().__init__(**kwargs)
 
     class Request(Searchable.Request):
-        def __init__(self):
-            super().__init__()
-            self.walk_speed = 'normal'
-            self.origin = None
-            self.via = []
-            self.destination = None
-            self.departure = None
-            self.arrival = None
-            self.linetypes = LineTypes()
-            self.max_changes = None
+        walk_speed = fields.Field(str, default='normal')
+        origin = fields.Model(AbstractLocation)
+        via = fields.List(fields.Model(AbstractLocation))
+        destination = fields.Model(Location)
+        departure = fields.Model(datetime)
+        arrival = fields.Model(datetime)
+        linetypes = fields.Model(LineTypes)
+        max_changes = fields.Field(int)
 
-            self.with_bike = False
-            self.wheelchair = False
-            self.low_floor_only = False
-            self.allow_solid_stairs = True
-            self.allow_escalators = True
-            self.allow_elevators = True
+        with_bike = fields.Field(bool, default=False)
+        wheelchair = fields.Field(bool, default=False)
+        low_floor_only = fields.Field(bool, default=False)
+        allow_solid_stairs = fields.Field(bool, default=True)
+        allow_escalators = fields.Field(bool, default=True)
+        allow_elevators = fields.Field(bool, default=True)
 
-            self.waytype_origin = WayType('walk')
-            self.waytype_via = WayType('walk')
-            self.waytype_destination = WayType('walk')
+        waytype_origin = fields.Model(WayType, default=WayType('walk'))
+        waytype_via = fields.Model(WayType, default=WayType('walk'))
+        waytype_destination = fields.Model(WayType, default=WayType('walk'))
 
-            self.wayduration_origin = timedelta(minutes=10)
-            self.wayduration_via = timedelta(minutes=10)
-            self.wayduration_destination = timedelta(minutes=10)
+        wayduration_origin = fields.Field(timedelta, default=timedelta(minutes=10))
+        wayduration_via = fields.Field(timedelta, default=timedelta(minutes=10))
+        wayduration_destination = fields.Field(timedelta, default=timedelta(minutes=10))
 
-        @staticmethod
-        def _validate():
-            return (
-                # ('walk_speed', None),
-                ('origin', (None, AbstractLocation, Ride, Trip)),
-                # ('via', None),
-                ('destination', (None, AbstractLocation, Ride, Trip)),
-                ('departure', (None, datetime)),
-                ('arrival', (None, datetime)),
-                ('linetypes', LineTypes),
-                ('max_changes', (None, int)),
-
-                ('with_bike', bool),
-                ('wheelchair', bool),
-                ('low_floor_only', bool),
-                ('allow_solid_stairs', bool),
-                ('allow_escalators', bool),
-                ('allow_elevators', bool),
-
-                ('waytype_origin', fields.Field),
-                ('waytype_via', WayType),
-                ('waytype_destination', WayType),
-
-                ('wayduration_origin', timedelta),
-                ('wayduration_via', timedelta),
-                ('wayduration_destination', timedelta)
-            )
+        def __init__(self, **kwargs):
+            # magic, do not remove
+            super().__init__(**kwargs)
 
         def _matches(self, obj):
             if self.origin != obj.origin or self.destination != obj.destination:
