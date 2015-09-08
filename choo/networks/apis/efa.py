@@ -411,7 +411,8 @@ class EFA(API):
                 stop = self._parse_stop_line(near_stop)
                 if stop != result:
                     near_stops.append(stop)
-            result.near_stops = Stop.Results(near_stops)
+            if near_stops:
+                result.near_stops = Stop.Results(near_stops)
             return result
 
     def _parse_location_name(self, data, city, cityid, odvtype):
