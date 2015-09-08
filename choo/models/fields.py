@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from collections import Iterable
 from datetime import datetime, timedelta
 
 
@@ -139,6 +138,7 @@ class List(Field):
         self.set = set_
 
     def validate(self, value):
+        from collections import Iterable
         if self.none and value is None:
             return True
         assert isinstance(value, Iterable)
