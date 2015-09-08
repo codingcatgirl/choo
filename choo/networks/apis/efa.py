@@ -305,7 +305,8 @@ class EFA(API):
         stop = self._parse_location(data.find('./itdOdv'))
 
         if type(stop) == list:
-            return Stop.Results(stop), servernow
+            raise ValueError('Stop not found.')
+            # todo return Stop.Results(stop), servernow
 
         lineslist = data.find('./itdServingLines')
 
