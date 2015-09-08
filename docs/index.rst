@@ -11,7 +11,6 @@ Contents:
 
    choo/start
    choo/networks
-   choo/api
    choo/models
    choo/serializing
 
