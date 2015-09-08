@@ -170,3 +170,25 @@ We created the Stop, got the network and used the generic .query() function of t
         newsegment = ridesegment.ride[1:]
 
 For more information, see `Model Reference`_.
+
+
+How to search for a Trip
+========================
+
+Just query the Request-submodel of Trip, like explained above. Simple example:
+
+.. code-block:: json
+
+    ["Trip.Request", {
+        "origin:" ["Stop", {
+            "name": "Essen Hauptbahnhof"
+        }],
+        "destination:" ["Stop", {
+            "name": "Dortmund Hauptbahnhof"
+        }]
+    }]
+
+.. code-block:: python
+
+    Trip.Request(origin=Stop(name='Essen Hauptbahnhof'),
+                 destination=Stop(name='Dortmund Hauptbahnhof'))
