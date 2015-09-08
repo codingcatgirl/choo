@@ -27,10 +27,8 @@ class Serializable(metaclass=MetaSerializable):
         for name, field in self.__class__._fields.items():
             if name in kwargs and (field.none or kwargs[name] is not None):
                 setattr(self, name, kwargs[name])
-            elif field.none:
-                setattr(self, name, None)
             else:
-                setattr(self, name, field.type())
+                setattr(self, name, field.get_default())
 
     def validate(self):
         for name, field in self._fields.items():
