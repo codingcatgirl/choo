@@ -78,7 +78,7 @@ Now we pass this data to the API. We use the network ``vrr``. ``--pretty`` means
 
 .. code-block:: none
 
-    choo --pretty vrr '["Stop", {"name": "Essen Hauptbahnhof"}]'
+    $ choo --pretty vrr '["Stop", {"name": "Essen Hauptbahnhof"}]'
 
 We get the following result:
 
@@ -170,6 +170,16 @@ We created the Stop, got the network and used the generic .query() function of t
         newsegment = ridesegment.ride[1:]
 
 For more information, see `Model Reference`_.
+
+
+HTTP API
+--------
+
+Just start it and open it in your browser to see the API.
+
+.. code-block:: none
+
+    $ choo-server
 
 
 How to search for a Trip
