@@ -173,7 +173,7 @@ For more information, see `Model Reference`_.
 
 
 How to search for a Trip
-========================
+------------------------
 
 Just query the Request-submodel of Trip, like explained above. Simple example:
 
