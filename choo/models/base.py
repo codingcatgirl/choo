@@ -61,6 +61,7 @@ class Serializable(metaclass=MetaSerializable):
             cls_ = fields.Model._models[model_]
             assert issubclass(cls_, cls)
             return cls_.unserialize(data)
+        assert isinstance(data, (dict, OrderedDict))
         kwargs = {}
         for name, field in cls._fields.items():
             n = name[1:] if name.startswith('_') else name
