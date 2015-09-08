@@ -8,7 +8,7 @@ class API():
         self.name = name
         self.dump_raw = dump_raw
 
-    def query(self, obj, get_ids=False):
+    def query(self, obj):
         if isinstance(obj, Searchable):
             result, now = self._query_get(obj)
         elif isinstance(obj, Searchable.Request):
