@@ -137,8 +137,8 @@ class Searchable(Serializable, metaclass=MetaSearchable):
     class Request(Serializable, metaclass=MetaSearchableInner):
         limit = fields.Field(int)
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
             self.limit = None
 
         def matches(self, obj):
