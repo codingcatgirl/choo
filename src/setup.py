@@ -4,7 +4,6 @@ from choo import __version__
 setup(
     name='choo',
     packages=find_packages(),
-    py_modules=['choo.choo', 'choo.networks'],
     version=__version__,
     description='uniform interface for public transport APIs',
     author='Laura Klünder',
@@ -16,6 +15,8 @@ setup(
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.4',
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
