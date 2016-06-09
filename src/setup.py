@@ -9,7 +9,7 @@ setup(
     author='Laura Klünder',
     author_email='choo@codingcatgirl.de',
     url='https://github.com/codingcatgirl/choo',
-    install_requires=['requests'],
+    install_requires=['requests', 'defusedxml'],
     license='Apache License 2.0',
     scripts=['choo/choo-cli', 'choo/choo-server'],
     classifiers=[
