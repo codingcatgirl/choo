@@ -49,11 +49,11 @@ class OdvLocationList(XMLParser):
         """ Parses the odvNameElem of an ODV """
         odvtype = data.attrib.get('anyType', odvtype)
         if odvtype == 'stop':
-            return 'stop', OdvNameElemStop(self, data, city)
+            return 'stop', (OdvNameElemStop(self, data, city), )
         elif odvtype == 'poi':
-            return 'poi', OdvNameElemPOI(self, data, city)
+            return 'poi', (OdvNameElemPOI(self, data, city), )
         elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
-            return 'address', OdvNameElemAddress(self, data, city)
+            return 'address', (OdvNameElemAddress(self, data, city), )
         else:
             raise ParserError(self, 'Unknown ofvtype: %s' % odvtype)
 

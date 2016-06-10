@@ -35,7 +35,7 @@ class LocationQueryExecuter:
         return ()
 
 
-class LocationQuery(LocationQueryExecuter, queries.StopQuery):
+class LocationQuery(LocationQueryExecuter, queries.LocationQuery):
     pass
 
 
