@@ -89,14 +89,6 @@ class OdvNameElemLocation(Location.XMLParser):
                            float(data.attrib['x']) / 1000000)
 
 
-class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
-    pass
-
-
-class OdvNameElemPOI(POI.XMLParser, OdvNameElemLocation):
-    pass
-
-
 class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
     @parser_property
     def street(self, data, city):
@@ -112,3 +104,11 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
         if name is not None:
             return name
         return '%s %s' % (self.street, self.number)
+
+
+class OdvNameElemStop(Stop.XMLParser, OdvNameElemAddress):
+    pass
+
+
+class OdvNameElemPOI(POI.XMLParser, OdvNameElemAddress):
+    pass
