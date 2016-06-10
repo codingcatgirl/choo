@@ -63,6 +63,11 @@ class OdvLocationList(XMLParser):
 
 class OdvPlaceElemCity(City.XMLParser):
     @parser_property
+    def ids(self, data, city):
+        myid = data.attrib.get('stateless')
+        return myid and {self.network.name: myid}
+
+    @parser_property
     def name(self, data, country=None):
         return data.text
 
