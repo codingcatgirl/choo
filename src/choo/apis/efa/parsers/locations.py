@@ -102,6 +102,9 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
     def name(self, data, city):
         name = data.attrib.get('objectName', data.text)
         if name is not None:
+            number = self.number
+            if number and number not in name:
+                name = '%s %s' % (name, number)
             return name
         return '%s %s' % (self.street, self.number)
 
