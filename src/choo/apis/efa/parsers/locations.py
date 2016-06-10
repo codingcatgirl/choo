@@ -106,9 +106,9 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
         return '%s %s' % (self.street, self.number)
 
 
-class OdvNameElemStop(Stop.XMLParser, OdvNameElemAddress):
+class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
     pass
 
 
-class OdvNameElemPOI(POI.XMLParser, OdvNameElemAddress):
+class OdvNameElemPOI(POI.XMLParser, OdvNameElemLocation):
     pass
