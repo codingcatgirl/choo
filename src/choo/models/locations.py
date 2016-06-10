@@ -4,14 +4,14 @@ from ..types import Coordinates
 from .base import Field, Model, ModelWithIDs
 
 
-class Location(Model):
+class GeoPoint(Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     coords = Field(Coordinates)
 
 
-class Platform(Location, ModelWithIDs):
+class Platform(GeoPoint, ModelWithIDs):
     stop = Field(Union['Stop'])
     ifopt = Field(str)
     name = Field(str)
@@ -36,11 +36,13 @@ class Platform(Location, ModelWithIDs):
         return None
 
 
-class Address(Location):
+class Location(GeoPoint):
     country = Field(str)
     city = Field(str)
-    address = Field(str)
     name = Field(str)
+
+
+class Address(Location):
     street = Field(str)
     number = Field(str)
     # near_stops = fields.Model('Stop.Results')
@@ -60,7 +62,7 @@ class Address(Location):
             self.name = name
 
     def __repr__(self):
-        return '%s(%s, %s, %s)' % (self.__class__.__name__, repr(self.country), repr(self.city), repr(self.name))
+        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.city, self.name)
 
     def __eq__(self, other):
         if not isinstance(other, Location):
@@ -73,7 +75,11 @@ class Address(Location):
         return None
 
 
-class Stop(Address, ModelWithIDs):
+class Addressable(Location):
+    address = Field(Address)
+
+
+class Stop(Addressable, ModelWithIDs):
     ifopt = Field(str)
     uic = Field(str)
     # rides = fields.Model('Ride.Results')
@@ -81,9 +87,6 @@ class Stop(Address, ModelWithIDs):
 
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
-
-    def __repr__(self):
-        return '<Stop %s>' % repr(self.full_name if self.full_name else (self.city, self.name))
 
     def __eq__(self, other):
         if not isinstance(other, Stop):
@@ -103,7 +106,7 @@ class Stop(Address, ModelWithIDs):
         return None
 
 
-class POI(Address, ModelWithIDs):
+class POI(Addressable, ModelWithIDs):
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(country=country, city=city, name=name, **kwargs)
 
