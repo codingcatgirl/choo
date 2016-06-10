@@ -1,4 +1,4 @@
-from ....models import City, POI, Address, Location, Stop
+from ....models import POI, Address, City, Location, Stop
 from ....types import Coordinates, StopIFOPT
 from ...base import ParserError, XMLParser, cached_property, parser_property
 

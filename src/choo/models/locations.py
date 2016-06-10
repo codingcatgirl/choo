@@ -79,7 +79,8 @@ class Address(Location):
     # near_stops = fields.Model('Stop.Results')
 
     def __repr__(self):
-        return '<%s: %s-%s %s, %s>' % (self.__class__.__name__, self.country.upper(), self.postcode, self.city_name, self.name)
+        return '<%s: %s-%s %s, %s>' % (self.__class__.__name__, self.country.upper(),
+                                       self.postcode, self.city_name, self.name)
 
 
 class Addressable(Location):
