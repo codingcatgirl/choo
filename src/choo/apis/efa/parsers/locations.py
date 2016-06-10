@@ -47,6 +47,7 @@ class OdvLocationList(XMLParser):
 
     def _parse_location_name(self, data, city, cityid, odvtype):
         """ Parses the odvNameElem of an ODV """
+        odvtype = data.attrib.get('anyType', odvtype)
         if odvtype == 'stop':
             return OdvNameElemStop(self, data, city)
         elif odvtype == 'poi':
