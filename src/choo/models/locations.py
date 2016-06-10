@@ -1,6 +1,6 @@
 from typing import Union
 
-from ..types import Coordinates
+from ..types import Coordinates, PlatformIFOPT, StopIFOPT
 from .base import Field, Model, ModelWithIDs
 
 
@@ -13,7 +13,7 @@ class GeoPoint(Model):
 
 class Platform(GeoPoint, ModelWithIDs):
     stop = Field(Union['Stop'])
-    ifopt = Field(str)
+    ifopt = Field(PlatformIFOPT)
     name = Field(str)
     full_name = Field(str)
 
@@ -42,8 +42,9 @@ class City(ModelWithIDs):
     official_id = Field(str)
     name = Field(str)
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(self, name=None, country=None, **kwargs):
         super().__init__(**kwargs)
+        self.country = country
         self.name = name
 
     def __repr__(self):
@@ -54,14 +55,21 @@ class Location(GeoPoint):
     city = Field(City)
     name = Field(str)
 
-    def __init__(self, country=None, city=None, name=None, **kwargs):
+    def __init__(self, city=None, name=None, **kwargs):
         super().__init__(**kwargs)
-        self.country = country
         self.city = city
         self.name = name
 
+    @property
+    def country(self):
+        return self.city.country if self.city else None
+
+    @property
+    def city_name(self):
+        return self.city.name if self.city else None
+
     def __repr__(self):
-        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.city.country, self.city.name, self.name)
+        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.city_name, self.name)
 
 
 class Address(Location):
@@ -71,7 +79,7 @@ class Address(Location):
     # near_stops = fields.Model('Stop.Results')
 
     def __repr__(self):
-        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.city, self.postcode, self.name)
+        return '<%s: %s-%s %s, %s>' % (self.__class__.__name__, self.country.upper(), self.postcode, self.city_name, self.name)
 
 
 class Addressable(Location):
@@ -79,13 +87,19 @@ class Addressable(Location):
 
 
 class Stop(Addressable, ModelWithIDs):
-    ifopt = Field(str)
+    ifopt = Field(StopIFOPT)
     uic = Field(str)
     # rides = fields.Model('Ride.Results')
     # lines = fields.Model('Line.Results')
 
-    def __init__(self, country=None, city=None, name=None, **kwargs):
-        super().__init__(country=country, city=city, name=name, **kwargs)
+    def __init__(self, city=None, name=None, **kwargs):
+        super().__init__(city=city, name=name, **kwargs)
+
+    @property
+    def country(self):
+        if self.ifopt:
+            return self.ifopt.country
+        return self.city.country if self.city else None
 
     def __eq__(self, other):
         if not isinstance(other, Stop):
@@ -106,8 +120,8 @@ class Stop(Addressable, ModelWithIDs):
 
 
 class POI(Addressable, ModelWithIDs):
-    def __init__(self, country=None, city=None, name=None, **kwargs):
-        super().__init__(country=country, city=city, name=name, **kwargs)
+    def __init__(self, city=None, name=None, **kwargs):
+        super().__init__(city=city, name=name, **kwargs)
 
     def __eq__(self, other):
         if not isinstance(other, POI):

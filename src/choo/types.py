@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime, timedelta
 from enum import Enum
 
@@ -90,6 +91,31 @@ class LiveTime:
             return self.expected_time < other
         else:
             return self.expected_time < other.expected_time
+
+
+class IFOPT:
+    @classmethod
+    def parse(cls, string):
+        if string is None:
+            return None
+        print(string)
+        try:
+            return cls(*string.split(':'))
+        except TypeError:
+            # Wrong number of arguments
+            return None
+
+    def __str__(self):
+        return ':'.join(self)
+
+
+class StopIFOPT(IFOPT, namedtuple('StopIFOPT', ('country', 'area', 'stop'))):
+    pass
+
+
+class PlatformIFOPT(IFOPT, namedtuple('PlatformIFOPT', ('country', 'area', 'stop', 'level', 'quay'))):
+    def get_stop_ifopt(self):
+        return StopIFOPT(*self[:3])
 
 
 class HierarchicEnumMixin:

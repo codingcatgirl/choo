@@ -111,7 +111,7 @@ class parser_property(object):
 
 def cached_property(func):
     def wrapped_func(self):
-        value = func(self, self.data)
+        value = func(self, self.data, *self._args, **self._kwargs)
         self.__dict__[func.__name__] = value
         return value
     return property(wrapped_func)
