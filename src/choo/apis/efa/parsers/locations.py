@@ -99,6 +99,10 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
         return data.attrib.get('buildingNumber') or data.attrib.get('houseNumber')
 
     @parser_property
+    def postcode(self, data, city):
+        return data.attrib.get('postCode')
+
+    @parser_property
     def name(self, data, city):
         name = data.attrib.get('objectName', data.text)
         if name is not None:

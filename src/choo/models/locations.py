@@ -59,7 +59,11 @@ class Location(GeoPoint):
 class Address(Location):
     street = Field(str)
     number = Field(str)
+    postcode = Field(str)
     # near_stops = fields.Model('Stop.Results')
+
+    def __repr__(self):
+        return '<%s: %s, %s %s, %s>' % (self.__class__.__name__, self.country, self.postcode, self.city, self.name)
 
 
 class Addressable(Location):
