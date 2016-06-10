@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 from choo.networks.de import vrr
-from choo.models import Stop
+from choo.models import Stop, City
 import code
 
 # collection = Collection('test')
 
-bs = Stop(city='essen', name='borbeck süd bf')
-results = list(vrr.locations.update(city='essen', name='borbeck'))
+bs = Stop(city=City('essen'), name='borbeck süd bf')
+results = list(vrr.locations.update(city=City('Aalborg'), name='bf'))
 code.interact(local=locals())
 
 

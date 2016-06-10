@@ -15,9 +15,10 @@ class EFA(API):
     StopQuery = StopQuery
     POIQuery = POIQuery
 
-    def __init__(self, name, base_url):
+    def __init__(self, name, base_url, preset):
         super().__init__(name)
         self.base_url = base_url
+        self.preset = preset
 
     def _request(self, endpoint, data):
         if os.environ.get('CHOO_DEBUG'):
@@ -32,24 +33,25 @@ class EFA(API):
     def _convert_location(self, location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
         r = None
+        city_name = location.city.name if location.city else None
         if isinstance(location, Stop) or isinstance(location, StopQuery):
             if location.ids and self.name in location.ids:
                 r = {'type': 'stop', 'place': None, 'name': str(location.ids[self.name])}
             elif location.ifopt:
                 r = {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % location.ifopt}
             else:
-                r = {'type': 'stop', 'place': location.city, 'name': location.name}
+                r = {'type': 'stop', 'place': city_name, 'name': location.name}
         elif isinstance(location, POI) or isinstance(location, POIQuery):
             if location.ids and self.name in location.ids:
                 r = {'type': 'poiID', 'name': str(location.ids[self.name])}
             else:
-                r = {'type': 'poi', 'place': location.city, 'name': location.name}
+                r = {'type': 'poi', 'place': city_name, 'name': location.name}
         elif isinstance(location, Address) or isinstance(location, AddressQuery):
-            r = {'type': 'address', 'place': location.city, 'name': location.name}
+            r = {'type': 'address', 'place': city_name, 'name': location.name}
 
         elif r is None and (isinstance(location, Location) or isinstance(location, LocationQuery)):
             if location.name:
-                r = {'type': 'any', 'place': location.city, 'name': location.name}
+                r = {'type': 'any', 'place': city_name, 'name': location.name}
 
         if r is None and location.coords:
             r = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % (location.coords.lon, location.coords.lat)}

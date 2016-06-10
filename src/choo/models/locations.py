@@ -36,24 +36,32 @@ class Platform(GeoPoint, ModelWithIDs):
         return None
 
 
-class Location(GeoPoint):
+class City(ModelWithIDs):
     country = Field(str)
-    city = Field(str)
+    state = Field(str)
+    official_id = Field(str)
+    name = Field(str)
+
+    def __init__(self, name=None, **kwargs):
+        super().__init__(**kwargs)
+        self.name = name
+
+    def __repr__(self):
+        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.state, self.name)
+
+
+class Location(GeoPoint):
+    city = Field(City)
     name = Field(str)
 
     def __init__(self, country=None, city=None, name=None, **kwargs):
         super().__init__(**kwargs)
-        if country:
-            self.country = country
-
-        if city:
-            self.city = city
-
-        if name:
-            self.name = name
+        self.country = country
+        self.city = city
+        self.name = name
 
     def __repr__(self):
-        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.city, self.name)
+        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.city.country, self.city.name, self.name)
 
 
 class Address(Location):
@@ -63,7 +71,7 @@ class Address(Location):
     # near_stops = fields.Model('Stop.Results')
 
     def __repr__(self):
-        return '<%s: %s, %s %s, %s>' % (self.__class__.__name__, self.country, self.postcode, self.city, self.name)
+        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.city, self.postcode, self.name)
 
 
 class Addressable(Location):

@@ -107,3 +107,11 @@ class parser_property(object):
 
     def __delete__(self, obj):
         raise AttributeError("can't delete a parser property")
+
+
+def cached_property(func):
+    def wrapped_func(self):
+        value = func(self, self.data)
+        self.__dict__[func.__name__] = value
+        return value
+    return property(wrapped_func)

@@ -29,7 +29,7 @@ class LocationQueryExecuter:
             return results if issubclass(Address, self.Model) else ()
         elif results.type == 'poi':
             return results if issubclass(POI, self.Model) else ()
-        if results.type == 'mixed':
+        elif results.type == 'mixed':
             return (r for r in results if isinstance(r, self.Model))
 
         return ()

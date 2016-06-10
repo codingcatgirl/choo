@@ -1,7 +1,6 @@
-from ....models import POI, Address, Location, Stop
-from ....models.base import parser_property
+from ....models import City, POI, Address, Location, Stop
 from ....types import Coordinates
-from ...base import ParserError, XMLParser
+from ...base import ParserError, XMLParser, cached_property, parser_property
 
 
 class OdvLocationList(XMLParser):
@@ -20,23 +19,24 @@ class OdvLocationList(XMLParser):
             city = None
         elif p.attrib['state'] != 'identified':
             if p.attrib['state'] == 'list':
-                return 'cities', (CityOnlyOdvStop(self, city) for city in p.find('./odvPlaceElem'))
+                return 'cities', (OdvPlaceElemCity(self, city) for city in p.find('./odvPlaceElem'))
             return 'none', ()
         else:
-            city = p.find('./odvPlaceElem').text
+            city = p.find('./odvPlaceElem')
 
         # Location.name
         n = data.find('./itdOdvName')
         if n.attrib['state'] == 'empty':
             if city is not None:
-                return 'cities', (CityOnlyOdvStop(self, city), )
+                return 'cities', (city, )
             return 'none', ()
 
         if n.attrib['state'] == 'identified':
             ne = n.find('./odvNameElem')
             # AnyTypes are used in some EFA instances instead of ODV types
             odvtype = ne.attrib.get('anyType', odvtype)
-            return self._parse_location_name(ne, city, cityid, odvtype)
+            odvtype, location = self._parse_location_name(ne, city, cityid, odvtype)
+            return odvtype, (location, )
 
         if n.attrib['state'] != 'list':
             return 'none', ()
@@ -49,11 +49,11 @@ class OdvLocationList(XMLParser):
         """ Parses the odvNameElem of an ODV """
         odvtype = data.attrib.get('anyType', odvtype)
         if odvtype == 'stop':
-            return 'stop', (OdvNameElemStop(self, data, city), )
+            return 'stop', OdvNameElemStop(self, data, city)
         elif odvtype == 'poi':
-            return 'poi', (OdvNameElemPOI(self, data, city), )
+            return 'poi', OdvNameElemPOI(self, data, city)
         elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
-            return 'address', (OdvNameElemAddress(self, data, city), )
+            return 'address', OdvNameElemAddress(self, data, city)
         else:
             raise ParserError(self, 'Unknown ofvtype: %s' % odvtype)
 
@@ -61,10 +61,49 @@ class OdvLocationList(XMLParser):
         yield from self.generator
 
 
-class CityOnlyOdvStop(Stop.XMLParser):
+class OdvPlaceElemCity(City.XMLParser):
     @parser_property
-    def city(self, data):
+    def name(self, data):
         return data.text
+
+    @cached_property
+    def _omc(self, data):
+        omc = data.attrib['omc']
+        if self.network.preset == 'de':
+            states = {'01': 'sh', '02': 'hh', '03': 'ni', '04': 'hb',
+                      '05': 'nrw', '06': 'he', '07': 'rp', '08': 'bw',
+                      '09': 'by', '10': 'sl', '11': 'be', '12': 'bb',
+                      '13': 'mv', '14': 'sn', '15': 'st', '16': 'th'}
+            tmp = omc.zfill(8)
+            if len(tmp) == 8 and tmp[:2] in states:
+                return 'de', states[tmp[:2]], tmp
+            elif tmp.startswith('4'):
+                return 'at', None, tmp[1:6]
+            elif tmp.startswith('230'):
+                return 'ch', None, None
+            elif tmp.startswith('250'):
+                return 'lu', None, None
+            elif tmp.startswith('260'):
+                return 'be', None, None
+            elif tmp.startswith('270'):
+                return 'nl', None, None
+            elif tmp.startswith('18'):
+                return 'pl', None, None
+            elif tmp.startswith('55'):
+                return 'cz', None, None
+        return None, None, None
+
+    @parser_property
+    def country(self, data):
+        return self._omc[0]
+
+    @parser_property
+    def state(self, data):
+        return self._omc[1]
+
+    @parser_property
+    def official_id(self, data):
+        return self._omc[2]
 
 
 class OdvNameElemLocation(Location.XMLParser):
@@ -75,7 +114,7 @@ class OdvNameElemLocation(Location.XMLParser):
 
     @parser_property
     def city(self, data, city):
-        return data.attrib.get('locality', city)
+        return OdvPlaceElemCity(self, city) if city else None
 
     @parser_property
     def name(self, data, city):
