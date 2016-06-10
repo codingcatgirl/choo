@@ -61,13 +61,9 @@ class OdvLocationList(XMLParser):
 
 
 class CityOnlyOdvStop(Stop.XMLParser):
-    def __init__(self, network, xml):
-        self.network = network
-        self._xml = xml
-
     @parser_property
-    def city(self):
-        return self._xml.text
+    def city(self, data):
+        return data.text
 
 
 class OdvNameElemLocation(Location.XMLParser):
