@@ -41,16 +41,7 @@ class Location(GeoPoint):
     city = Field(str)
     name = Field(str)
 
-
-class Address(Location):
-    street = Field(str)
-    number = Field(str)
-    # near_stops = fields.Model('Stop.Results')
-
     def __init__(self, country=None, city=None, name=None, **kwargs):
-        if self.__class__ == Location:
-            raise RuntimeError('Only instances of Location subclasses are allowed!')
-
         super().__init__(**kwargs)
         if country:
             self.country = country
@@ -64,15 +55,11 @@ class Address(Location):
     def __repr__(self):
         return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.city, self.name)
 
-    def __eq__(self, other):
-        if not isinstance(other, Location):
-            return False
 
-        if (self.city is not None and self.city == other.city) or self._not_too_far(other):
-            if self.name is not None and self.name == other.name:
-                return True
-
-        return None
+class Address(Location):
+    street = Field(str)
+    number = Field(str)
+    # near_stops = fields.Model('Stop.Results')
 
 
 class Addressable(Location):
