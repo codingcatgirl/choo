@@ -102,11 +102,7 @@ class Query(metaclass=MetaQuery):
         if name not in self._combined:
             raise AttributeError
 
-        try:
-            return self._data[name]
-        except KeyError:
-            pass
-        raise AttributeError('%s.%s is currently not set on this query.')
+        return self._data.get(name)
 
     def __setattr__(self, name, value):
         if name in self._combined:

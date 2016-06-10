@@ -27,10 +27,7 @@ class Field:
     def __get__(self, obj, cls):
         if obj is None:
             return self
-        try:
-            return obj._data[self.name]
-        except KeyError:
-            raise AttributeError('Attribute %s is not set.' % self.name)
+        return obj._data.get(self.name)
 
     def __set__(self, obj, value):
         if not self.validate(value):
