@@ -1,7 +1,7 @@
 from ....models import POI, Address, Location, Stop
 from ....models.base import parser_property
 from ....types import Coordinates
-from ...base import XMLParser
+from ...base import ParserError, XMLParser
 
 
 class OdvLocationList(XMLParser):
@@ -55,7 +55,7 @@ class OdvLocationList(XMLParser):
         elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
             return OdvNameElemAddress(self, data, city)
         else:
-            raise NotImplementedError('Unknown odvtype: %s' % odvtype)
+            raise ParserError(self, 'Unknown ofvtype: %s' % odvtype)
 
     def __iter__(self):
         yield from self.generator

@@ -1,3 +1,10 @@
+import json
+import os
+
+import defusedxml.ElementTree as ET
+from defusedxml import minidom
+
+
 class API:
     StopQuery = None
     TripQuery = None
@@ -20,6 +27,19 @@ class API:
         return self.TripQuery(self)
 
 
+class ParserError(Exception):
+    def __init__(self, parser, message):
+        self.parser = parser
+        self.message = message
+        self.pretty_data = self.parser.printable_data()
+
+        if os.environ.get('CHOO_DEBUG'):
+            message += '\n'+self.pretty_data
+
+        super().__init__(message)
+        self.message = self.actual
+
+
 class Parser:
     def __init__(self, parent, data, *args, **kwargs):
         self.network = parent.network
@@ -28,13 +48,21 @@ class Parser:
         self._args = args
         self._kwargs = kwargs
 
+    def printable_data(self, pretty=True):
+        raise NotImplementedError
+
 
 class XMLParser(Parser):
-    pass
+    def printable_data(self, pretty=True):
+        string = ET.tostring(self.data, 'utf-8')
+        if pretty:
+            string = minidom.parseString(string).toprettyxml(indent='  ')
+        return string
 
 
 class JSONParser(Parser):
-    pass
+    def printable_data(self, pretty=True):
+        return json.dumps(self.data, indent=2 if pretty else None)
 
 
 class parser_property(object):
