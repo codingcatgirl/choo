@@ -6,7 +6,10 @@ from defusedxml import minidom
 
 
 class API:
+    LocationQuery = None
+    AddressQuery = None
     StopQuery = None
+    POIQuery = None
     TripQuery = None
 
     def __init__(self, name):
@@ -15,10 +18,28 @@ class API:
         self.name = name
 
     @property
+    def locations(self):
+        if self.StopQuery is None:
+            raise NotImplementedError('Querying locations is not supported by this network.')
+        return self.LocationQuery(self)
+
+    @property
+    def addresses(self):
+        if self.AddressQuery is None:
+            raise NotImplementedError('Querying addresses is not supported by this network.')
+        return self.AddressQuery(self)
+
+    @property
     def stops(self):
         if self.StopQuery is None:
             raise NotImplementedError('Querying stops is not supported by this network.')
         return self.StopQuery(self)
+
+    @property
+    def pois(self):
+        if self.POIQuery is None:
+            raise NotImplementedError('Querying POIs is not supported by this network.')
+        return self.POIQuery(self)
 
     @property
     def trips(self):

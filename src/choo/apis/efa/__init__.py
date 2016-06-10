@@ -1,6 +1,6 @@
 from ..base import API
-from .queries import StopQuery
-from ...models import Stop, Address, POI
+from .queries import AddressQuery, LocationQuery, POIQuery, StopQuery
+from ...models import Stop, Address, POI, Location
 
 import requests
 from datetime import datetime
@@ -10,7 +10,10 @@ import defusedxml.ElementTree as ET
 
 
 class EFA(API):
+    LocationQuery = LocationQuery
+    AddressQuery = AddressQuery
     StopQuery = StopQuery
+    POIQuery = POIQuery
 
     def __init__(self, name, base_url):
         super().__init__(name)
@@ -36,14 +39,17 @@ class EFA(API):
                 r = {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % location.ifopt}
             else:
                 r = {'type': 'stop', 'place': location.city, 'name': location.name}
-        elif isinstance(location, POI):
+        elif isinstance(location, POI) or isinstance(location, POIQuery):
             if location.ids and self.name in location.ids:
                 r = {'type': 'poiID', 'name': str(location.ids[self.name])}
             else:
                 r = {'type': 'poi', 'place': location.city, 'name': location.name}
+        elif isinstance(location, Address) or isinstance(location, AddressQuery):
+            r = {'type': 'address', 'place': location.city, 'name': location.name}
 
-        if r is None and isinstance(location, Address):
-            r = {'type': 'address', 'place': location.city, 'name': location.address}
+        elif r is None and (isinstance(location, Location) or isinstance(location, LocationQuery)):
+            if location.name:
+                r = {'type': 'any', 'place': location.city, 'name': location.name}
 
         if r is None and location.coords:
             r = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % (location.coords.lon, location.coords.lat)}

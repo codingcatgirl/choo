@@ -22,8 +22,7 @@ class MetaQuery(type):
 
         cls._settings = OrderedDict()
         for base in cls.__bases__:
-            if base != object:
-                cls._settings.update(base._settings)
+            cls._settings.update(getattr(base, '_settings', {}))
         if '_settings' in attrs:
             cls._settings.update(attrs['_settings'])
 
@@ -70,7 +69,7 @@ class Query(metaclass=MetaQuery):
             raise self.Model.NotFound
         return next(iter(r))
 
-    def _execute(self, obj):
+    def _execute(self):
         raise TypeError('Cannot execute query not bound to a network')
 
     def setlimit(self, limit):

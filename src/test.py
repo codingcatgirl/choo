@@ -6,7 +6,7 @@ import code
 # collection = Collection('test')
 
 bs = Stop(city='essen', name='borbeck süd bf')
-results = list(vrr.stops.update(city='essen', name='borbeck'))
+results = list(vrr.locations.update(city='essen', name='borbeck'))
 code.interact(local=locals())
 
 

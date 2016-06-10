@@ -36,12 +36,12 @@ class OdvLocationList(XMLParser):
             ne = n.find('./odvNameElem')
             # AnyTypes are used in some EFA instances instead of ODV types
             odvtype = ne.attrib.get('anyType', odvtype)
-            return odvtype, (self._parse_location_name(ne, city, cityid, odvtype), )
+            return self._parse_location_name(ne, city, cityid, odvtype)
 
         if n.attrib['state'] != 'list':
             return 'none', ()
 
-        return 'mixed', (self._parse_location_name(item, city, cityid, odvtype)
+        return 'mixed', (self._parse_location_name(item, city, cityid, odvtype)[1]
                          for item in sorted(n.findall('./odvNameElem'), reverse=True,
                                             key=lambda e: e.attrib.get('matchQuality', 0)))
 
@@ -49,11 +49,11 @@ class OdvLocationList(XMLParser):
         """ Parses the odvNameElem of an ODV """
         odvtype = data.attrib.get('anyType', odvtype)
         if odvtype == 'stop':
-            return OdvNameElemStop(self, data, city)
+            return 'stop', OdvNameElemStop(self, data, city)
         elif odvtype == 'poi':
-            return OdvNameElemPOI(self, data, city)
+            return 'poi', OdvNameElemPOI(self, data, city)
         elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
-            return OdvNameElemAddress(self, data, city)
+            return 'address', OdvNameElemAddress(self, data, city)
         else:
             raise ParserError(self, 'Unknown ofvtype: %s' % odvtype)
 

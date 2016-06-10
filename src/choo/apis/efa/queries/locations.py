@@ -1,9 +1,9 @@
 from .... import queries
-from ....models import Stop
+from ....models import POI, Address, Stop
 from ..parsers.locations import OdvLocationList
 
 
-class StopQuery(queries.StopQuery):
+class LocationQueryExecuter:
     def _execute(self):
         post = {
             'language': 'de',
@@ -21,11 +21,31 @@ class StopQuery(queries.StopQuery):
         data = xml.find('./itdStopFinderRequest')
 
         results = OdvLocationList(self, data.find('./itdOdv'))
-
-        if results.type == 'stop':
-            return results
-
+        if results.type == 'none':
+            return ()
+        elif results.type == 'stop':
+            return results if issubclass(Stop, self.Model) else ()
+        elif results.type == 'address':
+            return results if issubclass(Address, self.Model) else ()
+        elif results.type == 'poi':
+            return results if issubclass(POI, self.Model) else ()
         if results.type == 'mixed':
-            return (r for r in results if isinstance(r, Stop))
+            return (r for r in results if isinstance(r, self.Model))
 
         return ()
+
+
+class LocationQuery(LocationQueryExecuter, queries.StopQuery):
+    pass
+
+
+class AddressQuery(LocationQueryExecuter, queries.AddressQuery):
+    pass
+
+
+class StopQuery(LocationQueryExecuter, queries.StopQuery):
+    pass
+
+
+class POIQuery(LocationQueryExecuter, queries.POIQuery):
+    pass

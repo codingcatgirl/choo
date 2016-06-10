@@ -1,3 +1,3 @@
-from .locations import StopQuery
+from .locations import AddressQuery, LocationQuery, POIQuery, StopQuery
 
-__all__ = ['StopQuery']
+__all__ = ['AddressQuery', 'LocationQuery', 'POIQuery', 'StopQuery']
