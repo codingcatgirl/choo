@@ -61,16 +61,7 @@ class OdvLocationList(XMLParser):
         yield from self.generator
 
 
-class OdvPlaceElemCity(City.XMLParser):
-    @parser_property
-    def ids(self, data, city):
-        myid = data.attrib.get('stateless')
-        return myid and {self.network.name: myid}
-
-    @parser_property
-    def name(self, data, country=None):
-        return data.text
-
+class OmcParserMixin:
     @cached_property
     def _omc(self, data, country=None):
         omc = data.attrib['omc']
@@ -111,6 +102,23 @@ class OdvPlaceElemCity(City.XMLParser):
         return self._omc[2]
 
 
+class OdvPlaceElemCity(City.XMLParser, OmcParserMixin):
+    @parser_property
+    def ids(self, data, city):
+        myid = data.attrib.get('stateless')
+        return myid and {self.network.name: myid}
+
+    @parser_property
+    def name(self, data, country=None):
+        return data.text
+
+
+class OdvNameElemCity(City.XMLParser, OmcParserMixin):
+    @parser_property
+    def name(self, data, country=None):
+        return data.attrib.get('locality')
+
+
 class OdvNameElemLocation(Location.XMLParser):
     @parser_property
     def ids(self, data, city):
@@ -120,9 +128,7 @@ class OdvNameElemLocation(Location.XMLParser):
     def _city_parse(self, data, city, country=None):
         if city is not None:
             return OdvPlaceElemCity(self, city, country=country)
-
-        city = data.attrib.get('locality')
-        return City(name=city, country=country) if city else None
+        return OdvNameElemCity(self, data, country=country)
 
     @parser_property
     def city(self, data, city):
