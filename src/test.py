@@ -6,7 +6,7 @@ import code
 # collection = Collection('test')
 
 bs = Stop(city=City('essen'), name='borbeck süd bf')
-results = vrr.locations.where(city=None, name='Essen').execute()
+results = vrr.locations.where(city__name='essen', name='borbeck').execute()
 code.interact(local=locals())
 
 

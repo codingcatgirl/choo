@@ -11,18 +11,35 @@ class Field:
     """
     _i = 0
 
-    def __init__(self, types):
+    def __init__(self, types, model=None):
         self.types = Optional[types]
+        self.Model = model
         self.i = Field._i
         Field._i += 1
 
-    def set_model_and_name(self, model, name):
-        self.model = model
+    def set_name(self, name):
         self.name = name
         return self
 
     def validate(self, value):
         return issubclass(type(value), self.types)
+
+    def get_proxy_fields(self):
+        if self.Model is None:
+            return OrderedDict()
+        return OrderedDict(((self.name+'__'+name, ProxyField(self, name)) for name in self.Model._fields.keys()))
+
+    def proxy_set(self, obj, name, value):
+        subobj = getattr(obj, self.name)
+        if subobj is None:
+            subobj = self.Model()
+            setattr(obj, self.name, subobj)
+
+        setattr(subobj, name, value)
+
+    def proxy_get(self, obj, name):
+        subobj = getattr(obj, self.name)
+        return None if subobj is None else getattr(subobj, name)
 
     def __get__(self, obj, cls):
         if obj is None:
@@ -34,11 +51,29 @@ class Field:
             raise TypeError('Invalid type for attribute %s.' % self.name)
         obj._data[self.name] = value
 
-    def __delete__(self, obj):
-        try:
-            del obj._data[self.name]
-        except KeyError:
-            raise AttributeError('Attribute %s is not set.' % self.name)
+
+class ProxyField:
+    """
+    A proxy field on a Choo Model (e.g. Stop.city__name)
+    """
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
+
+    def set_name(self, name):
+        self.name = name
+        return self
+
+    def validate(self, value):
+        return issubclass(type(value), self.types)
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        return self.parent.proxy_get(obj, self.name)
+
+    def __set__(self, obj, value):
+        return self.parent.proxy_set(obj, self.name, value)
 
 
 def give_none(self, *args, **kwargs):
@@ -47,22 +82,31 @@ def give_none(self, *args, **kwargs):
 
 class MetaModel(type):
     def __new__(mcs, name, bases, attrs):
-        cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
-        cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
-        cls._fields = OrderedDict()
-        for base in cls.__bases__:
-            cls._fields.update(getattr(base, '_fields', {}))
-
-        cls._fields.update(OrderedDict(sorted(
-            [(n, v.set_model_and_name(cls, n)) for n, v in attrs.items() if isinstance(v, Field)],
+        fields = OrderedDict()
+        fields.update(OrderedDict(sorted(
+            [(n, v.set_name(n)) for n, v in attrs.items() if isinstance(v, Field)],
             key=lambda v: v[1].i)
         ))
+
+        for field in tuple(fields.values()):
+            proxy_fields = field.get_proxy_fields()
+            fields.update(proxy_fields)
+            attrs.update(proxy_fields)
+
+        for base in bases:
+            fields.update(getattr(base, '_fields', {}))
+
+        attrs['_fields'] = fields
+        attrs['_nonproxy_fields'] = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
+
+        cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
+        cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
 
         if not issubclass(cls, Parser):
             cls.XMLParser = type('XMLParser', (XMLParser, cls), {'__module__': attrs['__module__'], 'Model': cls})
             cls.JSONParser = type('JSONParser', (JSONParser, cls), {'__module__': attrs['__module__'], 'Model': cls})
         elif Parser not in sum([b.__bases__ for b in cls.__bases__], ()):
-            for name, field in cls._fields.items():
+            for name, field in cls._nonproxy_fields.items():
                 if getattr(cls, name) is field:
                     setattr(cls, name, parser_property(give_none, name))
 

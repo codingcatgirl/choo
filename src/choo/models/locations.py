@@ -52,7 +52,7 @@ class City(ModelWithIDs):
 
 
 class Location(GeoPoint):
-    city = Field(City)
+    city = Field(City, City)
     name = Field(str)
 
     def __init__(self, city=None, name=None, **kwargs):
@@ -62,14 +62,10 @@ class Location(GeoPoint):
 
     @property
     def country(self):
-        return self.city.country if self.city else None
-
-    @property
-    def city_name(self):
-        return self.city.name if self.city else None
+        return self.city__country
 
     def __repr__(self):
-        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.city_name, self.name)
+        return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.city__name, self.name)
 
 
 class Address(Location):
@@ -79,8 +75,8 @@ class Address(Location):
     # near_stops = fields.Model('Stop.Results')
 
     def __repr__(self):
-        return '<%s: %s-%s %s, %s>' % (self.__class__.__name__, self.country.upper(),
-                                       self.postcode, self.city_name, self.name)
+        return '<%s: %s-%s %s, %s>' % (self.__class__.__name__, self.country,
+                                       self.postcode, self.city__name, self.name)
 
 
 class Addressable(Location):
@@ -98,9 +94,7 @@ class Stop(Addressable, ModelWithIDs):
 
     @property
     def country(self):
-        if self.ifopt:
-            return self.ifopt.country
-        return self.city.country if self.city else None
+        return self.ifopt.country if self.ifopt else self.city__country
 
     def __eq__(self, other):
         if not isinstance(other, Stop):
