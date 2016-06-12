@@ -11,31 +11,6 @@ class GeoPoint(Model):
     coords = Field(Coordinates)
 
 
-class Platform(GeoPoint, ModelWithIDs):
-    stop = Field(Union['Stop'])
-    ifopt = Field(PlatformIFOPT)
-    name = Field(str)
-    full_name = Field(str)
-
-    def __init__(self, stop=None, name=None, full_name=None, **kwargs):
-        super().__init__(stop=stop, name=name, full_name=full_name, **kwargs)
-
-    def __repr__(self):
-        return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
-
-    def __eq__(self, other):
-        if not isinstance(other, Platform):
-            return False
-
-        if self.stop != other.stop:
-            return False
-
-        if self.coords is not None and self.coords == other.coords:
-            return True
-
-        return None
-
-
 class City(ModelWithIDs):
     country = Field(str)
     state = Field(str)
@@ -80,7 +55,7 @@ class Address(Location):
 
 
 class Addressable(Location):
-    address = Field(Address)
+    address = Field(Address, Address)
 
 
 class Stop(Addressable, ModelWithIDs):
@@ -123,3 +98,28 @@ class POI(Addressable, ModelWithIDs):
             return False
 
         return super().__eq__(other)
+
+
+class Platform(GeoPoint, ModelWithIDs):
+    stop = Field(Stop, Stop)
+    ifopt = Field(PlatformIFOPT)
+    name = Field(str)
+    full_name = Field(str)
+
+    def __init__(self, stop=None, name=None, full_name=None, **kwargs):
+        super().__init__(stop=stop, name=name, full_name=full_name, **kwargs)
+
+    def __repr__(self):
+        return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
+
+    def __eq__(self, other):
+        if not isinstance(other, Platform):
+            return False
+
+        if self.stop != other.stop:
+            return False
+
+        if self.coords is not None and self.coords == other.coords:
+            return True
+
+        return None

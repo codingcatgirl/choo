@@ -11,8 +11,8 @@ class Line(ModelWithIDs):
     name = Field(str)
     shortname = Field(str)
     route = Field(str)
-    first_stop = Field(Stop)
-    last_stop = Field(Stop)
+    first_stop = Field(Stop, Stop)
+    last_stop = Field(Stop, Stop)
     network = Field(str)
     operator = Field(str)
 
@@ -24,7 +24,7 @@ class Line(ModelWithIDs):
 
 
 class MetaRide(ModelWithIDs):
-    line = Field(Line)
+    line = Field(Line, Line)
     number = Field(str)
     direction = Field(str)
     bike_friendly = Field(bool)
@@ -32,14 +32,14 @@ class MetaRide(ModelWithIDs):
 
 
 class Ride(ModelWithIDs):
-    meta = Field(MetaRide)
+    meta = Field(MetaRide, MetaRide)
     canceled = Field(bool)
     infotexts = Field(Iterable[str])
 
 
 class RidePoint(Model):
-    platform = Field(Platform)
-    stop = Field(Stop)
+    platform = Field(Platform, Platform)
+    stop = Field(Stop, Stop)
     arrival = Field(LiveTime)
     departure = Field(LiveTime)
     passthrough = Field(bool)

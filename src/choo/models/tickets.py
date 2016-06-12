@@ -3,21 +3,6 @@ from typing import Mapping, Union
 from .base import Field, Model
 
 
-class TicketList(Model):
-    currency = Field(str)
-    level_name = Field(str)
-    single = Field(Union['TicketData'])
-    bike = Field(Union['TicketData'])
-    other = Field(Mapping[str, 'TicketData'])
-
-    def __init__(self, **kwargs):
-        # magic, do not remove
-        super().__init__(**kwargs)
-
-    def __repr__(self):
-        return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))
-
-
 class TicketData(Model):
     authority = Field(str)
     level = Field(str)
@@ -50,3 +35,18 @@ class TicketData(Model):
         if self.price_child is not None:
             childprice = ' %.2f' % self.price_child
         return '<TicketData %s %s %.2f%s>' % (self.authority, self.level, self.price, childprice)
+
+
+class TicketList(Model):
+    currency = Field(str)
+    level_name = Field(str)
+    single = Field(TicketData, TicketData)
+    bike = Field(TicketData, TicketData)
+    other = Field(Mapping[str, TicketData])
+
+    def __init__(self, **kwargs):
+        # magic, do not remove
+        super().__init__(**kwargs)
+
+    def __repr__(self):
+        return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))

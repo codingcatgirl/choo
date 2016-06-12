@@ -10,9 +10,9 @@ RideSegment = 1
 
 
 class Trip(Model):
-    origin = Field(Location)
+    origin = Field(Location, Location)
     via = Field(Iterable[Location])
-    destination = Field(Location)
+    destination = Field(Location, Location)
     parts = Field(list)
     tickets = Field(TicketList)
     departure = Field(LiveTime)
@@ -157,8 +157,8 @@ class Trip(Model):
 
 class Way(Model):
     waytype = Field(WayType)
-    origin = Field(Location)
-    destination = Field(Location)
+    origin = Field(Location, Location)
+    destination = Field(Location, Location)
     distance = Field(float)
     duration = Field(timedelta)
     events = Field(WayEvent)
