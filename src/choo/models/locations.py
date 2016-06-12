@@ -1,5 +1,3 @@
-from typing import Union
-
 from ..types import Coordinates, PlatformIFOPT, StopIFOPT
 from .base import Field, Model, ModelWithIDs
 
