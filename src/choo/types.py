@@ -98,7 +98,7 @@ class IFOPT:
     def parse(cls, string):
         if string is None:
             return None
-        print(string)
+
         try:
             return cls(*string.split(':'))
         except TypeError:

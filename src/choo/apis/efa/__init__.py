@@ -33,6 +33,7 @@ class EFA(API):
     def _convert_location(self, location, wrap=''):
         """ Convert a Location into POST parameters for the EFA Requests """
         r = None
+
         city_name = location.city.name if location.city else None
         if isinstance(location, Stop) or isinstance(location, StopQuery):
             if location.ids and self.name in location.ids:
