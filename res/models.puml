@@ -2,7 +2,6 @@
 
 hide empty members
 
-' types
 namespace types {
     class Coordinates {
         lat: float
@@ -29,16 +28,25 @@ namespace types {
     }
     IFOPT <|-- PlatformIFOPT
 
+    abstract class HierarchicEnumMixin {
+    }
     class WayType {
     }
+    HierarchicEnumMixin <|-- WayType
+
     class WayEvent {
     }
-    class WalkSpeed {
-    }
+    HierarchicEnumMixin <|-- WayEvent
+
     class LineType {
+    }
+    HierarchicEnumMixin <|-- LineType
+
+    class WalkSpeed {
     }
     class LineTypes {
     }
+    LineTypes *-- LineType
 }
 
 namespace models {
@@ -117,7 +125,7 @@ namespace models {
         Location <|-- Platform
         ModelWithIDs <|-- Platform
         types.PlatformIFOPT -- Platform : < ifopt
-        Stop -- Platform : stop >
+        Stop- Platform : < stop
     }
 
 
@@ -127,7 +135,7 @@ namespace models {
         abstract class ModelWithIDs {
         }
         "models.base.Model" .. Model
-        Model <|. ModelWithIDs
+        ModelWithIDs .|> Model
         hide Model circle
         hide ModelWithIDs circle
 
@@ -161,7 +169,7 @@ namespace models {
             infotexts: Iterable[str]
         }
         ModelWithIDs <|-- MetaRide
-        Ride - MetaRide : < belongs to
+        MetaRide -- Ride : < meta
 
         class RidePoint {
             ride: Ride
@@ -172,10 +180,9 @@ namespace models {
             passthrough: bool
         }
         Model -|> RidePoint
-        RidePoint -- models.locations.Platform --  : < platform
-        RidePoint -- models.locations.Stop -- RidePoint : < stop
-        types.LiveTime -- RidePoint : < arrival
-        types.LiveTime -- RidePoint : < departure
+        models.locations.Platform -- RidePoint : < platform
+        models.locations.Stop -- RidePoint : < stop
+        types.LiveTime -- RidePoint : < arrival/departure
         RidePoint -- Ride : ride >
     }
 
@@ -186,7 +193,6 @@ namespace models {
         "models.base.Model" .. Model
         hide Model circle
 
-        ' models.tickets
         class TicketData {
             authority: str
             level: str
@@ -225,8 +231,8 @@ namespace models {
             linetypes: LineTypes
         }
         Model <|-- Trip
-        Trip -- models.locations.Location : < origin/destination/via
-        Trip -- models.tickets.TicketList : < tickets
+        Trip -- models.locations.Location : origin/destination/via >
+        Trip -- models.tickets.TicketList : tickets >
         Trip -- types.LiveTime : departure/arrival >
         types.LineTypes -- Trip : < linetypes
 
@@ -240,10 +246,9 @@ namespace models {
             path: Iterable[Coordinates]
         }
         Model <|-- Way
-        ' WayType -- Way : < waytype
-        ' Location -- Way : < origin
-        ' Location -- Way : < destination
-        ' WayEvent -- Way : < events
+        types.WayType -- Way : < waytype
+        models.locations.Location -- Way : < origin/destination
+        types.WayEvent -- Way : < events
     }
 }
 
