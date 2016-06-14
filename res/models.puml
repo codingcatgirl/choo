@@ -1,0 +1,234 @@
+@startuml
+
+' types
+class Coordinates {
+    lat: float
+    lon: float
+}
+class LiveTime {
+    time: datetime
+    delay: datetime
+}
+abstract class IFOPT {
+}
+class StopIFOPT {
+    country
+    area
+    stop
+}
+IFOPT <|-- StopIFOPT
+class PlatformIFOPT {
+    country
+    area
+    stop
+    level
+    quay
+}
+IFOPT <|-- PlatformIFOPT
+
+class WayType {
+}
+class WayEvent {
+}
+class WalkSpeed {
+}
+class LineType {
+}
+class LineTypes {
+}
+
+
+' models.base
+abstract class Model {
+}
+abstract class ModelWithIDs {
+    ids: dict
+}
+Model <|- ModelWithIDs
+
+
+' models.locations
+abstract class GeoPoint {
+    coords: Coordinates
+}
+Model <|-- GeoPoint
+City -- Location : < coords
+
+class City {
+    name: str
+    country: str
+    state: str
+    official_id: str
+}
+ModelWithIDs <|-- City
+
+abstract class Location {
+    city: City
+    name: str
+}
+GeoPoint <|-- Location
+Coordinates -- GeoPoint : < city
+
+class Address {
+    street: str
+    number: str
+    postcode: str
+}
+Location <|-- Address
+
+abstract class Addressable {
+    address: Address
+}
+Location <|-- Addressable
+ModelWithIDs <|-- Addressable
+Address -- Addressable : < address
+
+class Stop {
+    ifopt: StopIFOPT
+    uic: str
+}
+Addressable <|-- Stop
+StopIFOPT -- Stop : < ifopt
+
+class POI {
+}
+Addressable <|-- POI
+
+class Platform {
+    stop: Stop
+    ifopt: PlatformIFOPT
+    name: str
+    full_name: str
+}
+Location <|-- Platform
+ModelWithIDs <|-- Platform
+PlatformIFOPT -- Platform : < ifopt
+Stop -- Platform : < stop
+
+
+' models.ride
+class Line {
+    linetype: LineType
+    product: str
+    name: str
+    shortname: str
+    route: str
+    first_stop: Stop
+    last_stop: Stop
+    network: str
+    operator: str
+}
+ModelWithIDs <|-- Line
+LineType -- Line : < linetype
+
+class MetaRide {
+    line: Line
+    number: str
+    direction: str
+    bike_friendly: bool
+    annotation: Iterable[str]
+}
+ModelWithIDs <|-- Ride
+Line -- MetaRide : < line
+
+class Ride {
+    meta: MetaRide
+    canceled: bool
+    infotexts: Iterable[str]
+}
+ModelWithIDs <|-- MetaRide
+MetaRide -- Ride : < belongs to
+
+class RidePoint {
+    ride: Ride
+    platform: Platform
+    stop: Stop
+    arrival: LiveTime
+    departure: LiveTime
+    passthrough: bool
+}
+Model <|-- RidePoint
+Platform -- RidePoint : < platform
+Stop -- RidePoint : < stop
+LiveTime -- RidePoint : < arrival
+LiveTime -- RidePoint : < departure
+Ride -- RidePoint : < ride
+
+
+' models.trip
+class Trip {
+    origin: Location
+    via: Iterable[Location]
+    destination: Location
+    parts: list
+    tickets: TicketList
+    departure: LiveTime
+    arrival: LiveTime
+    linetypes: LineTypes
+
+    with_bike: bool
+    wheelchair: bool
+    low_floor_only: bool
+    no_solid_stairs: bool
+    no_escalators: bool
+    no_elevators: bool
+
+    waytype_origin: WayType
+    waytype_via: WayType
+    waytype_destination: WayType
+
+    wayduration_origin: timedelta
+    wayduration_via: timedelta
+    wayduration_destination: timedelta
+}
+Model <|-- Trip
+Location -- Trip : < origin
+Location -- Trip : < via
+Location -- Trip : < destination
+TicketList -- Trip : < tickets
+Trip -- LiveTime : departure >
+Trip -- LiveTime : arrival >
+LineTypes -- Trip : < linetypes
+WayType -- Trip : < waytype_*
+
+
+
+class Way {
+    waytype: WayType
+    origin: Location
+    destination: Location
+    distance: float
+    duration: timedelta
+    events: Iterable[WayEvent]
+    path: Iterable[Coordinates]
+}
+Model <|-- Way
+WayType -- Way : < waytype
+Location -- Way : < origin
+Location -- Way : < destination
+WayEvent -- Way : < events
+
+
+' models.tickets
+class TicketData {
+    authority: str
+    level: str
+    price: float
+    price_child: float
+}
+Model <|-- TicketData
+
+class TicketList {
+    currency: str
+    level_name: str
+    single: TicketData
+    bike: TicketData
+    other: Mapping[str, TicketData]
+}
+Model <|-- TicketList
+TicketData -- TicketList : < single
+TicketData -- TicketList : < bike
+
+
+
+@enduml
