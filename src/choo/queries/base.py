@@ -66,9 +66,14 @@ class Query(metaclass=MetaQuery):
         self._results_generator = None
         self._results_done = False
 
-    def where(self, **kwargs):
+    def copy(self):
         result = self.__class__(self.network)
         result._obj = deepcopy(self._obj)
+        result._settings = self._settings
+        return result
+
+    def where(self, **kwargs):
+        result = self.copy()
 
         for name, value in kwargs.items():
             if name not in self.Model._fields:
@@ -96,9 +101,14 @@ class Query(metaclass=MetaQuery):
 
     def limit(self, limit):
         if limit is not None and (not isinstance(limit, int) or limit < 1):
-            raise TypeError('limit has to be None or int > 1')
-        self._settings['limit'] = limit
+            raise TypeError('limit has to be None or int >= 1')
+        self._update_setting('limit', limit)
         return self
+
+    def _update_setting(self, name, value):
+        result = self.copy()
+        result._settings[name] = value
+        return result
 
     def execute(self):
         if self._results_generator is None:
