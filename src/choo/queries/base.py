@@ -24,9 +24,9 @@ class MetaQuery(type):
 
         cls._settings = OrderedDict()
         for base in cls.__bases__:
-            cls._settings.update(getattr(base, '_settings', {}))
-        if '_settings' in attrs:
-            cls._settings.update(attrs['_settings'])
+            cls._settings.update(getattr(base, '_settings_defaults', {}))
+        if '_settings_defaults' in attrs:
+            cls._settings.update(attrs['_settings_defaults'])
 
         cls._combined = ChainMap(cls._fields, cls._settings)
         return cls
