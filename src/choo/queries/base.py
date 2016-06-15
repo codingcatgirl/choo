@@ -1,9 +1,9 @@
 from collections import ChainMap, OrderedDict
 from copy import deepcopy
 from itertools import chain
+from types import MappingProxyType
 
 from ..models.base import Field, Model
-from types import MappingProxyType
 
 
 class MetaQuery(type):
