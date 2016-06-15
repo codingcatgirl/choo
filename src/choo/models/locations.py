@@ -6,6 +6,15 @@ class GeoPoint(Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def distance_to(self, other):
+        if not isinstance(other, GeoPoint):
+            raise TypeError('distance_to expected GeoPoint object, not %s' % repr(other))
+
+        if self.coords is None or other.coords is None:
+            return None
+
+        return self.coords.distance_do(other.coords)
+
     coords = Field(Coordinates)
 
 

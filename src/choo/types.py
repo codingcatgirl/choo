@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from enum import Enum
+from math import asin, cos, radians, sin, sqrt
 
 
 class Coordinates:
@@ -21,6 +22,13 @@ class Coordinates:
 
     def __repr__(self):
         return 'Coordinates(%.6f, %.6f)' % (self.lat, self.lon)
+
+    def distance_to(self, other):
+        if not isinstance(other, Coordinates):
+            raise TypeError('distance_to expected Coordinates object, not %s' % repr(other))
+
+        lon1, lat1, lon2, lat2 = map(radians, [self.lon, self.lat, other.lon, other.lat])
+        return 12742000 * asin(sqrt(sin((lat2-lat1)/2)**2+cos(lat1)*cos(lat2)*sin((lon2-lon1)/2)**2))
 
     def _near(self, other):
         return (abs(self.lat - other.lat) < 0.02 and
