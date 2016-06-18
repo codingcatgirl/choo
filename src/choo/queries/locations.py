@@ -1,9 +1,9 @@
-from ..models import POI, Address, Location, Stop
+from ..models import GeoPoint, Addressable, Platform, POI, Address, Location, Stop
 from .base import Query
 
 
-class LocationQuery(Query):
-    Model = Location
+class GeoPointQuery(Query):
+    Model = GeoPoint
     _settings_defaults = {'max_distance': 1000}
 
     def max_distance(self, max_distance):
@@ -21,13 +21,25 @@ class LocationQuery(Query):
         return self._full_iter()
 
 
-class AddressQuery(Query):
+class PlatformQuery(GeoPointQuery):
+    Model = Platform
+
+
+class LocationQuery(GeoPointQuery):
+    Model = Location
+
+
+class AddressQuery(LocationQuery):
     Model = Address
 
 
-class StopQuery(Query):
+class AddressableQuery(LocationQuery):
+    Model = Addressable
+
+
+class StopQuery(AddressableQuery):
     Model = Stop
 
 
-class POIQuery(Query):
+class POIQuery(AddressableQuery):
     Model = POI

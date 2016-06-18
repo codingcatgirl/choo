@@ -1,5 +1,5 @@
 from .base import Model
-from .locations import AddressQuery, LocationQuery, POIQuery, StopQuery
-from .trip import Trip
+from .locations import GeoPointQuery, PlatformQuery, AddressQuery, AddressableQuery, LocationQuery, POIQuery, StopQuery
 
-__all__ = ['Model', 'AddressQuery', 'LocationQuery', 'POIQuery', 'StopQuery', 'Trip']
+__all__ = ['Model', 'Query', 'GeoPointQuery', 'PlatformQuery', 'AddressableQuery', 'AddressQuery',
+           'LocationQuery', 'POIQuery', 'StopQuery']
