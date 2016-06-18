@@ -1,5 +1,5 @@
 from .... import queries
-from ....models import POI, Address, GeoPoint, Stop, Platform, Way
+from ....models import POI, Address, GeoPoint, Platform, Stop, Way
 from ....types import WayType
 from ..parsers.locations import OdvLocationList
 

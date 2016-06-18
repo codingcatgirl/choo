@@ -1,4 +1,4 @@
-from ..models import GeoPoint, Addressable, Platform, POI, Address, Location, Stop
+from ..models import POI, Address, Addressable, GeoPoint, Location, Platform, Stop
 from .base import Query
 
 
