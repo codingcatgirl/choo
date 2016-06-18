@@ -13,12 +13,12 @@ class LocationQuery(Query):
         return self
 
     def __iter__(self):
-        return self._full_iter if self.coords is None else iter(way.destination for way in self._full_iter)
+        return self._full_iter() if self.coords is None else iter(way.destination for way in self._full_iter())
 
     def ways(self):
         if self.coords is None:
             raise TypeError('results are not available as ways because coords was not part of the query')
-        return self._full_iter
+        return self._full_iter()
 
 
 class AddressQuery(Query):
