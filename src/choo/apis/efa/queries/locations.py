@@ -1,5 +1,5 @@
 from .... import queries
-from ....models import POI, Address, GeoPoint, Stop, Way
+from ....models import POI, Address, GeoPoint, Stop, Platform, Way
 from ....types import WayType
 from ..parsers.locations import OdvLocationList
 
@@ -14,8 +14,7 @@ class LocationQueryExecuter:
             if self.Model == Stop:
                 return self._coordinates_request()
             if self.Model == Address:
-                return self._stopfinder_request({'type': 'coord', 'name': '%.6f:%.6f:WGS84' %
-                                                (self.coords.lon, self.coords.lat)})
+                return self._stopfinder_request({'type': 'coord', 'name': '%.6f:%.6f:WGS84' % reversed(self.coords)})
         return self._stopfinder_request({'type': 'any', 'place': self.city__name, 'name': self.name})
 
     def _stopfinder_request(self, location):
@@ -31,8 +30,11 @@ class LocationQueryExecuter:
             'useHouseNumberList': 'true',
             'type_sf': location['type'],
             'place_sf': location['place'],
-            'name_sf': location['name']
+            'name_sf': location['name'],
         }
+
+        if self.settings['limit']:
+            post['anyMaxSizeHitList'] = self.settings['limit']
 
         if not post['place_sf']:
             post.pop('place_sf')
@@ -64,7 +66,35 @@ class LocationQueryExecuter:
 
     def _coordinates_request(self):
         # Executes as COORDS_REQUEST (which can only find stops)
-        pass
+        post = {
+            'language': 'de',
+            'outputFormat': 'XML',
+            'coordOutputFormat': 'WGS84',
+            'inclFilter': '1',
+            'coords': '%.6f:%.6f:WGS84' % reversed(self.coords),
+        }
+
+        if self.settings['limit']:
+            post['max'] = self.settings['limit']
+
+        types = []
+        if issubclass(Stop, self.Model):
+            types.append('STOP')
+
+        if issubclass(POI, self.Model):
+            types.append('POI_POINT')
+
+        if issubclass(Platform, self.Model):
+            types.append('BUS_POINT')
+
+        for i, type_ in enumerate(types):
+            post.update({
+                'type_%d' % (i+1): type_,
+                'radius_%d' % (i+1): self.settings['max_distance']
+            })
+
+        xml, self.time = self.network._request('XML_COORD_REQUEST', post)
+        data = xml.find('./itdStopFinderRequest')
 
 
 class LocationQuery(LocationQueryExecuter, queries.LocationQuery):
