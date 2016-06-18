@@ -1,5 +1,6 @@
 from .... import queries
-from ....models import POI, Address, Stop
+from ....models import POI, Address, GeoPoint, Stop, Way
+from ....types import WayType
 from ..parsers.locations import OdvLocationList
 
 
@@ -43,13 +44,23 @@ class LocationQueryExecuter:
         if results.type == 'none':
             return ()
         elif results.type == 'stop':
-            return results if issubclass(Stop, self.Model) else ()
+            results = results if issubclass(Stop, self.Model) else ()
         elif results.type == 'address':
-            return results if issubclass(Address, self.Model) else ()
+            results = results if issubclass(Address, self.Model) else ()
         elif results.type == 'poi':
-            return results if issubclass(POI, self.Model) else ()
+            results = results if issubclass(POI, self.Model) else ()
         elif results.type == 'mixed':
-            return (r for r in results if isinstance(r, self.Model))
+            results = (r for r in results if isinstance(r, self.Model))
+
+        return results if not self.coords else self._filter_stopfinder_results(results)
+
+    def _filter_stopfinder_results(self, results):
+        for result in results:
+            if not result.coords:
+                continue
+            distance = self.coords.distance_to(result.coords)
+            if distance > self.settings.max_distance:
+                yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
 
     def _coordinates_request(self):
         # Executes as COORDS_REQUEST (which can only find stops)

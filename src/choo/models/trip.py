@@ -165,8 +165,11 @@ class Way(Model):
     path = Field(Iterable[Coordinates])
 
     def __init__(self, waytype=None, origin=None, destination=None, distance=None, **kwargs):
-        super().__init__(waytype=(WayType('walk') if waytype is None else waytype),
-                         origin=origin, destination=destination, distance=distance, **kwargs)
+        super().__init__(**kwargs)
+        self.waytype = WayType.walk if waytype is None else waytype
+        self.origin = origin
+        self.destination = destination
+        self.distance = distance
 
     def __eq__(self, other):
         if not isinstance(other, Way):
