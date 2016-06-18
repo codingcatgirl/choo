@@ -22,13 +22,12 @@ class MetaQuery(type):
 
         cls._fields = Model._fields
 
-        cls._settings = OrderedDict()
+        cls._settings_defaults = OrderedDict()
         for base in cls.__bases__:
-            cls._settings.update(getattr(base, '_settings_defaults', {}))
+            cls._settings_defaults.update(getattr(base, '_settings_defaults', {}))
         if '_settings_defaults' in attrs:
-            cls._settings.update(attrs['_settings_defaults'])
+            cls._settings_defaults.update(attrs['_settings_defaults'])
 
-        cls._combined = ChainMap(cls._fields, cls._settings)
         return cls
 
 
@@ -136,7 +135,7 @@ class Query(metaclass=MetaQuery):
         if name in self.Model._fields:
             return getattr(self._obj, name)
 
-        if name in self._settings:
+        if name in self.__class__._settings_defaults:
             raise TypeError('Use .settings to get settings!')
 
         raise AttributeError
@@ -145,7 +144,7 @@ class Query(metaclass=MetaQuery):
         if name in self.Model._fields:
             raise TypeError('Can not set fields, use .where()!')
 
-        if name in self._settings:
+        if name in self._settings_defaults:
             raise TypeError('Can not set settings directly, set them using methods!')
 
         super().__setattr__(name, value)
@@ -154,7 +153,7 @@ class Query(metaclass=MetaQuery):
         if name in self.Model._fields:
             raise TypeError('Can not delete fields, use .where(%s=None)!' % name)
 
-        if name in self._settings:
+        if name in self._settings_defaults:
             raise TypeError('Can not delete settings')
 
         super().__delattr__(name)
