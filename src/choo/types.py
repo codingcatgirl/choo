@@ -4,25 +4,7 @@ from enum import Enum
 from math import asin, cos, radians, sin, sqrt
 
 
-class Coordinates:
-    def __init__(self, lat, lon, **kwargs):
-        if lat is None or lon is None:
-            raise ValueError('latitude and longitude has to be not None')
-        self.lat = lat
-        self.lon = lon
-        super().__init__(**kwargs)
-
-    def __iter__(self):
-        return iter([self.lat, self.lon])
-
-    def __eq__(self, other):
-        return (isinstance(other, Coordinates) and
-                self.lat is not None and other.lat == self.lat and
-                self.lon is not None and other.lon == self.lon)
-
-    def __repr__(self):
-        return 'Coordinates(%.6f, %.6f)' % (self.lat, self.lon)
-
+class Coordinates(namedtuple('Coordinates', ('lat', 'lon'))):
     def distance_to(self, other):
         if not isinstance(other, Coordinates):
             raise TypeError('distance_to expected Coordinates object, not %s' % repr(other))
