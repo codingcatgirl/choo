@@ -115,13 +115,16 @@ class Query(metaclass=MetaQuery):
             self._results_generator = self._execute()
         return self
 
-    def __iter__(self):
+    def _full_iter(self):
         self.execute()
 
         if self._results_done:
             return iter(self._cached_results)
 
         return chain(self._cached_results, self._next_result())
+
+    def __iter__(self):
+        return self._full_iter
 
     def _next_result(self):
         for result in self._results_generator:
