@@ -83,7 +83,6 @@ class StopQuery(LocationQueryExecuter, queries.StopQuery):
         if self.ifopt:
             return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
         return super()._convert_location()
-    pass
 
 
 class POIQuery(LocationQueryExecuter, queries.POIQuery):
@@ -91,4 +90,3 @@ class POIQuery(LocationQueryExecuter, queries.POIQuery):
         if self.ids and self.network.name in self.ids:
             return {'type': 'poiID', 'name': str(self.ids[self.network.name])}
         return super()._convert_location()
-    pass
