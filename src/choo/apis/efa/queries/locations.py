@@ -73,12 +73,6 @@ class LocationQuery(LocationQueryExecuter, queries.LocationQuery):
 
 
 class AddressQuery(LocationQueryExecuter, queries.AddressQuery):
-    def _convert_unique_location(self):
-        if self.name is None and self.coords is not None:
-            return 'finder', {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
-        if self.ifopt:
-            return 'finder', {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
-        return super()._convert_location()
     pass
 
 
