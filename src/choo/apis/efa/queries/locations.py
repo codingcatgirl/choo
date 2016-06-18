@@ -1,7 +1,8 @@
 from .... import queries
 from ....models import POI, Address, GeoPoint, Platform, Stop, Way
 from ....types import WayType
-from ..parsers.locations import OdvLocationList
+from ..parsers.odv import OdvLocationList
+from ..parsers.coordinfo import CoordInfoGeoPointList
 
 
 class LocationQueryExecuter:
@@ -94,7 +95,10 @@ class LocationQueryExecuter:
             })
 
         xml, self.time = self.network._request('XML_COORD_REQUEST', post)
-        data = xml.find('./itdStopFinderRequest')
+        data = xml.find('./itdCoordInfoRequest')
+
+        results = CoordInfoGeoPointList(self, data)
+        return results
 
 
 class LocationQuery(LocationQueryExecuter, queries.LocationQuery):
