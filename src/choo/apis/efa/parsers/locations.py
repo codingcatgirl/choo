@@ -102,7 +102,7 @@ class OmcParserMixin:
         return self._omc[2]
 
 
-class OdvPlaceElemCity(City.XMLParser, OmcParserMixin):
+class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
     @parser_property
     def ids(self, data, city):
         myid = data.attrib.get('stateless')
@@ -113,7 +113,7 @@ class OdvPlaceElemCity(City.XMLParser, OmcParserMixin):
         return data.text
 
 
-class OdvNameElemCity(City.XMLParser, OmcParserMixin):
+class OdvNameElemCity(OmcParserMixin, City.XMLParser):
     @parser_property
     def name(self, data, country=None):
         return data.attrib.get('locality')
