@@ -1,5 +1,5 @@
 from ....models import City, GeoPoint, Platform, POI, Stop
-from ....types import Coordinates, StopIFOPT, PlatformIFOPT, POIType
+from ....types import Coordinates, StopIFOPT, PlatformIFOPT
 from ...base import XMLParser, ParserError, cached_property, parser_property
 from .utils import GenAttrMapping
 
