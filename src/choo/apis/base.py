@@ -6,6 +6,8 @@ from defusedxml import minidom
 
 
 class API:
+    GeoPointQuery = None
+    PlatformQuery = None
     LocationQuery = None
     AddressQuery = None
     StopQuery = None
@@ -18,8 +20,20 @@ class API:
         self.name = name
 
     @property
+    def geopoints(self):
+        if self.GeoPointQuery is None:
+            raise NotImplementedError('Querying geopoints is not supported by this network.')
+        return self.GeoPointQuery(self)
+
+    @property
+    def platforms(self):
+        if self.PlatformQuery is None:
+            raise NotImplementedError('Querying platforms is not supported by this network.')
+        return self.GeoPointQuery(self)
+
+    @property
     def locations(self):
-        if self.StopQuery is None:
+        if self.LocationQuery is None:
             raise NotImplementedError('Querying locations is not supported by this network.')
         return self.LocationQuery(self)
 
