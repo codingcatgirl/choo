@@ -1,8 +1,8 @@
 from .... import queries
 from ....models import POI, Address, GeoPoint, Platform, Stop, Way
 from ....types import WayType
-from ..parsers.odv import OdvLocationList
 from ..parsers.coordinfo import CoordInfoGeoPointList
+from ..parsers.odv import OdvLocationList
 
 
 class GeoPointQuery(queries.GeoPointQuery):

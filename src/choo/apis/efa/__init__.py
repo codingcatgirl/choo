@@ -1,5 +1,5 @@
 from ..base import API
-from .queries import AddressQuery, LocationQuery, POIQuery, StopQuery
+from .queries import GeoPointQuery, PlatformQuery, AddressableQuery, AddressQuery, LocationQuery, POIQuery, StopQuery
 from ...models import Stop, Address, POI, Location
 
 import requests
@@ -10,8 +10,11 @@ import defusedxml.ElementTree as ET
 
 
 class EFA(API):
+    GeoPointQuery = GeoPointQuery
+    PlatformQuery = PlatformQuery
     LocationQuery = LocationQuery
     AddressQuery = AddressQuery
+    AddressableQuery = AddressableQuery
     StopQuery = StopQuery
     POIQuery = POIQuery
 
