@@ -1,6 +1,7 @@
 from ....models import City, GeoPoint, Platform, POI, Stop
 from ....types import Coordinates, StopIFOPT, PlatformIFOPT
 from ...base import XMLParser, ParserError, cached_property, parser_property
+from .utils import GenAttrMapping
 
 
 class CoordInfoGeoPointList(XMLParser):
@@ -30,7 +31,7 @@ class GeoPointParserMixin:
 
     @cached_property
     def _attrs(self, data):
-        return self.network._parse_genattrlist(data.find('./genAttrList'))
+        return GenAttrMapping(data.find('./genAttrList'))
 
 
 class LocationParserMixin(GeoPointParserMixin):

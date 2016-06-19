@@ -96,6 +96,3 @@ class EFA(API):
                 return 'cz', None, None
         return None, None, None
 
-    def _parse_genattrlist(self, data):
-        return {elem.find('./name').text: elem.find('./value').text
-                for elem in data.findall('./genAttrElem')}
