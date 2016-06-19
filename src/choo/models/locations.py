@@ -3,8 +3,9 @@ from .base import Field, Model, ModelWithIDs
 
 
 class GeoPoint(Model):
-    def __init__(self, **kwargs):
+    def __init__(self, coords=None, **kwargs):
         super().__init__(**kwargs)
+        self.coords = coords
 
     def distance_to(self, other):
         if not isinstance(other, GeoPoint):
