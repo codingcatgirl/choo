@@ -1,5 +1,5 @@
 from ....models import City, GeoPoint, Platform, POI, Stop
-from ....types import Coordinates, StopIFOPT, PlatformIFOPT
+from ....types import Coordinates, StopIFOPT, PlatformIFOPT, POIType
 from ...base import XMLParser, ParserError, cached_property, parser_property
 from .utils import GenAttrMapping
 
@@ -82,6 +82,11 @@ class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
     @parser_property
     def city(self, data):
         return CoordInfoLocationCity(self, data, None)
+
+    @parser_property
+    def poitype(self, data):
+        key = max(self._attrs.getall('POI_HIERARCHY_KEY'), key=lambda x: len(x), default=None)
+        return self.network._parse_poitype(key)
 
 
 class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):

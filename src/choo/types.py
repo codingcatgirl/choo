@@ -189,6 +189,21 @@ class LineType(HierarchicEnumMixin, Enum):
         return 'LineType.' + self.name
 
 
+class POIType(Enum):
+    unknown = 'unknown'
+    bicycle_hire = 'bicycle_hire'
+    education = 'education'
+    graveyard = 'graveyard'
+    mall = 'mall'
+    parking = 'parking'
+    place_of_worship = 'place_of_worship'
+    public_building = 'public_building'
+    sight = 'sight'
+    sport = 'sport'
+    swimming = 'swimming'
+    venue = 'venue'
+
+
 class LineTypes:
     def __init__(self, *linetypes):
         self._linetypes = set()

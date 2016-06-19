@@ -1,4 +1,4 @@
-from ..types import Coordinates, PlatformIFOPT, StopIFOPT
+from ..types import Coordinates, PlatformIFOPT, StopIFOPT, POIType
 from .base import Field, Model, ModelWithIDs
 
 
@@ -98,6 +98,8 @@ class Stop(Addressable, ModelWithIDs):
 
 
 class POI(Addressable, ModelWithIDs):
+    poitype = Field(POIType)
+
     def __init__(self, city=None, name=None, **kwargs):
         super().__init__(city=city, name=name, **kwargs)
 
@@ -106,6 +108,9 @@ class POI(Addressable, ModelWithIDs):
             return False
 
         return super().__eq__(other)
+
+    def __repr__(self):
+        return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, self.country, self.city__name, self.name, self.poitype)
 
 
 class Platform(GeoPoint, ModelWithIDs):

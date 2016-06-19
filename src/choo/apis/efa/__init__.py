@@ -1,6 +1,7 @@
 from ..base import API
 from .queries import GeoPointQuery, PlatformQuery, AddressableQuery, AddressQuery, LocationQuery, POIQuery, StopQuery
 from ...models import Stop, Address, POI, Location
+from ...types import POIType
 
 import requests
 from datetime import datetime
@@ -17,6 +18,19 @@ class EFA(API):
     AddressableQuery = AddressableQuery
     StopQuery = StopQuery
     POIQuery = POIQuery
+
+    poitype_mapping = (
+        ('A', POIType.education),
+        ('B', POIType.public_building),
+        ('D', POIType.graveyard),
+        ('F', POIType.sport),
+        ('JC', POIType.place_of_worship),
+        ('J', POIType.sight),
+        ('K', POIType.venue),
+        ('NC', POIType.parking),
+        ('ND', POIType.bicycle_hire),
+        ('U', POIType.mall),
+    )
 
     def __init__(self, name, base_url, preset):
         super().__init__(name)
@@ -96,3 +110,8 @@ class EFA(API):
                 return 'cz', None, None
         return None, None, None
 
+    def _parse_poitype(self, ident):
+        for n, poitype in self.poitype_mapping:
+            if ident.startswith(n):
+                return poitype
+        return POIType.unknown
