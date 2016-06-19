@@ -55,7 +55,7 @@ class OdvLocationList(XMLParser):
         elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
             return 'address', OdvNameElemAddress(self, data, city)
         else:
-            raise ParserError(self, 'Unknown ofvtype: %s' % odvtype)
+            raise ParserError(self, 'Unknown odvtype: %s' % odvtype)
 
     def __iter__(self):
         yield from self.generator
