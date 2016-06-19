@@ -120,7 +120,10 @@ class Platform(GeoPoint, ModelWithIDs):
     full_name = Field(str)
 
     def __init__(self, stop=None, name=None, full_name=None, **kwargs):
-        super().__init__(stop=stop, name=name, full_name=full_name, **kwargs)
+        super().__init__(**kwargs)
+        self.stop = stop
+        self.name = name
+        self.full_name = full_name
 
     def __repr__(self):
         return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
