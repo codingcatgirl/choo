@@ -91,6 +91,11 @@ class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
 
 class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
     @parser_property
+    def ids(self, data, city):
+        myid = data.attrib.get('id')
+        return myid and {self.network.name: myid}
+
+    @parser_property
     def ifopt(self, data):
         return PlatformIFOPT.parse(self._attrs.get('STOPPOINT_GLOBAL_ID'))
 
