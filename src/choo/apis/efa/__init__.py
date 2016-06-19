@@ -1,7 +1,7 @@
-from ..base import API
+from ..base import API, ParserError
 from .queries import GeoPointQuery, PlatformQuery, AddressableQuery, AddressQuery, LocationQuery, POIQuery, StopQuery
 from ...models import Stop, Address, POI, Location
-from ...types import POIType
+from ...types import POIType, PlatformType
 
 import requests
 from datetime import datetime
@@ -31,6 +31,11 @@ class EFA(API):
         ('ND', POIType.bicycle_hire),
         ('U', POIType.mall),
     )
+    platformtype_mapping = {
+        'Bay': PlatformType.street,
+        'Platform': PlatformType.platform,
+        '': PlatformType.unknown,
+    }
 
     def __init__(self, name, base_url, preset):
         super().__init__(name)
@@ -115,3 +120,9 @@ class EFA(API):
             if ident.startswith(n):
                 return poitype
         return POIType.unknown
+
+    def _parse_platformtype(self, ident):
+        try:
+            return self.platformtype_mapping[ident]
+        except KeyError:
+            raise ParserError('Unknown Platform Characteristic')

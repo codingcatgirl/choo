@@ -106,7 +106,15 @@ class StopIFOPT(IFOPT, namedtuple('StopIFOPT', ('country', 'area', 'stop'))):
     pass
 
 
+class StopAreaIFOPT(IFOPT, namedtuple('StopAreaIFOPT', ('country', 'area', 'stop', 'level'))):
+    def get_stop_ifopt(self):
+        return StopIFOPT(*self[:3])
+
+
 class PlatformIFOPT(IFOPT, namedtuple('PlatformIFOPT', ('country', 'area', 'stop', 'level', 'quay'))):
+    def get_area_ifopt(self):
+        return StopAreaIFOPT(*self[:3])
+
     def get_stop_ifopt(self):
         return StopIFOPT(*self[:3])
 
@@ -202,6 +210,12 @@ class POIType(Enum):
     sport = 'sport'
     swimming = 'swimming'
     venue = 'venue'
+
+
+class PlatformType(Enum):
+    unknown = 'unknown'
+    street = 'street'
+    platform = 'platform'
 
 
 class LineTypes:

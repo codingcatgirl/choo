@@ -1,4 +1,4 @@
-from ..types import Coordinates, PlatformIFOPT, StopIFOPT, POIType
+from ..types import Coordinates, PlatformIFOPT, StopIFOPT, StopAreaIFOPT, POIType, PlatformType
 from .base import Field, Model, ModelWithIDs
 
 
@@ -114,20 +114,27 @@ class POI(Addressable, ModelWithIDs):
                                          self.name, self.poitype)
 
 
+class StopArea(GeoPoint, ModelWithIDs):
+    stop = Field(Stop, Stop)
+    ifopt = Field(StopAreaIFOPT)
+    name = Field(str)
+
+
 class Platform(GeoPoint, ModelWithIDs):
     stop = Field(Stop, Stop)
+    area = Field(StopArea, StopArea)
     ifopt = Field(PlatformIFOPT)
+    platform_type = Field(PlatformType)
     name = Field(str)
-    full_name = Field(str)
 
     def __init__(self, stop=None, name=None, full_name=None, **kwargs):
         super().__init__(**kwargs)
         self.stop = stop
         self.name = name
-        self.full_name = full_name
 
     def __repr__(self):
-        return 'Platform(%s, %s, %s)' % (repr(self.stop), repr(self.name), repr(self.full_name))
+        return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, repr(self.stop), self.name,
+                                         self.platform_type, self.area__name)
 
     def __eq__(self, other):
         if not isinstance(other, Platform):

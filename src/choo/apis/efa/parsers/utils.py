@@ -1,13 +1,13 @@
 class GenAttrMapping:
     def __init__(self, data):
-        self._items = tuple((elem.find('./name').text, elem.find('./value').text)
+        self._items = tuple((elem.find('./name').text, elem.find('./value').text or '')
                             for elem in data.findall('./genAttrElem'))
         self._anyitem = dict(self._items)
 
     def __getitem__(self, name):
         return self._anyitem[name]
 
-    def get(self, name, default):
+    def get(self, name, default=None):
         return self._anyitem.get(name, default)
 
     def __iter__(self, name):

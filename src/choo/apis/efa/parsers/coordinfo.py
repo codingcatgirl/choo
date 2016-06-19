@@ -1,4 +1,4 @@
-from ....models import City, GeoPoint, Platform, POI, Stop
+from ....models import City, GeoPoint, Platform, POI, Stop, StopArea
 from ....types import Coordinates, StopIFOPT, PlatformIFOPT
 from ...base import XMLParser, ParserError, cached_property, parser_property
 from .utils import GenAttrMapping
@@ -105,4 +105,31 @@ class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
 
     @parser_property
     def name(self, data):
-        return self._attrs.get('IDENTIFIER')
+        return self._attrs.get('STOP_POINT_LONGNAME', '').strip() or self._attrs.get('IDENTIFIER')
+
+    @parser_property
+    def area(self, data):
+        return CoordInfoStopArea(self, data, self)
+
+    @parser_property
+    def platform_type(self, data):
+        return self.network._parse_platformtype(self._attrs.get('STOP_POINT_CHARACTERISTICS'))
+
+
+class CoordInfoStopArea(GeoPointParserMixin, StopArea.XMLParser):
+    @parser_property
+    def ids(self, data, platform):
+        myid = platform.ids.get(self.network.name)
+        return myid and {self.network.name: myid.split('-')[:-1].join('-')}
+
+    @parser_property
+    def ifopt(self, data, platform):
+        return platform.ifopt.get_area_ifopt()
+
+    @parser_property
+    def stop(self, data, platform):
+        return platform.stop
+
+    @parser_property
+    def name(self, data, platform):
+        return platform._attrs.get('STOP_AREA_NAME', '').strip() or None
