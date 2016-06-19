@@ -10,6 +10,7 @@ class API:
     PlatformQuery = None
     LocationQuery = None
     AddressQuery = None
+    AddressableQuery = None
     StopQuery = None
     POIQuery = None
     TripQuery = None
@@ -42,6 +43,12 @@ class API:
         if self.AddressQuery is None:
             raise NotImplementedError('Querying addresses is not supported by this network.')
         return self.AddressQuery(self)
+
+    @property
+    def addressables(self):
+        if self.AddressableQuery is None:
+            raise NotImplementedError('Querying addressables is not supported by this network.')
+        return self.AddressableQuery(self)
 
     @property
     def stops(self):
