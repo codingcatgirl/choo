@@ -3,7 +3,7 @@ from typing import Iterable
 
 from ..types import Coordinates, LineTypes, LiveTime, WayEvent, WayType
 from .base import Field, Model
-from .locations import Location
+from .locations import GeoPoint, Location
 from .tickets import TicketList
 
 RideSegment = 1
@@ -157,8 +157,8 @@ class Trip(Model):
 
 class Way(Model):
     waytype = Field(WayType)
-    origin = Field(Location, Location)
-    destination = Field(Location, Location)
+    origin = Field(GeoPoint, GeoPoint)
+    destination = Field(GeoPoint, GeoPoint)
     distance = Field(float)
     duration = Field(timedelta)
     events = Field(WayEvent)
