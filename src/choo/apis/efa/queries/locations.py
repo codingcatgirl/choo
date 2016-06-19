@@ -126,7 +126,7 @@ class AddressQuery(LocationQuery, queries.AddressQuery):
             return {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
         if self.ifopt:
             return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
-        return super()._convert_location()
+        return super()._convert_unique_location()
 
 
 class AddressableQuery(LocationQuery, queries.AddressableQuery):
@@ -139,11 +139,11 @@ class StopQuery(AddressableQuery, queries.StopQuery):
             return {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
         if self.ifopt:
             return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
-        return super()._convert_location()
+        return super()._convert_unique_location()
 
 
 class POIQuery(AddressableQuery, queries.POIQuery):
     def _convert_unique_location(self):
         if self.ids and self.network.name in self.ids:
             return {'type': 'poiID', 'name': str(self.ids[self.network.name])}
-        return super()._convert_location()
+        return super()._convert_unique_location()
