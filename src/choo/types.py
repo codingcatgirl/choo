@@ -113,7 +113,7 @@ class StopAreaIFOPT(IFOPT, namedtuple('StopAreaIFOPT', ('country', 'area', 'stop
 
 class PlatformIFOPT(IFOPT, namedtuple('PlatformIFOPT', ('country', 'area', 'stop', 'level', 'quay'))):
     def get_area_ifopt(self):
-        return StopAreaIFOPT(*self[:3])
+        return StopAreaIFOPT(*self[:4])
 
     def get_stop_ifopt(self):
         return StopIFOPT(*self[:3])
