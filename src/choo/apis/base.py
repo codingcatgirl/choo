@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 import defusedxml.ElementTree as ET
 from defusedxml import minidom
@@ -116,7 +117,11 @@ class parser_property(object):
         if obj is None:
             return self
         field = obj.Model._fields[self.name]
-        value = obj.__dict__[self.name] = self.func(obj, obj.data, *obj._args, **obj._kwargs)
+        try:
+            value = obj.__dict__[self.name] = self.func(obj, obj.data, *obj._args, **obj._kwargs)
+        except Exception as e:
+            raise type(e)(str(e) +
+                          '\n\n### CHOO DEBUG INFO:\n%s' % obj.printable_data()).with_traceback(sys.exc_info()[2])
 
         if not field.validate(value):
             raise TypeError('Invalid type for attribute %s.' % self.name)

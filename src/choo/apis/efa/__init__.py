@@ -70,3 +70,32 @@ class EFA(API):
             r = {wrap % n: v for n, v in r.items()}
 
         return r
+
+    def _parse_omc(self, omc):
+        if self.preset == 'de':
+            states = {'01': 'sh', '02': 'hh', '03': 'ni', '04': 'hb',
+                      '05': 'nrw', '06': 'he', '07': 'rp', '08': 'bw',
+                      '09': 'by', '10': 'sl', '11': 'be', '12': 'bb',
+                      '13': 'mv', '14': 'sn', '15': 'st', '16': 'th'}
+            tmp = omc.zfill(8)
+            if len(tmp) == 8 and tmp[:2] in states:
+                return 'de', states[tmp[:2]], tmp
+            elif tmp.startswith('4'):
+                return 'at', None, tmp[1:6]
+            elif tmp.startswith('230'):
+                return 'ch', None, None
+            elif tmp.startswith('250'):
+                return 'lu', None, None
+            elif tmp.startswith('260'):
+                return 'be', None, None
+            elif tmp.startswith('270'):
+                return 'nl', None, None
+            elif tmp.startswith('18'):
+                return 'pl', None, None
+            elif tmp.startswith('55'):
+                return 'cz', None, None
+        return None, None, None
+
+    def _parse_genattrlist(self, data):
+        return {elem.find('./name').text: elem.find('./value').text
+                for elem in data.findall('./genAttrElem')}
