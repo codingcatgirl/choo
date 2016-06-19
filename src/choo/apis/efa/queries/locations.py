@@ -53,7 +53,7 @@ class GeoPointQuery(queries.GeoPointQuery):
             if not result.coords:
                 continue
             distance = self.coords.distance_to(result.coords)
-            if distance > self.settings.max_distance:
+            if distance > self.settings['max_distance']:
                 yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
 
 
