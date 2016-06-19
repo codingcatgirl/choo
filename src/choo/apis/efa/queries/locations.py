@@ -45,8 +45,16 @@ class GeoPointQuery(queries.GeoPointQuery):
         xml, self.time = self.network._request('XML_COORD_REQUEST', post)
         data = xml.find('./itdCoordInfoRequest')
 
-        results = CoordInfoGeoPointList(self, data)
-        return results
+        results = CoordInfoGeoPointList(self, data.find('./itdCoordInfo/coordInfoItemList'))
+        return self._wrap_distance_results(results)
+
+    def _wrap_distance_results(self, results):
+        for result in results:
+            if not result.coords:
+                continue
+            distance = self.coords.distance_to(result.coords)
+            if distance > self.settings.max_distance:
+                yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
 
 
 class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
@@ -109,15 +117,7 @@ class LocationQuery(GeoPointQuery, queries.LocationQuery):
         elif results.type == 'mixed':
             results = (r for r in results if isinstance(r, self.Model))
 
-        return results if not self.coords else self._filter_results_by_distance(results)
-
-    def _filter_results_by_distance(self, results):
-        for result in results:
-            if not result.coords:
-                continue
-            distance = self.coords.distance_to(result.coords)
-            if distance > self.settings.max_distance:
-                yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
+        return results if not self.coords else self._wrap_distance_results(results)
 
 
 class AddressQuery(LocationQuery, queries.AddressQuery):
