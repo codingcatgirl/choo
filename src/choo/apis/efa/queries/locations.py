@@ -13,7 +13,7 @@ class GeoPointQuery(queries.GeoPointQuery):
         return self._coordinates_request()
 
     def _coordinates_request(self):
-        # Executes as COORDS_REQUEST (which can only find stops)
+        # Executes as COORDS_REQUEST
         post = {
             'language': 'de',
             'outputFormat': 'XML',
