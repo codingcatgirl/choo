@@ -12,6 +12,9 @@ class Coordinates(namedtuple('Coordinates', ('lat', 'lon'))):
         lon1, lat1, lon2, lat2 = map(radians, [self.lon, self.lat, other.lon, other.lat])
         return 12742000 * asin(sqrt(sin((lat2-lat1)/2)**2+cos(lat1)*cos(lat2)*sin((lon2-lon1)/2)**2))
 
+    def __reversed__(self):
+        return tuple(self)[::-1]
+
     def _near(self, other):
         return (abs(self.lat - other.lat) < 0.02 and
                 abs(self.lon - other.lon) < 0.02)
