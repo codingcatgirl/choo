@@ -110,7 +110,8 @@ class POI(Addressable, ModelWithIDs):
         return super().__eq__(other)
 
     def __repr__(self):
-        return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, self.country, self.city__name, self.name, self.poitype)
+        return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, self.country, self.city__name,
+                                         self.name, self.poitype)
 
 
 class Platform(GeoPoint, ModelWithIDs):
