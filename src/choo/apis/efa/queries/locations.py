@@ -63,6 +63,8 @@ class LocationQuery(GeoPointQuery, queries.LocationQuery):
             return self._stopfinder_request({'type': 'any', 'place': self.city__name, 'name': self.name})
 
         if self.coords:
+            if self.Model == Address:
+                return self._stopfinder_request({'type': 'coord', 'name': '%.6f:%.6f:WGS84' % reversed(self.coords)})
             return self._coordinates_request()
 
         raise NotImplementedError('Not enough data for Query.')
