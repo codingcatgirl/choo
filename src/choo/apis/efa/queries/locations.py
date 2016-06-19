@@ -5,18 +5,64 @@ from ..parsers.odv import OdvLocationList
 from ..parsers.coordinfo import CoordInfoGeoPointList
 
 
-class LocationQueryExecuter:
+class GeoPointQuery(queries.GeoPointQuery):
+    def _coordinates_request(self):
+        # Executes as COORDS_REQUEST (which can only find stops)
+        post = {
+            'language': 'de',
+            'outputFormat': 'XML',
+            'coordOutputFormat': 'WGS84',
+            'inclFilter': '1',
+            'coords': '%.6f:%.6f:WGS84' % reversed(self.coords),
+        }
+
+        if self.settings['limit']:
+            post['max'] = self.settings['limit']
+
+        types = []
+        if issubclass(Stop, self.Model):
+            types.append('STOP')
+
+        if issubclass(POI, self.Model):
+            types.append('POI_POINT')
+            types.append('POI_AREA')
+
+        if issubclass(Platform, self.Model):
+            types.append('BUS_POINT')
+
+        for i, type_ in enumerate(types):
+            post.update({
+                'type_%d' % (i+1): type_,
+                'radius_%d' % (i+1): self.settings['max_distance']
+            })
+
+        xml, self.time = self.network._request('XML_COORD_REQUEST', post)
+        data = xml.find('./itdCoordInfoRequest')
+
+        results = CoordInfoGeoPointList(self, data)
+        return results
+
+
+class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
+    pass
+
+
+class LocationQuery(GeoPointQuery, queries.LocationQuery):
     def _execute(self):
         location = self._convert_unique_location()
         if location:
             return self._stopfinder_request(location)
 
+        if not self.coords or self.city__name or self.name:
+            return self._stopfinder_request({'type': 'any', 'place': self.city__name, 'name': self.name})
+
         if self.coords:
-            if self.Model == Stop:
-                return self._coordinates_request()
-            if self.Model == Address:
-                return self._stopfinder_request({'type': 'coord', 'name': '%.6f:%.6f:WGS84' % reversed(self.coords)})
-        return self._stopfinder_request({'type': 'any', 'place': self.city__name, 'name': self.name})
+            return self._coordinates_request()
+
+        raise NotImplementedError('Not enough data for Query.')
+
+    def _convert_unique_location(self):
+        return None
 
     def _stopfinder_request(self, location):
         # Executes a STOPFINDER_REQUEST (which can not only find stops)
@@ -55,9 +101,9 @@ class LocationQueryExecuter:
         elif results.type == 'mixed':
             results = (r for r in results if isinstance(r, self.Model))
 
-        return results if not self.coords else self._filter_stopfinder_results(results)
+        return results if not self.coords else self._filter_results_by_distance(results)
 
-    def _filter_stopfinder_results(self, results):
+    def _filter_results_by_distance(self, results):
         for result in results:
             if not result.coords:
                 continue
@@ -65,52 +111,8 @@ class LocationQueryExecuter:
             if distance > self.settings.max_distance:
                 yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
 
-    def _coordinates_request(self):
-        # Executes as COORDS_REQUEST (which can only find stops)
-        post = {
-            'language': 'de',
-            'outputFormat': 'XML',
-            'coordOutputFormat': 'WGS84',
-            'inclFilter': '1',
-            'coords': '%.6f:%.6f:WGS84' % reversed(self.coords),
-        }
 
-        if self.settings['limit']:
-            post['max'] = self.settings['limit']
-
-        types = []
-        if issubclass(Stop, self.Model):
-            types.append('STOP')
-
-        if issubclass(POI, self.Model):
-            types.append('POI_POINT')
-
-        if issubclass(Platform, self.Model):
-            types.append('BUS_POINT')
-
-        for i, type_ in enumerate(types):
-            post.update({
-                'type_%d' % (i+1): type_,
-                'radius_%d' % (i+1): self.settings['max_distance']
-            })
-
-        xml, self.time = self.network._request('XML_COORD_REQUEST', post)
-        data = xml.find('./itdCoordInfoRequest')
-
-        results = CoordInfoGeoPointList(self, data)
-        return results
-
-
-class LocationQuery(LocationQueryExecuter, queries.LocationQuery):
-    def _convert_unique_location(self):
-        return None
-
-
-class AddressQuery(LocationQueryExecuter, queries.AddressQuery):
-    pass
-
-
-class StopQuery(LocationQueryExecuter, queries.StopQuery):
+class AddressQuery(LocationQuery, queries.AddressQuery):
     def _convert_unique_location(self):
         if self.ids and self.network.name in self.ids:
             return {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
@@ -119,7 +121,20 @@ class StopQuery(LocationQueryExecuter, queries.StopQuery):
         return super()._convert_location()
 
 
-class POIQuery(LocationQueryExecuter, queries.POIQuery):
+class AddressableQuery(LocationQuery, queries.AddressableQuery):
+    pass
+
+
+class StopQuery(AddressableQuery, queries.StopQuery):
+    def _convert_unique_location(self):
+        if self.ids and self.network.name in self.ids:
+            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
+        if self.ifopt:
+            return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
+        return super()._convert_location()
+
+
+class POIQuery(AddressableQuery, queries.POIQuery):
     def _convert_unique_location(self):
         if self.ids and self.network.name in self.ids:
             return {'type': 'poiID', 'name': str(self.ids[self.network.name])}
