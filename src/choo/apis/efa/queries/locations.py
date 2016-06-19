@@ -6,6 +6,12 @@ from ..parsers.odv import OdvLocationList
 
 
 class GeoPointQuery(queries.GeoPointQuery):
+    def _execute(self):
+        if not self.coords:
+            raise NotImplementedError('Not enough data for Query.')
+
+        return self._coordinates_request()
+
     def _coordinates_request(self):
         # Executes as COORDS_REQUEST (which can only find stops)
         post = {
@@ -13,7 +19,7 @@ class GeoPointQuery(queries.GeoPointQuery):
             'outputFormat': 'XML',
             'coordOutputFormat': 'WGS84',
             'inclFilter': '1',
-            'coords': '%.6f:%.6f:WGS84' % reversed(self.coords),
+            'coord': '%.6f:%.6f:WGS84' % reversed(self.coords),
         }
 
         if self.settings['limit']:
