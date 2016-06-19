@@ -31,7 +31,7 @@ class API:
     def platforms(self):
         if self.PlatformQuery is None:
             raise NotImplementedError('Querying platforms is not supported by this network.')
-        return self.GeoPointQuery(self)
+        return self.PlatformQuery(self)
 
     @property
     def locations(self):
