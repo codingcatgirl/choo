@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 from choo.networks.de import vrr
 from choo.models import Stop, City
+from choo.types import Coordinates
+from pprint import pprint
 import code
+import json
 
 # collection = Collection('test')
 
 bs = Stop(city=City('essen'), name='borbeck süd bf')
-results = vrr.locations.where(city__name='essen', name='borbeck').execute()
+results = vrr.platforms.where(coords=Coordinates(51.462983, 6.956251)).max_distance(5000).execute()
+pprint(list(results)[0].serialize())
+print(json.dumps(list(results)[0].serialize(), indent=2))
 code.interact(local=locals())
 
 

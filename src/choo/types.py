@@ -1,16 +1,35 @@
+from abc import ABC, abstractmethod
 from collections import namedtuple
 from datetime import datetime, timedelta
 from enum import Enum
 from math import asin, cos, radians, sin, sqrt
 
 
-class Coordinates(namedtuple('Coordinates', ('lat', 'lon'))):
+class Serializable(ABC):
+    @abstractmethod
+    def serialize(self):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def unserialize(cls, data):
+        pass
+
+
+class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
     def distance_to(self, other):
         if not isinstance(other, Coordinates):
             raise TypeError('distance_to expected Coordinates object, not %s' % repr(other))
 
         lon1, lat1, lon2, lat2 = map(radians, [self.lon, self.lat, other.lon, other.lat])
         return 12742000 * asin(sqrt(sin((lat2-lat1)/2)**2+cos(lat1)*cos(lat2)*sin((lon2-lon1)/2)**2))
+
+    def serialize(self):
+        return (self.lat, self.lon)
+
+    @classmethod
+    def unserialize(cls, data):
+        return cls(*data)
 
     def __reversed__(self):
         return tuple(self)[::-1]
@@ -86,7 +105,7 @@ class LiveTime:
             return self.expected_time < other.expected_time
 
 
-class IFOPT:
+class IFOPT(Serializable):
     @classmethod
     def parse(cls, string):
         if string is None:
@@ -100,6 +119,13 @@ class IFOPT:
 
     def __str__(self):
         return ':'.join(self)
+
+    def serialize(self):
+        return str(self)
+
+    @classmethod
+    def unserialize(cls, data):
+        return cls.parse(data)
 
 
 class StopIFOPT(IFOPT, namedtuple('StopIFOPT', ('country', 'area', 'stop'))):
@@ -119,7 +145,21 @@ class PlatformIFOPT(IFOPT, namedtuple('PlatformIFOPT', ('country', 'area', 'stop
         return StopIFOPT(*self[:3])
 
 
-class HierarchicEnumMixin:
+class SerializableEnumMixin:
+    def serialize(self):
+        return self.name
+
+    @classmethod
+    def unserialize(cls, data):
+        result = getattr(cls, data)
+        if not isinstance(result, cls):
+            raise AttributeError
+        return result
+
+Serializable.register(SerializableEnumMixin)
+
+
+class HierarchicEnumMixin(SerializableEnumMixin):
     def __contains__(self, other):
         if not isinstance(other, self.__class__):
             raise TypeError('can only match %s instances' % self.__class__.__name__)
@@ -163,7 +203,7 @@ class WayEvent(HierarchicEnumMixin, Enum):
         return 'WayEvent.' + self.name
 
 
-class WalkSpeed(Enum):
+class WalkSpeed(SerializableEnumMixin, Enum):
     normal = 'normal'
     fast = 'fast'
     slow = 'slow'
@@ -197,7 +237,7 @@ class LineType(HierarchicEnumMixin, Enum):
         return 'LineType.' + self.name
 
 
-class POIType(Enum):
+class POIType(SerializableEnumMixin, Enum):
     unknown = 'unknown'
     bicycle_hire = 'bicycle_hire'
     education = 'education'
@@ -212,7 +252,7 @@ class POIType(Enum):
     venue = 'venue'
 
 
-class PlatformType(Enum):
+class PlatformType(SerializableEnumMixin, Enum):
     unknown = 'unknown'
     street = 'street'
     platform = 'platform'

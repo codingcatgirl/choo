@@ -1,8 +1,10 @@
+from abc import ABCMeta
 from collections import OrderedDict
 from typing import Iterable, Mapping, Optional, Union
 
 from ..apis.base import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
+from ..types import Serializable
 
 
 class Field:
@@ -23,6 +25,9 @@ class Field:
 
     def validate(self, value):
         return issubclass(type(value), self.types)
+
+    def serialize(self, value):
+        return value.serialize() if isinstance(value, Serializable) else value
 
     def get_proxy_fields(self):
         if self.Model is None:
@@ -80,7 +85,7 @@ def give_none(self, *args, **kwargs):
     return None
 
 
-class MetaModel(type):
+class MetaModel(ABCMeta):
     def __new__(mcs, name, bases, attrs):
         fields = OrderedDict()
         fields.update(OrderedDict(sorted(
@@ -113,19 +118,23 @@ class MetaModel(type):
         return cls
 
 
-class Model(metaclass=MetaModel):
+class Model(Serializable, metaclass=MetaModel):
     def __init__(self):
         self._data = {}
 
-    def serialize(self, exclude=[], **kwargs):
-        data = [('type', self._serialized_name())]
-        for name, field in self._fields.items():
-            try:
-                val = self._data[name]
-            except KeyError:
-                continue
-            data = (name, val if isinstance([int, float, str, dict, list]) else val.serialize())
-        return OrderedDict(data)
+    def serialize(self):
+        result = OrderedDict()
+        for name, field in self._nonproxy_fields.items():
+            value = field.serialize(getattr(self, name))
+            if value is not None:
+                result[name] = field.serialize(getattr(self, name))
+        return result
+
+    @classmethod
+    def unserialize(self, data):
+        raise NotImplementedError
+
+Serializable.register(Model)
 
 
 class ModelWithIDs(Model):

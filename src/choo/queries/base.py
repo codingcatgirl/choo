@@ -82,6 +82,10 @@ class Query(metaclass=MetaQuery):
 
         return result
 
+    @classmethod
+    def unserialize(cls, data):
+        raise NotImplementedError
+
     @property
     def settings(self):
         return MappingProxyType(self._settings)
