@@ -84,11 +84,10 @@ class ParserError(Exception):
 
 
 class Parser:
-    def __init__(self, parent, data, *args, **kwargs):
+    def __init__(self, parent, data, **kwargs):
         self.network = parent.network
         self.time = parent.time
         self.data = data
-        self._args = args
         self._kwargs = kwargs
 
     def printable_data(self, pretty=True):
@@ -118,7 +117,7 @@ class parser_property(object):
             return self
         field = obj.Model._fields[self.name]
         try:
-            value = obj.__dict__[self.name] = self.func(obj, obj.data, *obj._args, **obj._kwargs)
+            value = obj.__dict__[self.name] = self.func(obj, obj.data, **obj._kwargs)
         except Exception as e:
             raise type(e)(str(e) +
                           '\n\n### CHOO DEBUG INFO:\n%s' % obj.printable_data()).with_traceback(sys.exc_info()[2])
@@ -137,7 +136,7 @@ class parser_property(object):
 
 def cached_property(func):
     def wrapped_func(self):
-        value = func(self, self.data, *self._args, **self._kwargs)
+        value = func(self, self.data, **self._kwargs)
         self.__dict__[func.__name__] = value
         return value
     return property(wrapped_func)

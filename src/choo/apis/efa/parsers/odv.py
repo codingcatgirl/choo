@@ -49,11 +49,11 @@ class OdvLocationList(XMLParser):
         """ Parses the odvNameElem of an ODV """
         odvtype = data.attrib.get('anyType', odvtype)
         if odvtype == 'stop':
-            return 'stop', OdvNameElemStop(self, data, city)
+            return 'stop', OdvNameElemStop(self, data, city=city)
         elif odvtype == 'poi':
-            return 'poi', OdvNameElemPOI(self, data, city)
+            return 'poi', OdvNameElemPOI(self, data, city=city)
         elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
-            return 'address', OdvNameElemAddress(self, data, city)
+            return 'address', OdvNameElemAddress(self, data, city=city)
         else:
             raise ParserError(self, 'Unknown odvtype: %s' % odvtype)
 
@@ -63,60 +63,60 @@ class OdvLocationList(XMLParser):
 
 class OmcParserMixin:
     @cached_property
-    def _omc(self, data, country=None):
+    def _omc(self, data, **kwargs):
         self.network._parse_omc(data.attrib['omc'])
 
     @parser_property
-    def country(self, data, country=None):
+    def country(self, data, country=None, **kwargs):
         return country if country else self._omc[0]
 
     @parser_property
-    def state(self, data, country=None):
+    def state(self, data, **kwargs):
         return self._omc[1]
 
     @parser_property
-    def official_id(self, data, country=None):
+    def official_id(self, data, **kwargs):
         return self._omc[2]
 
 
 class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
     @parser_property
-    def ids(self, data, city):
+    def ids(self, data, **kwargs):
         myid = data.attrib.get('stateless')
         return myid and {self.network.name: myid}
 
     @parser_property
-    def name(self, data, country=None):
+    def name(self, data, **kwargs):
         return data.text
 
 
 class OdvNameElemCity(OmcParserMixin, City.XMLParser):
     @parser_property
-    def name(self, data, country=None):
+    def name(self, data, **kwargs):
         return data.attrib.get('locality')
 
 
 class OdvNameElemLocation(Location.XMLParser):
     @parser_property
-    def ids(self, data, city):
+    def ids(self, data, **kwargs):
         myid = data.attrib.get('stopID') or data.attrib.get('id')
         return myid and {self.network.name: myid}
 
-    def _city_parse(self, data, city, country=None):
+    def _city_parse(self, data, city, **kwargs):
         if city is not None:
             return OdvPlaceElemCity(self, city, country=country)
         return OdvNameElemCity(self, data, country=country)
 
     @parser_property
-    def city(self, data, city):
+    def city(self, data, city, **kwargs):
         return self._city_parse(data, city)
 
     @parser_property
-    def name(self, data, city):
+    def name(self, data, **kwargs):
         return data.attrib.get('objectName', data.text)
 
     @parser_property
-    def coords(self, data, city):
+    def coords(self, data, **kwargs):
         if 'x' not in data.attrib:
             return None
         return Coordinates(float(data.attrib['y']) / 1000000,
@@ -125,19 +125,19 @@ class OdvNameElemLocation(Location.XMLParser):
 
 class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
     @parser_property
-    def street(self, data, city):
+    def street(self, data, **kwargs):
         return data.attrib.get('streetName')
 
     @parser_property
-    def number(self, data, city):
+    def number(self, data, **kwargs):
         return data.attrib.get('buildingNumber') or data.attrib.get('houseNumber')
 
     @parser_property
-    def postcode(self, data, city):
+    def postcode(self, data, **kwargs):
         return data.attrib.get('postCode')
 
     @parser_property
-    def name(self, data, city):
+    def name(self, data, **kwargs):
         name = data.attrib.get('objectName', data.text)
         if name is not None:
             number = self.number
@@ -149,11 +149,11 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
 
 class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
     @parser_property
-    def ifopt(self, data, city):
+    def ifopt(self, data, **kwargs):
         return StopIFOPT.parse(data.attrib.get('gid') or None)
 
     @parser_property
-    def city(self, data, city):
+    def city(self, data, city, **kwargs):
         ifopt = self.ifopt
         return self._city_parse(data, city, ifopt.country if ifopt else None)
 
