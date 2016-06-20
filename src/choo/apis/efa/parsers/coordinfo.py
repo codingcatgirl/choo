@@ -25,7 +25,7 @@ class CoordInfoGeoPoint(GeoPoint.XMLParser):
 
 class GeoPointParserMixin:
     @parser_property
-    def coords(self, data):
+    def coords(self, data, *args):
         coords = data.find('./itdPathCoordinates/itdCoordinateBaseElemList/itdCoordinateBaseElem')
         return Coordinates(int(coords.find('./y').text)/1000000, int(coords.find('./x').text)/1000000)
 
@@ -91,7 +91,7 @@ class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
 
 class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
     @parser_property
-    def ids(self, data, city):
+    def ids(self, data):
         myid = data.attrib.get('id')
         return myid and {self.network.name: myid}
 
@@ -120,7 +120,7 @@ class CoordInfoStopArea(GeoPointParserMixin, StopArea.XMLParser):
     @parser_property
     def ids(self, data, platform):
         myid = platform.ids.get(self.network.name)
-        return myid and {self.network.name: myid.split('-')[:-1].join('-')}
+        return myid and {self.network.name: '-'.join(myid.split('-')[:-1])}
 
     @parser_property
     def ifopt(self, data, platform):
