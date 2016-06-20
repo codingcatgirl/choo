@@ -114,7 +114,7 @@ class POI(Addressable, ModelWithIDs):
                                          self.name, self.poitype)
 
 
-class StopArea(GeoPoint, ModelWithIDs):
+class StopArea(ModelWithIDs):
     stop = Field(Stop, Stop)
     ifopt = Field(StopAreaIFOPT)
     name = Field(str)
