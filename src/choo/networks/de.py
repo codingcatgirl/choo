@@ -1,5 +1,5 @@
 from ..apis.efa import EFA
 
-vrr = EFA('vrr', 'http://efa.vrr.de/standard/', 'de')
+vrr = EFA(name='vrr', base_url='http://efa.vrr.de/standard/', preset='de')
 # vrr = EFA('vrr', 'http://app.vrr.de/companion-vrr/')
-vrn = EFA('vrn', 'http://fahrplanauskunft.vrn.de/vrn/', 'de')
+vrn = EFA(name='vrn', base_url='http://fahrplanauskunft.vrn.de/vrn/', preset='de')
