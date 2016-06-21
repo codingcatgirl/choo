@@ -94,7 +94,9 @@ class Query(metaclass=MetaQuery):
         if not isinstance(obj, self.Model):
             raise TypeError('Expected %s instance, got %s' % (self.Model.__name__, repr(obj)))
 
-        r = self.update(**{name: getattr(obj, name, None) for name in self._fields}).limit(1).execute()
+        result = self.copy()
+        result._obj = deepcopy(obj)
+        r = result.execute()
         if not r:
             raise self.Model.NotFound
         return next(iter(r))
@@ -142,7 +144,7 @@ class Query(metaclass=MetaQuery):
         if name in self.__class__._settings_defaults:
             raise TypeError('Use .settings to get settings!')
 
-        raise AttributeError
+        raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name in self.Model._fields:
