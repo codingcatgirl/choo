@@ -43,20 +43,15 @@ class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
                 abs(self.lon - other.lon) < 0.04)
 
 
-class LiveTime:
-    def __init__(self, time=None, delay=None, expected_time=None, **kwargs):
-        if expected_time is not None:
-            if time is None:
-                time = expected_time - delay
-            elif delay is None:
-                delay = expected_time - time
-            elif expected_time - time != delay:
-                raise ValueError
+class LiveTime(Serializable, namedtuple('LiveTime', ('time', 'delay'))):
+    def __new__(self, time, delay=None):
+        if not isinstance(time, datetime):
+            raise TypeError('time has to be datetime, not %s' % repr(time))
 
-        super().__init__(time=time, delay=delay, **kwargs)
+        if not isinstance(delay, timedelta):
+            raise TypeError('delay has to be timedelta or None, not %s' % repr(delay))
 
-    def __repr__(self):
-        return '<LiveTime %s>' % (str(self))
+        return super().__new__(time, delay)
 
     def __str__(self):
         out = self.time.strftime('%Y-%m-%d %H:%M')
@@ -74,35 +69,6 @@ class LiveTime:
             return self.time + self.delay
         else:
             return self.time
-
-    def __add__(self, other):
-        assert isinstance(other, timedelta)
-        return LiveTime(self.time + other, self.delay)
-
-    def __sub__(self, other):
-        assert isinstance(other, timedelta)
-        return LiveTime(self.time - other, self.delay)
-
-    def __eq__(self, other):
-        if isinstance(other, datetime):
-            return self.expected_time == other
-        elif isinstance(other, LiveTime):
-            return self.time == other.time
-        return False
-
-    def __lt__(self, other):
-        assert isinstance(other, LiveTime) or isinstance(other, datetime)
-        if isinstance(other, datetime):
-            return self.expected_time < other
-        else:
-            return self.expected_time < other.expected_time
-
-    def __gt__(self, other):
-        assert isinstance(other, LiveTime) or isinstance(other, datetime)
-        if isinstance(other, datetime):
-            return self.expected_time < other
-        else:
-            return self.expected_time < other.expected_time
 
 
 class IFOPT(Serializable):
