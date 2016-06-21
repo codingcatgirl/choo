@@ -58,7 +58,18 @@ class GeoPointQuery(queries.GeoPointQuery):
 
 
 class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
-    pass
+    def _execute(self):
+        if self.stop:
+            stop = self.stop
+            if not stop.coords:
+                stop = self.network.stops.get(stop)
+            if not stop.coords:
+                raise NotImplementedError('Could not get stop coordinates needed to get its platforms.')
+
+            results = self.network.platforms.where(coords=stop.coords).max_distance(400)
+            return results if not self.coords else self._wrap_distance_results(results)
+        else:
+            return self._coordinates_request()
 
 
 class LocationQuery(GeoPointQuery, queries.LocationQuery):
