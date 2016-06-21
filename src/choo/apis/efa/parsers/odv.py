@@ -102,7 +102,7 @@ class OdvNameElemLocation(Location.XMLParser):
         myid = data.attrib.get('stopID') or data.attrib.get('id')
         return myid and {self.network.name: myid}
 
-    def _city_parse(self, data, city, **kwargs):
+    def _city_parse(self, data, city, country, **kwargs):
         if city is not None:
             return OdvPlaceElemCity(self, city, country=country)
         return OdvNameElemCity(self, data, country=country)
