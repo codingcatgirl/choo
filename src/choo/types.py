@@ -34,14 +34,6 @@ class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
     def __reversed__(self):
         return tuple(self)[::-1]
 
-    def _near(self, other):
-        return (abs(self.lat - other.lat) < 0.02 and
-                abs(self.lon - other.lon) < 0.02)
-
-    def _not_too_far(self, other):
-        return (abs(self.lat - other.lat) < 0.04 or
-                abs(self.lon - other.lon) < 0.04)
-
 
 class LiveTime(Serializable, namedtuple('LiveTime', ('time', 'delay'))):
     def __new__(self, time, delay=None):
