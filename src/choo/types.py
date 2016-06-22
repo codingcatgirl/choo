@@ -73,7 +73,8 @@ class IDs(Serializable):
             self.data.setdefault(name, set()).update(value if isinstance(value, set) else set(value))
 
     def serialize(self):
-        return {name: (tuple(values) if len(values)-1 else next(iter(values))) for name, values in self.data.items() if values}
+        return {name: (tuple(values) if len(values)-1 else next(iter(values)))
+                for name, values in self.data.items() if values}
 
     @classmethod
     def unserialize(self, data):
