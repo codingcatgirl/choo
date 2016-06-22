@@ -61,12 +61,12 @@ class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
     def _execute(self):
         if self.stop:
             stop = self.stop
-            if not stop.coords:
+            if not stop.coords or self.network.name not in self.ids:
                 stop = self.network.stops.get(stop)
             if not stop.coords:
                 raise NotImplementedError('Could not get stop coordinates needed to get its platforms.')
 
-            results = self.network.platforms.where(coords=stop.coords).max_distance(400)
+            results = (r for r in self.network.platforms.where(coords=stop.coords).max_distance(400) if r.stop == stop)
             return results if not self.coords else self._wrap_distance_results(results)
         else:
             return self._coordinates_request()
