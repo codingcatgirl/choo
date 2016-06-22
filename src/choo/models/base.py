@@ -139,3 +139,17 @@ Serializable.register(Model)
 
 class ModelWithIDs(Model):
     ids = Field(IDs)
+
+    def __eq__(self, other):
+        if not isinstance(other, ModelWithIDs):
+            return False
+
+        model1 = self.Model if isinstance(self, Parser) else self.__class__
+        model2 = other.Model if isinstance(other, Parser) else other.__class__
+
+        if model1 != model2:
+            return False
+
+        print(self.ids, other.ids)
+
+        return (self.ids and other.ids and self.ids & other.ids) or None
