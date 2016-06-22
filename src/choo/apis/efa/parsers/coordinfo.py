@@ -71,6 +71,13 @@ class CoordInfoLocationCity(City.XMLParser):
 
 class CoordInfoStop(LocationParserMixin, Stop.XMLParser):
     @parser_property
+    def ids(self, data, platform=None, **kwargs):
+        if platform:
+            return FrozenIDs({self.network.name: platform.ids[self.network.name].split('-')[0]})
+        myid = data.attrib.get('id')
+        return myid and FrozenIDs({self.network.name: myid})
+
+    @parser_property
     def ifopt(self, data, **kwargs):
         return StopIFOPT.parse(self._attrs.get('STOP_GLOBAL_ID'))
 
@@ -103,7 +110,7 @@ class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
 
     @parser_property
     def stop(self, data, **kwargs):
-        return CoordInfoStop(self, data, no_coords=True)
+        return CoordInfoStop(self, data, platform=self, no_coords=True)
 
     @parser_property
     def name(self, data, **kwargs):
@@ -122,7 +129,7 @@ class CoordInfoStopArea(GeoPointParserMixin, StopArea.XMLParser):
     @parser_property
     def ids(self, data, platform):
         myid = platform.ids.get(self.network.name)
-        return myid and FrozenIDs({self.network.name: '-'.join(myid.split('-')[:-1])})
+        return myid and FrozenIDs({self.network.name: '-'.join(myid.split('-')[:2])})
 
     @parser_property
     def ifopt(self, data, platform):
