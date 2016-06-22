@@ -18,8 +18,8 @@ class Serializable(ABC):
 
 class IDs(Serializable):
     def __init__(self, initialdata={}):
-        self.data = {name: (value if isinstance(value, (set, list)) else set((value, )))
-                     for name, value in initialdata.items()}
+        items = initialdata.items() if isinstance(initialdata, (dict, IDs)) else initialdata
+        self.data = {name: (value if isinstance(value, (set, list)) else set((value, ))) for name, value in items}
 
     def __getitem__(self, name):
         return next(iter(self.data[name]))
@@ -32,6 +32,9 @@ class IDs(Serializable):
 
     def __contains__(self, name):
         return name in self.data
+
+    def __iter__(self):
+        return iter(self.data)
 
     def clear(self):
         self.data = {}
@@ -47,9 +50,16 @@ class IDs(Serializable):
 
     def remove(self, name, value):
         self.data[name].remove(value)
+        if not self.data[name]:
+            del self.data[name]
 
     def discard(self, name, value):
-        self.data.get(name, set()).discard(value)
+        if name not in self.data:
+            return
+
+        self.data[name].discard(value)
+        if not self.data[name]:
+            del self.data[name]
 
     def get(self, name, default=None):
         return self[name] if name in self.data else default
@@ -70,35 +80,43 @@ class IDs(Serializable):
 
     def update(self, other):
         for name, value in other.items():
-            self.data.setdefault(name, set()).update(value if isinstance(value, set) else set(value))
+            self.data.setdefault(name, set()).update(value if isinstance(value, (set, list)) else set(value))
 
     def serialize(self):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
                 for name, values in self.data.items() if values}
 
+    def union(self, other):
+        result = self.copy()
+        result.update(other)
+        return result
+
+    def intersection(self, other):
+        return self.__class__(set(self.items()) & set(self.__class__(other).items()))
+
+    __and__ = intersection
+    __or__ = union
+    __ior__ = update
+
     @classmethod
     def unserialize(self, data):
         return self.__class__(data)
 
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.data)
+
 
 class FrozenIDs(IDs):
-    def add(self, name, value):
+    def _frozen_error(self, *args, **kwargs):
         raise TypeError('FrozenIDs can not be altered')
 
-    def __delitem__(self, name):
-        raise TypeError('FrozenIDs can not be altered')
-
-    def remove(self, name, value):
-        raise TypeError('FrozenIDs can not be altered')
-
-    def clear(self, name, value):
-        raise TypeError('FrozenIDs can not be altered')
-
-    def discard(self, name, value):
-        raise TypeError('FrozenIDs can not be altered')
-
-    def update(self, other):
-        raise TypeError('FrozenIDs can not be altered')
+    add = _frozen_error
+    __delitem__ = _frozen_error
+    remove = _frozen_error
+    clear = _frozen_error
+    discard = _frozen_error
+    update = _frozen_error
+    __ior__ = _frozen_error
 
 
 class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
