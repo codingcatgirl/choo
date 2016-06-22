@@ -79,35 +79,12 @@ class Stop(Addressable, ModelWithIDs):
     def country(self):
         return self.ifopt.country if self.ifopt else self.city__country
 
-    def __eq__(self, other):
-        if not isinstance(other, Stop):
-            return False
-
-        if (self.full_name is not None and other.full_name is not None and
-                self.full_name.replace(',', '') == other.full_name.replace(',', '')):
-            return True
-
-        if self.city is not None and other.city is not None:
-            if self.city.split(' ')[0].lower() != other.city.split(' ')[0].lower():
-                return False
-
-            if self.city.startswith(other.city) and other.city.startswith(self.city):
-                return self.name == other.name
-
-        return None
-
 
 class POI(Addressable, ModelWithIDs):
     poitype = Field(POIType)
 
     def __init__(self, city=None, name=None, **kwargs):
         super().__init__(city=city, name=name, **kwargs)
-
-    def __eq__(self, other):
-        if not isinstance(other, POI):
-            return False
-
-        return super().__eq__(other)
 
     def __repr__(self):
         return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, self.country, self.city__name,
@@ -135,15 +112,3 @@ class Platform(GeoPoint, ModelWithIDs):
     def __repr__(self):
         return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, repr(self.stop), self.name,
                                          self.platform_type, self.area__name)
-
-    def __eq__(self, other):
-        if not isinstance(other, Platform):
-            return False
-
-        if self.stop != other.stop:
-            return False
-
-        if self.coords is not None and self.coords == other.coords:
-            return True
-
-        return None
