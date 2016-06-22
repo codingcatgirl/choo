@@ -1,5 +1,5 @@
 from ....models import POI, Address, City, Location, Stop
-from ....types import Coordinates, StopIFOPT
+from ....types import Coordinates, StopIFOPT, FrozenIDs
 from ...base import ParserError, XMLParser, cached_property, parser_property
 
 

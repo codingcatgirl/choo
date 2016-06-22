@@ -1,10 +1,10 @@
 from abc import ABCMeta
 from collections import OrderedDict
-from typing import Iterable, Mapping, Optional, Union
+from typing import Optional
 
 from ..apis.base import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
-from ..types import Serializable
+from ..types import Serializable, IDs
 
 
 class Field:
@@ -138,4 +138,4 @@ Serializable.register(Model)
 
 
 class ModelWithIDs(Model):
-    ids = Field(Mapping[str, Union[str, Iterable[str]]])
+    ids = Field(IDs)

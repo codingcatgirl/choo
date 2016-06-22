@@ -1,5 +1,5 @@
 from ....models import City, GeoPoint, Platform, POI, Stop, StopArea
-from ....types import Coordinates, StopIFOPT, PlatformIFOPT
+from ....types import Coordinates, StopIFOPT, PlatformIFOPT, FrozenIDs
 from ...base import XMLParser, ParserError, cached_property, parser_property
 from .utils import GenAttrMapping
 
@@ -66,7 +66,7 @@ class CoordInfoLocationCity(City.XMLParser):
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('omc')+':'+data.attrib.get('placeID')
-        return myid and {self.network.name: myid}
+        return myid and FrozenIDs({self.network.name: myid})
 
 
 class CoordInfoStop(LocationParserMixin, Stop.XMLParser):
@@ -95,7 +95,7 @@ class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('id')
-        return myid and {self.network.name: myid}
+        return myid and FrozenIDs({self.network.name: myid})
 
     @parser_property
     def ifopt(self, data, **kwargs):
@@ -122,7 +122,7 @@ class CoordInfoStopArea(GeoPointParserMixin, StopArea.XMLParser):
     @parser_property
     def ids(self, data, platform):
         myid = platform.ids.get(self.network.name)
-        return myid and {self.network.name: '-'.join(myid.split('-')[:-1])}
+        return myid and FrozenIDs({self.network.name: '-'.join(myid.split('-')[:-1])})
 
     @parser_property
     def ifopt(self, data, platform):

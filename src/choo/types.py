@@ -16,6 +16,90 @@ class Serializable(ABC):
         pass
 
 
+class IDs(Serializable):
+    def __init__(self, initialdata={}):
+        self.data = {name: (value if isinstance(value, (set, list)) else set((value, )))
+                     for name, value in initialdata.items()}
+
+    def __getitem__(self, name):
+        return next(iter(self.data[name]))
+
+    def __setitem__(self, name):
+        raise TypeError('Use IDs.add()')
+
+    def __delitem__(self, name):
+        del self.data[name]
+
+    def __contains__(self, name):
+        return name in self.data
+
+    def clear(self):
+        self.data = {}
+
+    def copy(self):
+        return self.__class__(self.data)
+
+    def keys(self):
+        return self.data.keys()
+
+    def add(self, name, value):
+        self.data.setdefault(name, set()).add(value)
+
+    def remove(self, name, value):
+        self.data[name].remove(value)
+
+    def discard(self, name, value):
+        self.data.get(name, set()).discard(value)
+
+    def get(self, name, default=None):
+        return self[name] if name in self.data else default
+
+    def __len__(self):
+        return sum((len(values) for values in self.data.values()), 0)
+
+    def getall(self, name):
+        return frozenset(self.data.get(name, set()))
+
+    def items(self):
+        for name, values in self.data.items():
+            for value in values:
+                yield name, value
+
+    def values(self):
+        return (value for name, value in self.items())
+
+    def update(self, other):
+        for name, value in other.items():
+            self.data.setdefault(name, set()).update(value if isinstance(value, set) else set(value))
+
+    def serialize(self):
+        return {name: tuple(values) for name, values in self.data.items()}
+
+    @classmethod
+    def unserialize(self, data):
+        return self.__class__(data)
+
+
+class FrozenIDs(IDs):
+    def add(self, name, value):
+        raise TypeError('FrozenIDs can not be altered')
+
+    def __delitem__(self, name):
+        raise TypeError('FrozenIDs can not be altered')
+
+    def remove(self, name, value):
+        raise TypeError('FrozenIDs can not be altered')
+
+    def clear(self, name, value):
+        raise TypeError('FrozenIDs can not be altered')
+
+    def discard(self, name, value):
+        raise TypeError('FrozenIDs can not be altered')
+
+    def update(self, other):
+        raise TypeError('FrozenIDs can not be altered')
+
+
 class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
     def distance_to(self, other):
         if not isinstance(other, Coordinates):
