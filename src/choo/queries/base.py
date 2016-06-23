@@ -96,7 +96,7 @@ class Query(metaclass=MetaQuery):
 
         result = self.copy()
         result._obj = deepcopy(obj)
-        r = result.execute()
+        r = result.limit(1).execute()
         if not r:
             raise self.Model.NotFound
         return next(iter(r))
