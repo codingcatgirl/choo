@@ -19,7 +19,8 @@ class Serializable(ABC):
 class IDs(Serializable):
     def __init__(self, initialdata={}):
         items = initialdata.items() if isinstance(initialdata, (dict, IDs)) else initialdata
-        self.data = {name: (value if isinstance(value, (set, list)) else set((value, ))) for name, value in items}
+        self.data = {name: (value if isinstance(value, (set, list, tuple)) else set((value, )))
+                     for name, value in items}
 
     def __getitem__(self, name):
         return next(iter(self.data[name]))
@@ -80,7 +81,7 @@ class IDs(Serializable):
 
     def update(self, other):
         for name, value in other.items():
-            self.data.setdefault(name, set()).update(value if isinstance(value, (set, list)) else set(value))
+            self.data.setdefault(name, set()).update(value if isinstance(value, (set, list, tuple)) else set(value))
 
     def serialize(self):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
