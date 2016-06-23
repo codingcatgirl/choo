@@ -31,8 +31,6 @@ class GeoPointQuery(Query):
         super()._execute()
 
     def __iter__(self):
-        """
-        """
         return self._full_iter() if self.coords is None else iter(way.destination for way in self._full_iter())
 
     def ways(self):
