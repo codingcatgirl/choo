@@ -1,4 +1,7 @@
 class GenAttrMapping:
+    """
+    Parses an <genAttrList> Element into a Mapping that supports duplicate keys
+    """
     def __init__(self, data):
         self._items = tuple((elem.find('./name').text, elem.find('./value').text or '')
                             for elem in data.findall('./genAttrElem'))

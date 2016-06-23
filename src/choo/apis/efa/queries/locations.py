@@ -14,7 +14,7 @@ class GeoPointQuery(queries.GeoPointQuery):
 
     def _coordinates_request(self):
         """
-        Executes a COORDS_REQUEST (find Locations within a given distance from specific coordinates)
+        Execute a COORDS_REQUEST (find Locations within a given distance from specific coordinates)
         """
         post = {
             'language': 'de',

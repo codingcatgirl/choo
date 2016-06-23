@@ -62,6 +62,9 @@ class OdvLocationList(XMLParser):
 
 
 class OmcParserMixin:
+    """
+    Mixin for City parsers that have an omc xml attribute
+    """
     @cached_property
     def _omc(self, data, **kwargs):
         self.network._parse_omc(data.attrib['omc'])
@@ -80,6 +83,9 @@ class OmcParserMixin:
 
 
 class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
+    """
+    Parse an <odvPlaceElem> Element into a City
+    """
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('stateless')
@@ -91,12 +97,18 @@ class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
 
 
 class OdvNameElemCity(OmcParserMixin, City.XMLParser):
+    """
+    Parse the city part of an <odvNameElem> Element into a City
+    """
     @parser_property
     def name(self, data, **kwargs):
         return data.attrib.get('locality')
 
 
 class OdvNameElemLocation(Location.XMLParser):
+    """
+    Mixin class for anything that parses an <odvNameElem> Element into a Location subclass
+    """
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('stopID') or data.attrib.get('id')
@@ -124,6 +136,9 @@ class OdvNameElemLocation(Location.XMLParser):
 
 
 class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
+    """
+    Parses an <odvNameElem> Element into an Address
+    """
     @parser_property
     def street(self, data, **kwargs):
         return data.attrib.get('streetName')
@@ -148,6 +163,9 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
 
 
 class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
+    """
+    Parses an <odvNameElem> Element into a Stop
+    """
     @parser_property
     def ifopt(self, data, **kwargs):
         return StopIFOPT.parse(data.attrib.get('gid') or None)
@@ -159,4 +177,7 @@ class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
 
 
 class OdvNameElemPOI(POI.XMLParser, OdvNameElemLocation):
+    """
+    Parses an <odvNameElem> Element into an POI
+    """
     pass

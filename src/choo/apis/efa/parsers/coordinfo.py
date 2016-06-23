@@ -5,11 +5,17 @@ from .utils import GenAttrMapping
 
 
 class CoordInfoGeoPointList(XMLParser):
+    """
+    Parse a <coordInfoItemList> into GeoPoints
+    """
     def __iter__(self):
         return (CoordInfoGeoPoint.parse(self, elem) for elem in self.data.findall('./coordInfoItem'))
 
 
 class CoordInfoGeoPoint(GeoPoint.XMLParser):
+    """
+    Parse <coordInfoItem> into its correct GeoPoint submodel
+    """
     @classmethod
     def parse(cls, parent, data):
         type_ = data.attrib['type']
@@ -24,6 +30,9 @@ class CoordInfoGeoPoint(GeoPoint.XMLParser):
 
 
 class GeoPointParserMixin:
+    """
+    Mixin for any <coordInfoItem> parser
+    """
     @parser_property
     def coords(self, data, no_coords=False, **kwargs):
         if no_coords:
@@ -33,16 +42,25 @@ class GeoPointParserMixin:
 
     @cached_property
     def _attrs(self, data, **kwargs):
+        """
+        Get <genAttrList> attributes
+        """
         return GenAttrMapping(data.find('./genAttrList'))
 
 
 class LocationParserMixin(GeoPointParserMixin):
+    """
+    Mixin for any <coordInfoItem> parser for Location submodels
+    """
     @parser_property
     def name(self, data, **kwargs):
         return data.attrib.get('name', '').strip() or None
 
 
 class CoordInfoLocationCity(City.XMLParser):
+    """
+    Parse the city part of a <coordInfoItem> into a City
+    """
     @cached_property
     def _omc(self, data, **kwargs):
         return self.network._parse_omc(data.attrib['omc'])
@@ -70,6 +88,9 @@ class CoordInfoLocationCity(City.XMLParser):
 
 
 class CoordInfoStop(LocationParserMixin, Stop.XMLParser):
+    """
+    Parse a <coordInfoItem> that describes a Stop
+    """
     @parser_property
     def ids(self, data, platform=None, **kwargs):
         if platform:
@@ -88,6 +109,9 @@ class CoordInfoStop(LocationParserMixin, Stop.XMLParser):
 
 
 class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
+    """
+    Parse a <coordInfoItem> that describes a POI
+    """
     @parser_property
     def city(self, data, **kwargs):
         return CoordInfoLocationCity(self, data)
@@ -99,6 +123,9 @@ class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
 
 
 class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
+    """
+    Parse a <coordInfoItem> that describes a Platform
+    """
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('id')
@@ -126,6 +153,9 @@ class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
 
 
 class CoordInfoStopArea(GeoPointParserMixin, StopArea.XMLParser):
+    """
+    Parse a the stop area part pf <coordInfoItem> that describes a Platform into a StopArea
+    """
     @parser_property
     def ids(self, data, platform):
         myid = platform.ids.get(self.network.name)
