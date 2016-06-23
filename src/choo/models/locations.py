@@ -3,6 +3,9 @@ from .base import Field, Model, ModelWithIDs
 
 
 class GeoPoint(Model):
+    """
+    Anything that can have a geographic position.
+    """
     def __init__(self, coords=None, **kwargs):
         super().__init__(**kwargs)
         self.coords = coords
@@ -35,6 +38,9 @@ class City(ModelWithIDs):
 
 
 class Location(GeoPoint):
+    """
+    A named stand-alone Location
+    """
     city = Field(City, City)
     name = Field(str)
 
@@ -81,6 +87,9 @@ class Stop(Addressable, ModelWithIDs):
 
 
 class POI(Addressable, ModelWithIDs):
+    """
+    A Point of Interest
+    """
     poitype = Field(POIType)
 
     def __init__(self, city=None, name=None, **kwargs):
@@ -92,6 +101,9 @@ class POI(Addressable, ModelWithIDs):
 
 
 class StopArea(ModelWithIDs):
+    """
+    A collection of platforms belonging to one particular stop
+    """
     stop = Field(Stop, Stop)
     ifopt = Field(StopAreaIFOPT)
     name = Field(str)

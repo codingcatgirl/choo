@@ -43,6 +43,9 @@ class EFA(API):
         self.preset = preset
 
     def _request(self, endpoint, data):
+        """
+        Place a request to the given andpoint with the given post data.
+        """
         if os.environ.get('CHOO_DEBUG'):
             pprint.pprint(data)
         result = requests.post(self.base_url + endpoint, data=data).text
@@ -53,7 +56,9 @@ class EFA(API):
         return xml, servernow
 
     def _convert_location(self, location, wrap=''):
-        """ Convert a Location into POST parameters for the EFA Requests """
+        """
+        Convert a Location into POST parameters for the EFA Requests
+        """
         r = None
 
         city_name = location.city.name if location.city else None
@@ -91,6 +96,9 @@ class EFA(API):
         return r
 
     def _parse_omc(self, omc):
+        """
+        Parse omc data (part of a city) into country, state and official city id
+        """
         if self.preset == 'de':
             states = {'01': 'sh', '02': 'hh', '03': 'ni', '04': 'hb',
                       '05': 'nrw', '06': 'he', '07': 'rp', '08': 'bw',
@@ -116,12 +124,18 @@ class EFA(API):
         return None, None, None
 
     def _parse_poitype(self, ident):
+        """
+        Parse a COORD_REQUEST POI type by its identifier
+        """
         for n, poitype in self.poitype_mapping:
             if ident.startswith(n):
                 return poitype
         return POIType.unknown
 
     def _parse_platformtype(self, ident):
+        """
+        Parse a COORD_REQUEST platform type by its CHARACTERISTICS attribute
+        """
         try:
             return self.platformtype_mapping[ident]
         except KeyError:

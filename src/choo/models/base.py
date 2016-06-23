@@ -9,7 +9,8 @@ from ..types import Serializable, IDs
 
 class Field:
     """
-    A field on a Choo Model
+    A field on a choo model.
+    Each field has a type and validates it when a value is set.
     """
     _i = 0
 
@@ -59,7 +60,7 @@ class Field:
 
 class ProxyField:
     """
-    A proxy field on a Choo Model (e.g. Stop.city__name)
+    A proxy field on a choo model (e.g. Stop.city__name)
     """
     def __init__(self, parent, name):
         self.parent = parent

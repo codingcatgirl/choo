@@ -13,7 +13,9 @@ class GeoPointQuery(queries.GeoPointQuery):
         return self._coordinates_request()
 
     def _coordinates_request(self):
-        # Executes as COORDS_REQUEST
+        """
+        Executes a COORDS_REQUEST (find Locations within a given distance from specific coordinates)
+        """
         post = {
             'language': 'de',
             'outputFormat': 'XML',
@@ -49,6 +51,9 @@ class GeoPointQuery(queries.GeoPointQuery):
         return self._wrap_distance_results(results)
 
     def _wrap_distance_results(self, results):
+        """
+        Wraps results in Way objects and makes sure they are all within max_distance.
+        """
         for result in results:
             if not result.coords:
                 continue
@@ -60,6 +65,9 @@ class GeoPointQuery(queries.GeoPointQuery):
 class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
     def _execute(self):
         if self.stop:
+            # Platforms of a specific stop are queried
+            # This can only be done by querying all platforms near to the stop and filtering them
+            # For this, we need the stop id and it's coordinates.
             stop = self.stop
             if not stop.coords or self.network.name not in self.ids:
                 stop = self.network.stops.get(stop)
@@ -74,13 +82,16 @@ class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
 
 class LocationQuery(GeoPointQuery, queries.LocationQuery):
     def _execute(self):
+        # Is this location unique by ID? If so, just query it.
         location = self._convert_unique_location()
         if location:
             return self._stopfinder_request(location)
 
-        if not self.coords or self.city__name or self.name:
+        # If we have the name of the location or city, just query it
+        if self.city__name or self.name:
             return self._stopfinder_request({'type': 'any', 'place': self.city__name, 'name': self.name})
 
+        # If we have coordinates, get the address nearest to them or just query all locations nearby
         if self.coords:
             if self.Model == Address:
                 return self._stopfinder_request({'type': 'coord', 'name': '%.6f:%.6f:WGS84' % reversed(self.coords)})
@@ -89,10 +100,15 @@ class LocationQuery(GeoPointQuery, queries.LocationQuery):
         raise NotImplementedError('Not enough data for Query.')
 
     def _convert_unique_location(self):
+        """
+        Return POST data for a STOPFINDER_REQUEST if a unique location is described by id, or else None.
+        """
         return None
 
     def _stopfinder_request(self, location):
-        # Executes a STOPFINDER_REQUEST (which can not only find stops)
+        """
+        Executes a STOPFINDER_REQUEST (which can not only find stops)
+        """
         post = {
             'language': 'de',
             'outputFormat': 'XML',
