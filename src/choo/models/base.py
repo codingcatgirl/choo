@@ -85,7 +85,10 @@ def give_none(self, *args, **kwargs):
     return None
 
 
-class MetaModel(ABCMeta):
+class MetaModel(type):
+    """
+    Metaclass for all choo models.
+    """
     def __new__(mcs, name, bases, attrs):
         fields = OrderedDict()
         fields.update(OrderedDict(sorted(
@@ -118,7 +121,7 @@ class MetaModel(ABCMeta):
         return cls
 
 
-class Model(Serializable, metaclass=MetaModel):
+class Model(metaclass=MetaModel):
     def __init__(self):
         self._data = {}
 
