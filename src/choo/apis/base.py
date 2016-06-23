@@ -93,6 +93,16 @@ class Parser:
     def printable_data(self, pretty=True):
         raise NotImplementedError
 
+    def __setattr__(self, name, value):
+        if name in getattr(self, '_nonproxy_fields', ()):
+            raise TypeError('Cannot set a parser property')
+        super().__setattr__(name, value)
+
+    def __delattr__(self, name):
+        if name in getattr(self, '_nonproxy_fields', ()):
+            raise TypeError('Cannot delete a parser property')
+        super().__delattr__(name)
+
 
 class XMLParser(Parser):
     def printable_data(self, pretty=True):
@@ -126,12 +136,6 @@ class parser_property(object):
             raise TypeError('Invalid type for attribute %s.' % self.name)
 
         return value
-
-    def __set__(self, obj, value):
-        raise AttributeError("can't set a parser property")
-
-    def __delete__(self, obj):
-        raise AttributeError("can't delete a parser property")
 
 
 def cached_property(func):
