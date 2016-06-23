@@ -142,22 +142,22 @@ class Query(metaclass=MetaQuery):
             return getattr(self._obj, name)
 
         if name in self.__class__._settings_defaults:
-            raise TypeError('Use .settings to get settings!')
+            raise TypeError('Use .settings to get settings')
 
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name in self.Model._fields:
-            raise TypeError('Can not set fields, use .where()!')
+            raise TypeError('Can not set fields, use .where()')
 
         if name in self._settings_defaults:
-            raise TypeError('Can not set settings directly, set them using methods!')
+            raise TypeError('Can not set settings directly, set them using their methods')
 
         super().__setattr__(name, value)
 
     def __delattr__(self, name):
         if name in self.Model._fields:
-            raise TypeError('Can not delete fields, use .where(%s=None)!' % name)
+            raise TypeError('Can not delete fields, use .where(%s=None)' % name)
 
         if name in self._settings_defaults:
             raise TypeError('Can not delete settings')
