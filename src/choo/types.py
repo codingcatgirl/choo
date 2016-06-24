@@ -18,8 +18,43 @@ class Serializable(ABC):
 
 class IDs(Serializable):
     """
-    A Mapping of ids by name by id namespace (usually network name). Multiple ids per namespace are possible.
-    Multiple IDs instances can be combined like sets.
+    A Mapping of ids by id namespace (e.g. 'vrr' for the id namespace of the VRR network)
+    Multiple ids per namespace are possible.
+    IDs instances can be combined like sets.
+
+    How to initializ:
+    >>> ids = IDs((('one_id', '1a'), ('multiple_ids', 2), ('multiple_ids', 3)))
+    >>> ids = IDs({'one_id': '1a', 'multiple_ids': (2, 3)})
+
+    How to retrieve data:
+    >>> ids['multiple_ids']  # returns 2 or 3
+    >>> ids.getall('multiple_ids')  # returns set((2, 3))
+    >>> ids['other_namespace']  # KeyError
+    >>> ids.get('other_namespace', None)  # returns None
+    >>> tuples(ids.items())  # (('one_id', '1a'), ('multiple_ids', 2), ('multiple_ids', 3))
+
+    How to add data:
+    >>> ids['multiple_ids'] = 4  # TypeError
+    >>> ids.add('multiple_ids', 4)  # this works
+    >>> ids.update({'multiple_ids': 4})  # this works
+    >>> ids.update((('multiple_ids', 4)))  # this also works
+    >>> ids.update({'multiple_ids': set((4, 5))})  # this works, too
+    >>> ids |= {'multiple_ids': 4} # even this works
+    >>> ids |= IDs({'multiple_ids': 4}) # and this
+
+    How to remove data:
+    >>> del ids['multiple_ids']  # deletes all ids from this namespace
+    >>> ids.remove('multiple_ids', 3)  # this works
+    >>> ids.remove('multiple_ids', 7)  # KeyError
+    >>> ids.discard('multiple_ids', 7)  # does nothing
+    >>> ids.clear()  # clear completely
+
+    How to compare:
+    >>> len(ids)  # how many ids in total
+    >>> ids & IDs({'multiple_ids': 3})  # returns IDs({'multiple_ids': 3})
+    >>> ids & IDs({'multiple_ids': 9})  # returns IDs({})
+    >>> if ids & IDs({'multiple_ids': 9}):
+    ...     pass  # this gets executed if there are common ids
     """
     def __init__(self, initialdata={}):
         """
@@ -30,35 +65,6 @@ class IDs(Serializable):
         >>> ids = IDs((('one_id', '1a'), ('multiple_ids', 2), ('multiple_ids', 3)))
         >>> ids = IDs({'one_id': '1a', 'multiple_ids': (2, 3)})
 
-        How to retrieve data:
-        >>> ids['multiple_ids']  # returns 2 or 3
-        >>> ids.getall('multiple_ids')  # returns set((2, 3))
-        >>> ids['other_namespace']  # KeyError
-        >>> ids.get('other_namespace', None)  # returns None
-        >>> tuples(ids.items())  # (('one_id', '1a'), ('multiple_ids', 2), ('multiple_ids', 3))
-
-        How to add data:
-        >>> ids['multiple_ids'] = 4  # TypeError
-        >>> ids.add('multiple_ids', 4)  # this works
-        >>> ids.update({'multiple_ids': 4})  # this works
-        >>> ids.update((('multiple_ids', 4)))  # this also works
-        >>> ids.update({'multiple_ids': set((4, 5))})  # this works, too
-        >>> ids |= {'multiple_ids': 4} # even this works
-        >>> ids |= IDs({'multiple_ids': 4}) # and this
-
-        How to remove data:
-        >>> del ids['multiple_ids']  # deletes all ids from this namespace
-        >>> ids.remove('multiple_ids', 3)  # this works
-        >>> ids.remove('multiple_ids', 7)  # KeyError
-        >>> ids.discard('multiple_ids', 7)  # does nothing
-        >>> ids.clear()  # clear completely
-
-        How to compare:
-        >>> len(ids)  # how many ids in total
-        >>> ids & IDs({'multiple_ids': 3})  # returns IDs({'multiple_ids': 3})
-        >>> ids & IDs({'multiple_ids': 9})  # returns IDs({})
-        >>> if ids & IDs({'multiple_ids': 9}):
-        ...     pass  # this gets executed if there are common ids
         """
         items = initialdata.items() if isinstance(initialdata, (dict, IDs)) else initialdata
         self.data = {name: (value if isinstance(value, (set, list, tuple)) else set((value, )))
