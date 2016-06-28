@@ -54,7 +54,7 @@ class IDs(Serializable):
 
         """
         items = initialdata.items() if isinstance(initialdata, (dict, IDs)) else initialdata
-        self.data = {name: (value if isinstance(value, (set, list, tuple)) else set((value, )))
+        self.data = {name: (set(value) if isinstance(value, (set, list, tuple)) else set((value, )))
                      for name, value in items}
 
     def __getitem__(self, name):
@@ -169,7 +169,7 @@ class IDs(Serializable):
         """
         items = other.items() if isinstance(other, (dict, IDs)) else other
         for name, value in items:
-            self.data.setdefault(name, set()).update(value if isinstance(value, (set, list, tuple)) else set(value))
+            self.data.setdefault(name, set()).update(set(value) if isinstance(value, (set, list, tuple)) else {value})
 
     def serialize(self):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
