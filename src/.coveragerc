@@ -1,2 +1,6 @@
 [run]
 source = choo
+
+[report]
+exclude_lines =
+    pass
