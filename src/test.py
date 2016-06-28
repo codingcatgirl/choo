@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-from choo.networks.de import vrr
-from choo.models import Stop, City
-from choo.types import Coordinates
-from pprint import pprint
 import code
 import json
+from pprint import pprint
+
+from choo.models import City, Stop
+from choo.networks.de import vrr
+from choo.types import Coordinates
 
 # collection = Collection('test')
 

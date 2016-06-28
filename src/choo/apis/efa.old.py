@@ -1,13 +1,13 @@
-from ...models import Searchable
-from ...models import Location, Stop, POI, Address
-from ...models import RidePoint, Platform, LiveTime
-from ...models import Trip, MetaRide, Ride, RideSegment, Coordinates, TicketList, TicketData
-from ...models import Line, LineType, LineTypes, Way, WayType, WayEvent
-from datetime import datetime, timedelta
-import xml.etree.ElementTree as ET
-from .base import API
-import requests
 import re
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta
+
+import requests
+
+from ...models import (POI, Address, Coordinates, Line, LineType, LineTypes, LiveTime, Location, MetaRide, Platform,
+                       Ride, RidePoint, RideSegment, Searchable, Stop, TicketData, TicketList, Trip, Way, WayEvent,
+                       WayType)
+from .base import API
 
 
 class EFA(API):
