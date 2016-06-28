@@ -202,7 +202,7 @@ class LineTypes:
         return (lt for lt in complete if not ((set(lt.contained_in())-set(lt)) & complete))
 
     def __contains__(self, linetype):
-        if not isinstance(linetype, linetype):
+        if not isinstance(linetype, LineType):
             raise TypeError('can only match LineType instances')
         return linetype in self._linetypes
 
