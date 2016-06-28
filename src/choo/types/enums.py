@@ -117,11 +117,17 @@ class POIType(SerializableEnumMixin, Enum):
     swimming = 'swimming'
     venue = 'venue'
 
+    def __repr__(self):
+        return 'POIType.' + self.name
+
 
 class PlatformType(SerializableEnumMixin, Enum):
     unknown = 'unknown'
     street = 'street'
     platform = 'platform'
+
+    def __repr__(self):
+        return 'PlatformType.' + self.name
 
 
 class LineTypes:
