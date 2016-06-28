@@ -1,0 +1,7 @@
+# to install the usual requirements, use:
+# pip install -e .
+flake8
+isort
+pytest
+coverage
+coveralls
