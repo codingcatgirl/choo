@@ -1,4 +1,4 @@
-from ..types import Coordinates, PlatformIFOPT, StopIFOPT, StopAreaIFOPT, POIType, PlatformType
+from ..types import Coordinates, PlatformIFOPT, PlatformType, POIType, StopAreaIFOPT, StopIFOPT
 from .base import Field, Model, ModelWithIDs
 
 

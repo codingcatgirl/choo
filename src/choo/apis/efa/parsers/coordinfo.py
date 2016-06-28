@@ -1,6 +1,6 @@
-from ....models import City, GeoPoint, Platform, POI, Stop, StopArea
-from ....types import Coordinates, StopIFOPT, PlatformIFOPT, FrozenIDs
-from ...base import XMLParser, ParserError, cached_property, parser_property
+from ....models import POI, City, GeoPoint, Platform, Stop, StopArea
+from ....types import Coordinates, FrozenIDs, PlatformIFOPT, StopIFOPT
+from ...base import ParserError, XMLParser, cached_property, parser_property
 from .utils import GenAttrMapping
 
 
