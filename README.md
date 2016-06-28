@@ -1,4 +1,4 @@
-# choo [![Build Status](https://travis-ci.org/codingcatgirl/choo.svg)](https://travis-ci.org/codingcatgirl/choo) [![Coverage Status](https://coveralls.io/repos/github/codingcatgirl/choo/badge.svg?branch=master)](https://coveralls.io/github/codingcatgirl/choo?branch=master)
+# choo [![Build Status](https://img.shields.io/travis/codingcatgirl/choo.svg)](https://travis-ci.org/codingcatgirl/choo) [![Coverage Status](https://img.shields.io/coveralls/codingcatgirl/choo.svg)](https://coveralls.io/github/codingcatgirl/choo?branch=master)
 
 choo is a uniform interface for public transport APIs written in Python 3. A JSON interface will be available via command line and HTTP to use it with other languages.
 
