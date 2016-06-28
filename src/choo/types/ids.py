@@ -167,7 +167,8 @@ class IDs(Serializable):
         """
         Update ids using dictionary, iterable or other IDs object.
         """
-        for name, value in other.items():
+        items = other.items() if isinstance(other, (dict, IDs)) else other
+        for name, value in items:
             self.data.setdefault(name, set()).update(value if isinstance(value, (set, list, tuple)) else set(value))
 
     def serialize(self):
