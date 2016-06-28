@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-from .models import Serializable, Searchable
-from socketserver import ThreadingMixIn
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from . import networks, version
-import json
-import cgi
 import argparse
+import cgi
 import gzip
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
+
+from . import networks, version
+from .models import Searchable, Serializable
 
 
 class Handler(BaseHTTPRequestHandler):

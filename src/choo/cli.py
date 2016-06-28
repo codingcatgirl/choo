@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from .models import Serializable
-from . import networks
-import json
 import argparse
+import json
+
+from . import networks
+from .models import Serializable
 
 parser = argparse.ArgumentParser(prog='choo')
 parser.add_argument('--pretty', action='store_true', help='pretty-print output JSON')
