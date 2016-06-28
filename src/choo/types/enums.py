@@ -164,7 +164,7 @@ class LineTypes:
     def exclude(self, *linetypes):
         """
         Return a new LineTypes object with the given linetypes and their subtypes excluded.
-        >>> LineTypes.any.exclude(LineType.train, Linetype.bus)  # Exclude all trains and buses
+        >>> LineTypes.any.exclude(LineType.train, LineType.bus)  # Exclude all trains and buses
         """
         expanded = self._linetypes
         for linetype in linetypes:
@@ -179,7 +179,7 @@ class LineTypes:
     def include(self, *linetypes):
         """
         Return a new LineTypes object with the given linetype and their parents and subtypes included.
-        >>> LineTypes.none.include(LineType.train, Linetype.bus)  # Include all trains and buses
+        >>> LineTypes.none.include(LineType.train, LineType.bus)  # Include all trains and buses
         """
         expanded = self._linetypes
         for linetype in linetypes:
