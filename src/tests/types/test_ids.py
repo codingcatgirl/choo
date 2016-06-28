@@ -162,6 +162,9 @@ class TestIDs:
         with pytest.raises(TypeError):
             ids.update({})
 
+    def test_repr(self):
+        assert len(eval(repr(self.ids)) & self.ids) == 3
+
 
 class TestIFOPT:
     ifopt = PlatformIFOPT('1', '2', '3', '4', '5')
