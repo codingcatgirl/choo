@@ -53,7 +53,7 @@ class IDs(Serializable):
         >>> ids = IDs({'one_id': '1a', 'multiple_ids': (2, 3)})
         """
         self.data = {}
-        self.update(initialdata)
+        IDs.update(self, initialdata)
 
     def __getitem__(self, name):
         """
@@ -191,8 +191,8 @@ class IDs(Serializable):
     __or__ = union
 
     @classmethod
-    def unserialize(self, data):
-        return self.__class__(data)
+    def unserialize(cls, data):
+        return cls(data)
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self.data)
