@@ -114,7 +114,7 @@ class IDs(Serializable):
     def remove(self, name, value):
         """
         Remove id from namespace.
-        Raises KeyError if the namespace did no exist and ValueError if the id did not exist.
+        Raises KeyError if the namespace or the id did no exist.
         """
         self.data[name].remove(value)
         if not self.data[name]:
