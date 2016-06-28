@@ -51,11 +51,9 @@ class IDs(Serializable):
         There are two ways to give multiple ids:
         >>> ids = IDs((('one_id', '1a'), ('multiple_ids', 2), ('multiple_ids', 3)))
         >>> ids = IDs({'one_id': '1a', 'multiple_ids': (2, 3)})
-
         """
-        items = initialdata.items() if isinstance(initialdata, (dict, IDs)) else initialdata
-        self.data = {name: (set(value) if isinstance(value, (set, list, tuple)) else set((value, )))
-                     for name, value in items}
+        self.data = {}
+        self.update(initialdata)
 
     def __getitem__(self, name):
         """
