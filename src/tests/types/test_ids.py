@@ -16,7 +16,7 @@ class TestIDs:
             self.ids['unknown']
 
     def test_setitem(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(AttributeError):
             self.ids['one'] = 42
 
     def test_delitem(self):

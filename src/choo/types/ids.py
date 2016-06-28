@@ -61,12 +61,6 @@ class IDs(Serializable):
         """
         return next(iter(self.data[name]))
 
-    def __setitem__(self, name):
-        """
-        Not supported, use .add()
-        """
-        raise TypeError('Use IDs.add()')
-
     def __delitem__(self, name):
         """
         Delete all IDs from this namespace
