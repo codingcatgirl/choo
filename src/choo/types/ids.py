@@ -189,7 +189,6 @@ class IDs(Serializable):
 
     __and__ = intersection
     __or__ = union
-    __ior__ = update
 
     @classmethod
     def unserialize(self, data):
