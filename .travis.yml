@@ -9,6 +9,6 @@ before_script:
 script:
     - flake8 choo --max-line-length 119
     - isort -c -rc .
-    - coverage run -m py.test tests
+    - coverage run --branch -m py.test tests
 after_success:
     - coveralls

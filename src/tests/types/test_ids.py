@@ -4,6 +4,12 @@ from choo.types import PlatformIFOPT, StopAreaIFOPT, StopIFOPT
 class TestIFOPT:
     ifopt = PlatformIFOPT('1', '2', '3', '4', '5')
 
+    def test_init_none(self):
+        assert PlatformIFOPT.parse(None) is None
+
+    def test_init_arguments_count(self):
+        assert PlatformIFOPT.parse('1:2') is None
+
     def test_parse(self):
         assert PlatformIFOPT.parse('1:2:3:4:5') == self.ifopt
 
