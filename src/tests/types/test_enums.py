@@ -22,6 +22,8 @@ class TestEnums:
         assert WayEvent.stairs not in WayEvent.down
         assert WayEvent.stairs not in WayEvent.elevator
         assert WayEvent.any not in WayEvent.up
+        with pytest.raises(TypeError):
+            1 in WayType.any
 
     def test_iter(self):
         assert set(WayEvent.stairs) == {WayEvent.stairs, WayEvent.stairs_up, WayEvent.stairs_down}
