@@ -211,7 +211,6 @@ class FrozenIDs(IDs):
     clear = _frozen_error
     discard = _frozen_error
     update = _frozen_error
-    __ior__ = _frozen_error
 
 
 class IFOPT(Serializable):
