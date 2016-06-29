@@ -1,9 +1,14 @@
-from enum import Enum
+from enum import Enum, EnumMeta
 
+from .abc import ABCMeta
 from .misc import SimpleSerializable
 
 
-class SerializableEnumMixin:
+class EnumMixinMeta(EnumMeta, ABCMeta):
+    pass
+
+
+class SerializableEnumMixin(SimpleSerializable):
     def _simple_serialize(self):
         return self.name
 
@@ -13,8 +18,6 @@ class SerializableEnumMixin:
         if not isinstance(result, cls):
             raise AttributeError
         return result
-
-SimpleSerializable.register(SerializableEnumMixin)
 
 
 class HierarchicEnumMixin(SerializableEnumMixin):
@@ -38,7 +41,7 @@ class HierarchicEnumMixin(SerializableEnumMixin):
         return (e for e in self.__class__ if e.value in self.value)
 
 
-class WayType(HierarchicEnumMixin, Enum):
+class WayType(HierarchicEnumMixin, Enum, metaclass=EnumMixinMeta):
     any = '_'
 
     walk = '_walk_'
@@ -50,7 +53,7 @@ class WayType(HierarchicEnumMixin, Enum):
         return 'WayType.' + self.name
 
 
-class WayEvent(HierarchicEnumMixin, Enum):
+class WayEvent(HierarchicEnumMixin, Enum, metaclass=EnumMixinMeta):
     any = '_'
     up = '_up_'
     down = '_down_'
@@ -69,7 +72,7 @@ class WayEvent(HierarchicEnumMixin, Enum):
         return 'WayEvent.' + self.name
 
 
-class WalkSpeed(SerializableEnumMixin, Enum):
+class WalkSpeed(SerializableEnumMixin, Enum, metaclass=EnumMixinMeta):
     normal = 'normal'
     fast = 'fast'
     slow = 'slow'
@@ -78,7 +81,7 @@ class WalkSpeed(SerializableEnumMixin, Enum):
         return 'WalkSpeed.' + self.name
 
 
-class LineType(HierarchicEnumMixin, Enum):
+class LineType(HierarchicEnumMixin, Enum, metaclass=EnumMixinMeta):
     any = '_'
 
     train = '_train_'
@@ -103,7 +106,7 @@ class LineType(HierarchicEnumMixin, Enum):
         return 'LineType.' + self.name
 
 
-class POIType(SerializableEnumMixin, Enum):
+class POIType(SerializableEnumMixin, Enum, metaclass=EnumMixinMeta):
     unknown = 'unknown'
     bicycle_hire = 'bicycle_hire'
     education = 'education'
@@ -121,7 +124,7 @@ class POIType(SerializableEnumMixin, Enum):
         return 'POIType.' + self.name
 
 
-class PlatformType(SerializableEnumMixin, Enum):
+class PlatformType(SerializableEnumMixin, Enum, metaclass=EnumMixinMeta):
     unknown = 'unknown'
     street = 'street'
     platform = 'platform'
