@@ -1,12 +1,15 @@
 import json
 import os
 import sys
+from types import Serializable
 
 import defusedxml.ElementTree as ET
 from defusedxml import minidom
 
+_apis_by_name = {}
 
-class API:
+
+class API(Serializable):
     """
     An API subclass is a collection of Query implementations used by different networks.
     The instance of an API has a name and is usually a network.
@@ -27,7 +30,23 @@ class API:
     def __init__(self, name):
         if self.__class__ == API:
             raise TypeError('Only API subclasses can be initialized.')
+        if name in _apis_by_name:
+            raise TypeError('Duplicate API name: %s' % name)
+
         self.name = name
+        _apis_by_name[name] = self
+
+    def serialize(self):
+        return self.name
+
+    @classmethod
+    def unserialize(cls, data):
+        if data is None:
+            return None
+        try:
+            return _apis_by_name[data]
+        except:
+            raise ValueError('API %s does not exist!' % data)
 
     @property
     def geopoints(self):
