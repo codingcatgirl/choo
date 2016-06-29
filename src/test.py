@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import code
 import json
-from pprint import pprint
+from pprint import pprint  # noqa
 
+from choo.apis.de import vrr
 from choo.models import City, Stop
-from choo.networks.de import vrr
-from choo.types import Coordinates
+from choo.queries import PlatformQuery  # noqa
+from choo.types import Coordinates, Serializable
 
 # collection = Collection('test')
 
