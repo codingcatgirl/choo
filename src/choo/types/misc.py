@@ -5,17 +5,6 @@ from math import asin, cos, radians, sin, sqrt
 
 
 class Serializable(ABC):
-    @abstractmethod
-    def serialize(self):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def unserialize(cls, data):
-        pass
-
-
-class DictSerializable(Serializable):
     @classmethod
     def _full_class_name(cls):
         return '%s.%s' % (cls.__module__, cls.__name__)
@@ -55,7 +44,33 @@ class DictSerializable(Serializable):
         pass
 
 
-class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
+class SimpleSerializable(Serializable, ABC):
+    @classmethod
+    def unserialize(cls, data):
+        if isinstance(data, (dict, OrderedDict)):
+            return super().unserialize(data)
+        return cls._simple_unserialize(data)
+
+    def serialize(self, simple=True):
+        return self._simple_serialize() if simple else super().serialize()
+
+    def _serialize(self):
+        return {'value': self._simple_serialize()}
+
+    def _unserialize(cls, data):
+        return cls._simple_unserialize(data['value'])
+
+    @abstractmethod
+    def _simple_serialize(self):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _simple_unserialize(cls, data):
+        pass
+
+
+class Coordinates(SimpleSerializable, namedtuple('Coordinates', ('lat', 'lon'))):
     """
     Coordinates in WGS84. Has a lat and lon attribute. Implemented as namedtuple.
     """
@@ -69,11 +84,11 @@ class Coordinates(Serializable, namedtuple('Coordinates', ('lat', 'lon'))):
         lon1, lat1, lon2, lat2 = map(radians, [self.lon, self.lat, other.lon, other.lat])
         return 12742000 * asin(sqrt(sin((lat2-lat1)/2)**2+cos(lat1)*cos(lat2)*sin((lon2-lon1)/2)**2))
 
-    def serialize(self):
+    def _simple_serialize(self):
         return (self.lat, self.lon)
 
     @classmethod
-    def unserialize(cls, data):
+    def _simple_unserialize(cls, data):
         return cls(*data)
 
     def __reversed__(self):

@@ -8,12 +8,12 @@ from datetime import datetime
 import defusedxml.ElementTree as ET
 from defusedxml import minidom
 
-from ..types import DictSerializable, Serializable
+from ..types import Serializable, SimpleSerializable
 
 _apis_by_name = {}
 
 
-class API(Serializable):
+class API(SimpleSerializable):
     """
     An API subclass is a collection of Query implementations used by different networks.
     The instance of an API has a name and is usually a network.
@@ -40,11 +40,11 @@ class API(Serializable):
         self.name = name
         _apis_by_name[name] = self
 
-    def serialize(self):
+    def _simple_serialize(self):
         return self.name
 
     @classmethod
-    def unserialize(cls, data):
+    def _simple_unserialize(cls, data):
         if data is None:
             return None
         try:
@@ -119,7 +119,7 @@ class ParserError(Exception):
         super().__init__(message)
 
 
-class Parser(DictSerializable, ABC):
+class Parser(Serializable, ABC):
     """
     A object that parses data, usually into model attributes.
     Only subclasses of this class (XMLParser, JSONParser) may be used directly.

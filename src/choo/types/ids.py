@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from .misc import Serializable
+from .misc import Serializable, SimpleSerializable
 
 
 class IDs(Serializable):
@@ -207,7 +207,7 @@ class FrozenIDs(IDs):
     update = _frozen_error
 
 
-class IFOPT(Serializable):
+class IFOPT(SimpleSerializable):
     @classmethod
     def parse(cls, string):
         if string is None:
@@ -222,11 +222,11 @@ class IFOPT(Serializable):
     def __str__(self):
         return ':'.join(self)
 
-    def serialize(self):
+    def _simple_serialize(self):
         return str(self)
 
     @classmethod
-    def unserialize(cls, data):
+    def _simple_unserialize(cls, data):
         return cls.parse(data)
 
 

@@ -5,7 +5,7 @@ from typing import Optional
 
 from ..apis.base import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
-from ..types import DictSerializable, IDs, Serializable
+from ..types import IDs, Serializable
 
 
 class Field:
@@ -123,7 +123,7 @@ class MetaModel(ABCMeta):
         return cls
 
 
-class Model(DictSerializable, metaclass=MetaModel):
+class Model(Serializable, metaclass=MetaModel):
     def __init__(self):
         self._data = {}
 

@@ -1,20 +1,20 @@
 from enum import Enum
 
-from .misc import Serializable
+from .misc import SimpleSerializable
 
 
 class SerializableEnumMixin:
-    def serialize(self):
+    def _simple_serialize(self):
         return self.name
 
     @classmethod
-    def unserialize(cls, data):
+    def _simple_unserialize(cls, data):
         result = getattr(cls, data)
         if not isinstance(result, cls):
             raise AttributeError
         return result
 
-Serializable.register(SerializableEnumMixin)
+SimpleSerializable.register(SerializableEnumMixin)
 
 
 class HierarchicEnumMixin(SerializableEnumMixin):
