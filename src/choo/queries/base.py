@@ -104,9 +104,21 @@ class Query(metaclass=MetaQuery):
 
         return result
 
+    def serialize(self):
+        return {
+            'network': self.network.serialize() if self.network else None,
+            'obj': self._obj.serialize(),
+            'settings': self._settings,
+        }
+
     @classmethod
     def unserialize(cls, data):
-        raise NotImplementedError
+        from ..apis.base import API
+        result = cls(API.unserialize(data.get('network')))
+        result._obj = cls.Model.unserialize(data.get('obj', {}))
+        for name, value in data.get('settings', {}).items():
+            result = getattr(result, name)(value)
+        return result
 
     @property
     def settings(self):
