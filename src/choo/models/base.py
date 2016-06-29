@@ -5,7 +5,7 @@ from typing import Optional
 
 from ..apis.base import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
-from ..types import IDs, Serializable
+from ..types import DictSerializable, IDs, Serializable
 
 
 class Field:
@@ -123,11 +123,11 @@ class MetaModel(ABCMeta):
         return cls
 
 
-class Model(Serializable, metaclass=MetaModel):
+class Model(DictSerializable, metaclass=MetaModel):
     def __init__(self):
         self._data = {}
 
-    def serialize(self):
+    def _serialize(self):
         result = OrderedDict()
         for name, field in self._nonproxy_fields.items():
             value = field.serialize(getattr(self, name))
@@ -136,7 +136,7 @@ class Model(Serializable, metaclass=MetaModel):
         return result
 
     @classmethod
-    def unserialize(self, data):
+    def _unserialize(self, data):
         raise NotImplementedError
 
 
