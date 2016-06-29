@@ -1,6 +1,6 @@
+from abc import ABCMeta
 from enum import Enum, EnumMeta
 
-from .abc import ABCMeta
 from .misc import SimpleSerializable
 
 
