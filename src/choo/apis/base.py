@@ -1,10 +1,13 @@
 import json
 import os
 import sys
-from types import Serializable
+from abc import ABC, abstractmethod
+from datetime import datetime
 
 import defusedxml.ElementTree as ET
 from defusedxml import minidom
+
+from ..types import Serializable
 
 _apis_by_name = {}
 
@@ -115,7 +118,7 @@ class ParserError(Exception):
         super().__init__(message)
 
 
-class Parser:
+class Parser(Serializable, ABC):
     """
     A object that parses data, usually into model attributes.
     Only subclasses of this class (XMLParser, JSONParser) may be used directly.
@@ -140,17 +143,44 @@ class Parser:
         data is the parser's data.
         Any additional keyword arguments will be forwarded to all parser_property and cached_property methods.
         """
-        self.network = parent.network
-        self.time = parent.time
+        if parent is not None:
+            self.network = parent.network
+            self.time = parent.time
         self.data = data
         self._kwargs = kwargs
 
+    @abstractmethod
     def printable_data(self, pretty=True):
         """
         Get the parsers data as string.
         if pretty is True, the data is made easy-readable for humans (e.g. by indenting)
         """
-        raise NotImplementedError
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _parse_raw_data(cls, data):
+        pass
+
+    @classmethod
+    def parse(cls, network, time, data, **kwargs):
+        result = cls(None, cls._parse_raw_data(data), **kwargs)
+        result.network = network
+        result.time = time
+        return result
+
+    def serialize(self):
+        return {
+            'network': self.network.serialize(),
+            'time': self.time.isoformat(),
+            'data': self.printable_data(pretty=False).decode(),
+            'kwargs': self._kwargs,
+        }
+
+    @classmethod
+    def unserialize(cls, data):
+        return cls.parse(API.unserialize(data['network']), datetime.strptime(data['time'], "%Y-%m-%dT%H:%M:%S"),
+                         data['data'], **data['kwargs'])
 
     def __setattr__(self, name, value):
         if name in getattr(self, '_nonproxy_fields', ()):
@@ -174,6 +204,10 @@ class XMLParser(Parser):
             string = minidom.parseString(string).toprettyxml(indent='  ')
         return string
 
+    @classmethod
+    def _parse_raw_data(cls, data):
+        return ET.fromstring(data)
+
 
 class JSONParser(Parser):
     """
@@ -182,6 +216,10 @@ class JSONParser(Parser):
     """
     def printable_data(self, pretty=True):
         return json.dumps(self.data, indent=2 if pretty else None)
+
+    @classmethod
+    def _parse_raw_data(cls, data):
+        return json.loads(data)
 
 
 class parser_property(object):
