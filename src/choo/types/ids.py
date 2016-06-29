@@ -163,7 +163,7 @@ class IDs(Serializable):
         for name, value in items:
             self.data.setdefault(name, set()).update(set(value) if isinstance(value, (set, list, tuple)) else {value})
 
-    def serialize(self):
+    def _serialize(self):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
                 for name, values in self.data.items() if values}
 
@@ -185,7 +185,7 @@ class IDs(Serializable):
     __or__ = union
 
     @classmethod
-    def unserialize(cls, data):
+    def _unserialize(cls, data):
         return cls(data)
 
     def __repr__(self):
