@@ -1,4 +1,5 @@
 from datetime import timedelta
+
 from typing import Iterable
 
 from ..types import Coordinates, LineTypes, LiveTime, WayEvent, WayType
