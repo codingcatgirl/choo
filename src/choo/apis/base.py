@@ -2,12 +2,13 @@ import json
 import os
 import sys
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 from datetime import datetime
 
 import defusedxml.ElementTree as ET
 from defusedxml import minidom
 
-from ..types import Serializable
+from ..types import DictSerializable, Serializable
 
 _apis_by_name = {}
 
@@ -118,7 +119,7 @@ class ParserError(Exception):
         super().__init__(message)
 
 
-class Parser(Serializable, ABC):
+class Parser(DictSerializable, ABC):
     """
     A object that parses data, usually into model attributes.
     Only subclasses of this class (XMLParser, JSONParser) may be used directly.
@@ -169,16 +170,16 @@ class Parser(Serializable, ABC):
         result.time = time
         return result
 
-    def serialize(self):
-        return {
-            'network': self.network.serialize(),
-            'time': self.time.isoformat(),
-            'data': self.printable_data(pretty=False).decode(),
-            'kwargs': self._kwargs,
-        }
+    def _serialize(self):
+        return OrderedDict((
+            ('network', self.network.serialize()),
+            ('time', self.time.isoformat()),
+            ('data', self.printable_data(pretty=False).decode()),
+            ('kwargs', self._kwargs),
+        ))
 
     @classmethod
-    def unserialize(cls, data):
+    def _unserialize(cls, data):
         return cls.parse(API.unserialize(data['network']), datetime.strptime(data['time'], "%Y-%m-%dT%H:%M:%S"),
                          data['data'], **data['kwargs'])
 
