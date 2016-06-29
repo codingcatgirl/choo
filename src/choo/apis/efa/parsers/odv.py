@@ -67,7 +67,7 @@ class OmcParserMixin:
     """
     @cached_property
     def _omc(self, data, **kwargs):
-        self.network._parse_omc(data.attrib['omc'])
+        self.api._parse_omc(data.attrib['omc'])
 
     @parser_property
     def country(self, data, country=None, **kwargs):
@@ -89,7 +89,7 @@ class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('stateless')
-        return myid and FrozenIDs({self.network.name: myid})
+        return myid and FrozenIDs({self.api.name: myid})
 
     @parser_property
     def name(self, data, **kwargs):
@@ -112,7 +112,7 @@ class OdvNameElemLocation(Location.XMLParser):
     @parser_property
     def ids(self, data, **kwargs):
         myid = data.attrib.get('stopID') or data.attrib.get('id')
-        return myid and FrozenIDs({self.network.name: myid})
+        return myid and FrozenIDs({self.api.name: myid})
 
     def _city_parse(self, data, city, country, **kwargs):
         if city is not None:

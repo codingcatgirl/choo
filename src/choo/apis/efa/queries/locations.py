@@ -44,7 +44,7 @@ class GeoPointQuery(queries.GeoPointQuery):
                 'radius_%d' % (i+1): self.settings['max_distance']
             })
 
-        xml, self.time = self.network._request('XML_COORD_REQUEST', post)
+        xml, self.time = self.api._request('XML_COORD_REQUEST', post)
         data = xml.find('./itdCoordInfoRequest')
 
         results = CoordInfoGeoPointList(self, data.find('./itdCoordInfo/coordInfoItemList'))
@@ -69,12 +69,12 @@ class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
             # This can only be done by querying all platforms near to the stop and filtering them
             # For this, we need the stop id and it's coordinates.
             stop = self.stop
-            if not stop.coords or self.network.name not in self.ids:
-                stop = self.network.stops.get(stop)
+            if not stop.coords or self.api.name not in self.ids:
+                stop = self.api.stops.get(stop)
             if not stop.coords:
                 raise NotImplementedError('Could not get stop coordinates needed to get its platforms.')
 
-            results = (r for r in self.network.platforms.where(coords=stop.coords).max_distance(400) if r.stop == stop)
+            results = (r for r in self.api.platforms.where(coords=stop.coords).max_distance(400) if r.stop == stop)
             return results if not self.coords else self._wrap_distance_results(results)
         else:
             return self._coordinates_request()
@@ -129,7 +129,7 @@ class LocationQuery(GeoPointQuery, queries.LocationQuery):
         if not post['place_sf']:
             post.pop('place_sf')
 
-        xml, self.time = self.network._request('XML_STOPFINDER_REQUEST', post)
+        xml, self.time = self.api._request('XML_STOPFINDER_REQUEST', post)
         data = xml.find('./itdStopFinderRequest')
 
         results = OdvLocationList(self, data.find('./itdOdv'))
@@ -149,8 +149,8 @@ class LocationQuery(GeoPointQuery, queries.LocationQuery):
 
 class AddressQuery(LocationQuery, queries.AddressQuery):
     def _convert_unique_location(self):
-        if self.ids and self.network.name in self.ids:
-            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
+        if self.ids and self.api.name in self.ids:
+            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
         if self.ifopt:
             return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
         return super()._convert_unique_location()
@@ -162,8 +162,8 @@ class AddressableQuery(LocationQuery, queries.AddressableQuery):
 
 class StopQuery(AddressableQuery, queries.StopQuery):
     def _convert_unique_location(self):
-        if self.ids and self.network.name in self.ids:
-            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.network.name])}
+        if self.ids and self.api.name in self.ids:
+            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
         if self.ifopt:
             return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
         return super()._convert_unique_location()
@@ -171,6 +171,6 @@ class StopQuery(AddressableQuery, queries.StopQuery):
 
 class POIQuery(AddressableQuery, queries.POIQuery):
     def _convert_unique_location(self):
-        if self.ids and self.network.name in self.ids:
-            return {'type': 'poiID', 'name': str(self.ids[self.network.name])}
+        if self.ids and self.api.name in self.ids:
+            return {'type': 'poiID', 'name': str(self.ids[self.api.name])}
         return super()._convert_unique_location()

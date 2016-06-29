@@ -55,49 +55,49 @@ class API(SimpleSerializable):
     @property
     def geopoints(self):
         if self.GeoPointQuery is None:
-            raise NotImplementedError('Querying geopoints is not supported by this network.')
+            raise NotImplementedError('Querying geopoints is not supported by this API.')
         return self.GeoPointQuery(self)
 
     @property
     def platforms(self):
         if self.PlatformQuery is None:
-            raise NotImplementedError('Querying platforms is not supported by this network.')
+            raise NotImplementedError('Querying platforms is not supported by this API.')
         return self.PlatformQuery(self)
 
     @property
     def locations(self):
         if self.LocationQuery is None:
-            raise NotImplementedError('Querying locations is not supported by this network.')
+            raise NotImplementedError('Querying locations is not supported by this API.')
         return self.LocationQuery(self)
 
     @property
     def addresses(self):
         if self.AddressQuery is None:
-            raise NotImplementedError('Querying addresses is not supported by this network.')
+            raise NotImplementedError('Querying addresses is not supported by this API.')
         return self.AddressQuery(self)
 
     @property
     def addressables(self):
         if self.AddressableQuery is None:
-            raise NotImplementedError('Querying addressables is not supported by this network.')
+            raise NotImplementedError('Querying addressables is not supported by this API.')
         return self.AddressableQuery(self)
 
     @property
     def stops(self):
         if self.StopQuery is None:
-            raise NotImplementedError('Querying stops is not supported by this network.')
+            raise NotImplementedError('Querying stops is not supported by this API.')
         return self.StopQuery(self)
 
     @property
     def pois(self):
         if self.POIQuery is None:
-            raise NotImplementedError('Querying POIs is not supported by this network.')
+            raise NotImplementedError('Querying POIs is not supported by this API.')
         return self.POIQuery(self)
 
     @property
     def trips(self):
         if self.TripQuery is None:
-            raise NotImplementedError('Querying trips is not supported by this network.')
+            raise NotImplementedError('Querying trips is not supported by this API.')
         return self.TripQuery(self)
 
 
@@ -125,7 +125,7 @@ class Parser(Serializable, ABC):
     Only subclasses of this class (XMLParser, JSONParser) may be used directly.
 
     The data attribute contains the data.
-    The network property contains the API instance which supplied the data.
+    The api attribute contains the API instance which supplied the data.
     The time attribute contains the time of the data as datetime.
 
     If you want to implement a parser that describes a Model attributes, start similar to this:
@@ -140,12 +140,12 @@ class Parser(Serializable, ABC):
     def __init__(self, parent, data, **kwargs):
         """
         Initialise the parser.
-        parent has to be an object from which the network and time properties can be taken.
+        parent has to be an object from which the api and time attributes can be taken.
         data is the parser's data.
         Any additional keyword arguments will be forwarded to all parser_property and cached_property methods.
         """
         if parent is not None:
-            self.network = parent.network
+            self.api = parent.api
             self.time = parent.time
         self.data = data
         self._kwargs = kwargs
@@ -164,15 +164,15 @@ class Parser(Serializable, ABC):
         pass
 
     @classmethod
-    def parse(cls, network, time, data, **kwargs):
+    def parse(cls, api, time, data, **kwargs):
         result = cls(None, cls._parse_raw_data(data), **kwargs)
-        result.network = network
+        result.api = api
         result.time = time
         return result
 
     def _serialize(self):
         return OrderedDict((
-            ('network', self.network.serialize()),
+            ('api', self.api.serialize()),
             ('time', self.time.isoformat()),
             ('data', self.printable_data(pretty=False).decode()),
             ('kwargs', self._kwargs),
@@ -180,7 +180,7 @@ class Parser(Serializable, ABC):
 
     @classmethod
     def _unserialize(cls, data):
-        return cls.parse(API.unserialize(data['network']), datetime.strptime(data['time'], "%Y-%m-%dT%H:%M:%S"),
+        return cls.parse(API.unserialize(data['api']), datetime.strptime(data['time'], '%Y-%m-%dT%H:%M:%S'),
                          data['data'], **data['kwargs'])
 
     def __setattr__(self, name, value):

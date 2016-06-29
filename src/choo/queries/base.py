@@ -67,11 +67,11 @@ class Query(metaclass=MetaQuery):
     Model = Model
     _settings_defaults = {'limit': None}
 
-    def __init__(self, network):
+    def __init__(self, api):
         if self.__class__ == Query:
             raise TypeError('only subclasses of Query can be initialised')
 
-        self.network = network
+        self.api = api
         self._obj = self.Model()
         self._settings = self._settings_defaults.copy()
         self._cached_results = []
@@ -82,7 +82,7 @@ class Query(metaclass=MetaQuery):
         """
         Returns a deep copy of the query.
         """
-        result = self.__class__(self.network)
+        result = self.__class__(self.api)
         result._obj = deepcopy(self._obj)
         result._settings = self._settings
         return result
@@ -106,7 +106,7 @@ class Query(metaclass=MetaQuery):
 
     def serialize(self):
         return {
-            'network': self.network.serialize() if self.network else None,
+            'api': self.api.serialize() if self.api else None,
             'obj': self._obj.serialize(),
             'settings': self._settings,
         }
@@ -114,7 +114,7 @@ class Query(metaclass=MetaQuery):
     @classmethod
     def unserialize(cls, data):
         from ..apis.base import API
-        result = cls(API.unserialize(data.get('network')))
+        result = cls(API.unserialize(data.get('api')))
         result._obj = cls.Model.unserialize(data.get('obj', {}))
         for name, value in data.get('settings', {}).items():
             result = getattr(result, name)(value)
@@ -157,7 +157,7 @@ class Query(metaclass=MetaQuery):
         It has to return iterable (or generator) over instances of the query's model.
         Some Query types (e.g. GeoLocationQuery) require different result types.
         """
-        raise TypeError('Cannot execute query not bound to a network')
+        raise TypeError('Cannot execute query not bound to an API')
 
     def limit(self, limit):
         """

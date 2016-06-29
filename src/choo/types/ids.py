@@ -5,7 +5,7 @@ from .misc import Serializable, SimpleSerializable
 
 class IDs(Serializable):
     """
-    A Mapping of ids by id namespace (e.g. 'vrr' for the id namespace of the VRR network)
+    A Mapping of ids by id namespace (e.g. 'vrr' for the id namespace of the VRR network's API)
     Multiple ids per namespace are possible.
     IDs instances can be combined like sets.
 

@@ -1,4 +1,4 @@
-from ..apis.efa import EFA
+from .efa import EFA
 
 vrr = EFA(name='vrr', base_url='http://efa.vrr.de/standard/', preset='de')
 # vrr = EFA('vrr', 'http://app.vrr.de/companion-vrr/')
