@@ -1,3 +1,4 @@
+from abc import ABCMeta
 from collections import OrderedDict
 
 from typing import Optional
@@ -86,7 +87,7 @@ def give_none(self, *args, **kwargs):
     return None
 
 
-class MetaModel(type):
+class MetaModel(ABCMeta):
     """
     Metaclass for all choo models.
     """
@@ -122,7 +123,7 @@ class MetaModel(type):
         return cls
 
 
-class Model(metaclass=MetaModel):
+class Model(Serializable, metaclass=MetaModel):
     def __init__(self):
         self._data = {}
 
@@ -137,8 +138,6 @@ class Model(metaclass=MetaModel):
     @classmethod
     def unserialize(self, data):
         raise NotImplementedError
-
-Serializable.register(Model)
 
 
 class ModelWithIDs(Model):
