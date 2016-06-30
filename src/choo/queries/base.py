@@ -70,6 +70,14 @@ class Query(metaclass=MetaQuery):
         if self.__class__ == Query:
             raise TypeError('only subclasses of Query can be initialised')
 
+        if isinstance(self, BoundAPIQuery):
+            print(self.API)
+            if not isinstance(api, self.API):
+                raise ValueError('api has to be an %s subclass, got %s instead' % repr(self.API), repr(api))
+        else:
+            if api is not None:
+                raise ValueError('api has to be None, got %s instead.' % repr(api))
+
         self.api = api
         self._obj = self.Model()
         self._settings = self._settings_defaults.copy()
