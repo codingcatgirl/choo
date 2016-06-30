@@ -163,6 +163,10 @@ class IDs(Serializable):
         for name, value in items:
             self.data.setdefault(name, set()).update(set(value) if isinstance(value, (set, list, tuple)) else {value})
 
+    @classmethod
+    def _full_class_name(cls):
+        return 'ids'
+
     def _serialize(self):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
                 for name, values in self.data.items() if values}
