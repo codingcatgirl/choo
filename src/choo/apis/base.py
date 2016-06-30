@@ -28,7 +28,7 @@ class MetaAPI(ABCMeta):
             while base_queries:
                 base_query = base_queries.popleft()
                 base_queries.extend(q for q in base_query.__subclasses__() if not issubclass(q, BoundAPIQuery))
-                setattr(cls, base_query.__name__, type(base_query.__name__, (BoundAPIQuery, base_query, ),
+                setattr(cls, base_query.__name__, type(base_query.__name__, (cls.Query, base_query, ),
                                                        {'__module__': attrs['__module__']}))
         return cls
 
