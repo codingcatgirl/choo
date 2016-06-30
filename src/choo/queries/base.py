@@ -1,11 +1,12 @@
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
 from itertools import chain
 from types import MappingProxyType
+from ..types import Serializable
 
 
-class MetaQuery(type):
+class MetaQuery(ABCMeta):
     """
     Metaclass for all Queries
     """
@@ -55,7 +56,7 @@ class QuerySettingsProxy:
         raise TypeError
 
 
-class Query(metaclass=MetaQuery):
+class Query(Serializable, metaclass=MetaQuery):
     """
     A Query for a specific Model.
 
@@ -110,7 +111,7 @@ class Query(metaclass=MetaQuery):
 
         return result
 
-    def serialize(self):
+    def _serialize(self):
         return OrderedDict((
             ('api', self.api.serialize() if self.api else None),
             ('obj', self._obj.serialize()),
@@ -118,7 +119,7 @@ class Query(metaclass=MetaQuery):
         ))
 
     @classmethod
-    def unserialize(cls, data):
+    def _unserialize(cls, data):
         from ..apis.base import API
         result = cls(API.unserialize(data.get('api')))
         result._obj = cls.Model.unserialize(data.get('obj', {}))
@@ -253,11 +254,11 @@ class Query(metaclass=MetaQuery):
         super().__delattr__(name)
 
 
-class MetaBoundAPIQuery(ABCMeta, MetaQuery):
+class MetaBoundAPIQuery(MetaQuery, ABCMeta):
     pass
 
 
-class BoundAPIQuery(ABC, Query, metaclass=MetaBoundAPIQuery):
+class BoundAPIQuery(Query, metaclass=MetaBoundAPIQuery):
     API = None
 
     @abstractmethod
