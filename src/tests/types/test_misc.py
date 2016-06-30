@@ -1,6 +1,7 @@
 import pytest
 
-from choo.types import Coordinates
+from choo.models import Model
+from choo.types import IFOPT, Coordinates, LineType
 
 
 class TestCoordinates:
@@ -17,3 +18,29 @@ class TestCoordinates:
 
     def test_reversed(self):
         assert reversed(Coordinates(51.451379, 7.013569)) == (7.013569, 51.451379)
+
+
+class TestSerializable:
+    def test_no_serialize_supported(self):
+        model = Model()
+        with pytest.raises(TypeError):
+            model.serialize()
+
+    def test_wrong_type(self):
+        with pytest.raises(ValueError):
+            Model.unserialize({'@type': 'coordinates'})
+
+
+class TestSimpleSerializable:
+    def test_no_serialize_supported(self):
+        ifopt = IFOPT()
+        with pytest.raises(TypeError):
+            ifopt.serialize()
+
+    def test_unsimple_serialize(self):
+        assert LineType.train.serialize(simple=False) == {'@type': 'linetype', 'value': 'train'}
+
+    def test_unsimple_unserialize(self):
+        assert LineType.unserialize({'@type': 'linetype', 'value': 'train'}) == LineType.train
+        with pytest.raises(ValueError):
+            LineType.unserialize({'@type': 'stop'})
