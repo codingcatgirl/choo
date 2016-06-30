@@ -1,3 +1,4 @@
+from abc import ABC, ABCMeta, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
 from itertools import chain
@@ -10,12 +11,18 @@ class MetaQuery(type):
     """
     def __new__(mcs, name, bases, attrs):
         cls = super(MetaQuery, mcs).__new__(mcs, name, bases, attrs)
-        if 'Model' not in attrs:
+        try:
+            Model = attrs['Model']
+        except KeyError:
             for base in bases:
                 if hasattr(base, 'Model'):
+                    Model = base.Model
                     break
             else:
                 raise TypeError('Query without Model!')
+
+        if Model is not None:
+            Model.Query = cls
 
         cls._settings_defaults = OrderedDict()
         for base in cls.__bases__:
@@ -237,3 +244,15 @@ class Query(metaclass=MetaQuery):
             raise TypeError('Can not delete settings')
 
         super().__delattr__(name)
+
+
+class MetaBoundAPIQuery(ABCMeta, MetaQuery):
+    pass
+
+
+class BoundAPIQuery(ABC, Query, metaclass=MetaBoundAPIQuery):
+    API = None
+
+    @abstractmethod
+    def _execute(self):
+        pass

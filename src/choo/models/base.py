@@ -124,6 +124,8 @@ class MetaModel(ABCMeta):
 
 
 class Model(Serializable, metaclass=MetaModel):
+    Query = None
+
     def __init__(self):
         self._data = {}
 

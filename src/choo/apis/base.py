@@ -1,8 +1,8 @@
 import json
 import os
 import sys
-from abc import ABC, abstractmethod
-from collections import OrderedDict
+from abc import ABC, ABCMeta, abstractmethod
+from collections import OrderedDict, deque
 from datetime import datetime
 
 import defusedxml.ElementTree as ET
@@ -13,7 +13,27 @@ from ..types import Serializable, SimpleSerializable
 _apis_by_name = {}
 
 
-class API(SimpleSerializable):
+class MetaAPI(ABCMeta):
+    """
+    Meta Class for APIs. It creates the BoundAPIQuery helpers.
+    """
+    def __new__(mcs, name, bases, attrs):
+        cls = super(MetaAPI, mcs).__new__(mcs, name, bases, attrs)
+
+        # Only create the helpers on subclasses of API
+        if mcs.__module__ != attrs['__module__']:
+            from ..queries.base import Query, BoundAPIQuery
+            cls.Query = type('Query', (BoundAPIQuery, ), {'__module__': attrs['__module__'], 'API': cls})
+            base_queries = deque(q for q in Query.__subclasses__() if not issubclass(q, BoundAPIQuery))
+            while base_queries:
+                base_query = base_queries.popleft()
+                base_queries.extend(q for q in base_query.__subclasses__() if not issubclass(q, BoundAPIQuery))
+                setattr(cls, base_query.__name__, type(base_query.__name__, (BoundAPIQuery, base_query, ),
+                                                       {'__module__': attrs['__module__']}))
+        return cls
+
+
+class API(SimpleSerializable, metaclass=MetaAPI):
     """
     An API subclass is a collection of Query implementations used by different networks.
     The instance of an API has a name and is usually a network.
@@ -22,15 +42,6 @@ class API(SimpleSerializable):
     >>> api.stops.where(name='Essen')
     This may raise a NotImplementedError if the API does not implement this Query.
     """
-    GeoPointQuery = None
-    PlatformQuery = None
-    LocationQuery = None
-    AddressQuery = None
-    AddressableQuery = None
-    StopQuery = None
-    POIQuery = None
-    TripQuery = None
-
     def __init__(self, name):
         if self.__class__ == API:
             raise TypeError('Only API subclasses can be initialized.')
@@ -54,51 +65,42 @@ class API(SimpleSerializable):
 
     @property
     def geopoints(self):
-        if self.GeoPointQuery is None:
-            raise NotImplementedError('Querying geopoints is not supported by this API.')
-        return self.GeoPointQuery(self)
+        raise NotImplementedError('Querying geopoints is not supported by this API.')
 
     @property
     def platforms(self):
-        if self.PlatformQuery is None:
-            raise NotImplementedError('Querying platforms is not supported by this API.')
-        return self.PlatformQuery(self)
+        raise NotImplementedError('Querying platforms is not supported by this API.')
 
     @property
     def locations(self):
-        if self.LocationQuery is None:
-            raise NotImplementedError('Querying locations is not supported by this API.')
-        return self.LocationQuery(self)
+        raise NotImplementedError('Querying locations is not supported by this API.')
 
     @property
     def addresses(self):
-        if self.AddressQuery is None:
-            raise NotImplementedError('Querying addresses is not supported by this API.')
-        return self.AddressQuery(self)
+        raise NotImplementedError('Querying addresses is not supported by this API.')
 
     @property
     def addressables(self):
-        if self.AddressableQuery is None:
-            raise NotImplementedError('Querying addressables is not supported by this API.')
-        return self.AddressableQuery(self)
+        raise NotImplementedError('Querying addressables is not supported by this API.')
 
     @property
     def stops(self):
-        if self.StopQuery is None:
-            raise NotImplementedError('Querying stops is not supported by this API.')
-        return self.StopQuery(self)
+        raise NotImplementedError('Querying stops is not supported by this API.')
 
     @property
     def pois(self):
-        if self.POIQuery is None:
-            raise NotImplementedError('Querying POIs is not supported by this API.')
-        return self.POIQuery(self)
+        raise NotImplementedError('Querying POIs is not supported by this API.')
 
     @property
     def trips(self):
-        if self.TripQuery is None:
-            raise NotImplementedError('Querying trips is not supported by this API.')
-        return self.TripQuery(self)
+        raise NotImplementedError('Querying trips is not supported by this API.')
+
+    @classmethod
+    def register(cls, query_cls):
+        def get(self):
+            return query_cls(self)
+        setattr(cls, query_cls.Model.__name__.lower()+'s', property(get))
+        return query_cls
 
 
 class ParserError(Exception):

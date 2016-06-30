@@ -1,11 +1,12 @@
-from .... import queries
+from .. import EFA
 from ....models import POI, Address, GeoPoint, Platform, Stop, Way
 from ....types import WayType
 from ..parsers.coordinfo import CoordInfoGeoPointList
 from ..parsers.odv import OdvLocationList
 
 
-class GeoPointQuery(queries.GeoPointQuery):
+@EFA.register
+class GeoPointQuery(EFA.GeoPointQuery):
     def _execute(self):
         if not self.coords:
             raise NotImplementedError('Not enough data for Query.')
@@ -62,7 +63,8 @@ class GeoPointQuery(queries.GeoPointQuery):
                 yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
 
 
-class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
+@EFA.register
+class PlatformQuery(GeoPointQuery, EFA.PlatformQuery):
     def _execute(self):
         if self.stop:
             # Platforms of a specific stop are queried
@@ -80,7 +82,8 @@ class PlatformQuery(GeoPointQuery, queries.PlatformQuery):
             return self._coordinates_request()
 
 
-class LocationQuery(GeoPointQuery, queries.LocationQuery):
+@EFA.register
+class LocationQuery(GeoPointQuery, EFA.LocationQuery):
     def _execute(self):
         # Is this location unique by ID? If so, just query it.
         location = self._convert_unique_location()
@@ -147,7 +150,8 @@ class LocationQuery(GeoPointQuery, queries.LocationQuery):
         return results if not self.coords else self._wrap_distance_results(results)
 
 
-class AddressQuery(LocationQuery, queries.AddressQuery):
+@EFA.register
+class AddressQuery(LocationQuery, EFA.AddressQuery):
     def _convert_unique_location(self):
         if self.ids and self.api.name in self.ids:
             return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
@@ -156,11 +160,13 @@ class AddressQuery(LocationQuery, queries.AddressQuery):
         return super()._convert_unique_location()
 
 
-class AddressableQuery(LocationQuery, queries.AddressableQuery):
+@EFA.register
+class AddressableQuery(LocationQuery, EFA.AddressableQuery):
     pass
 
 
-class StopQuery(AddressableQuery, queries.StopQuery):
+@EFA.register
+class StopQuery(AddressableQuery, EFA.StopQuery):
     def _convert_unique_location(self):
         if self.ids and self.api.name in self.ids:
             return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
@@ -169,7 +175,8 @@ class StopQuery(AddressableQuery, queries.StopQuery):
         return super()._convert_unique_location()
 
 
-class POIQuery(AddressableQuery, queries.POIQuery):
+@EFA.register
+class POIQuery(AddressableQuery, EFA.POIQuery):
     def _convert_unique_location(self):
         if self.ids and self.api.name in self.ids:
             return {'type': 'poiID', 'name': str(self.ids[self.api.name])}
