@@ -23,7 +23,7 @@ class MetaQuery(ABCMeta):
             else:
                 raise TypeError('Query without Model!')
 
-        if Model is not None:
+        if Model is not None and not hasattr(cls, 'API'):
             Model.Query = cls
 
         cls._settings_defaults = OrderedDict()
