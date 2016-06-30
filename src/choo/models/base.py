@@ -126,6 +126,10 @@ class MetaModel(ABCMeta):
 class Model(Serializable, metaclass=MetaModel):
     Query = None
 
+    @classmethod
+    def _full_class_name(cls):
+        return super()._full_class_name() if issubclass(cls, Parser) else ('models.%s' % cls.__name__)
+
     def __init__(self):
         self._data = {}
 

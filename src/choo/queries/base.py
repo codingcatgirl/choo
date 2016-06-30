@@ -111,6 +111,10 @@ class Query(Serializable, metaclass=MetaQuery):
 
         return result
 
+    @classmethod
+    def _full_class_name(cls):
+        return 'queries.%s' % (cls.Model.__name__ if cls.Model else 'Query')
+
     def _serialize(self):
         return OrderedDict((
             ('api', self.api.serialize() if self.api else None),
@@ -121,6 +125,11 @@ class Query(Serializable, metaclass=MetaQuery):
     @classmethod
     def _unserialize(cls, data):
         from ..apis.base import API
+        api = API.unserialize(data.get('api'))
+        if issubclass(cls, BoundAPIQuery) or api is None:
+            result = cls(api)
+        else:
+            result = getattr(api, cls.Model.__name__.lower()+'s')
         result = cls(API.unserialize(data.get('api')))
         result._obj = cls.Model.unserialize(data.get('obj', {}))
         for name, value in data.get('settings', {}).items():

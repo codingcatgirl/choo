@@ -7,7 +7,7 @@ from math import asin, cos, radians, sin, sqrt
 class Serializable(ABC):
     @classmethod
     def _full_class_name(cls):
-        return '%s.%s' % (cls.__module__, cls.__name__)
+        return '%s.%s' % (cls.__module__[5:], cls.__name__)
 
     @classmethod
     def _get_all_subclasses(cls):
