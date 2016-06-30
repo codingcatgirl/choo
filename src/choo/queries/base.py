@@ -71,7 +71,6 @@ class Query(metaclass=MetaQuery):
             raise TypeError('only subclasses of Query can be initialised')
 
         if isinstance(self, BoundAPIQuery):
-            print(self.API)
             if not isinstance(api, self.API):
                 raise ValueError('api has to be an %s subclass, got %s instead' % repr(self.API), repr(api))
         else:
