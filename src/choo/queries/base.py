@@ -3,27 +3,19 @@ from copy import deepcopy
 from itertools import chain
 from types import MappingProxyType
 
-from ..models.base import Field, Model
-
 
 class MetaQuery(type):
     """
     Metaclass for all Queries
     """
     def __new__(mcs, name, bases, attrs):
-        not_field_attrs = {n: v for n, v in attrs.items() if not isinstance(v, Field)}
-        cls = super(MetaQuery, mcs).__new__(mcs, name, bases, not_field_attrs)
-        try:
-            Model = attrs['Model']
-        except KeyError:
+        cls = super(MetaQuery, mcs).__new__(mcs, name, bases, attrs)
+        if 'Model' not in attrs:
             for base in bases:
                 if hasattr(base, 'Model'):
-                    Model = base.Model
                     break
             else:
                 raise TypeError('Query without Model!')
-
-        cls._fields = Model._fields
 
         cls._settings_defaults = OrderedDict()
         for base in cls.__bases__:
@@ -64,7 +56,7 @@ class Query(metaclass=MetaQuery):
     Neither of these values ever change. All methods by which the query can be altered return a new query.
     It can be executed using .execute() or by accessing its results like an iterable.
     """
-    Model = Model
+    Model = None
     _settings_defaults = {'limit': None}
 
     def __init__(self, api):
