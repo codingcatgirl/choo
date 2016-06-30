@@ -65,6 +65,7 @@ class SimpleSerializable(Serializable, ABC):
     def _serialize(self):
         return {'value': self._simple_serialize()}
 
+    @classmethod
     def _unserialize(cls, data):
         return cls._simple_unserialize(data['value'])
 
