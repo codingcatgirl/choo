@@ -112,8 +112,8 @@ class Query(Serializable, metaclass=MetaQuery):
         return result
 
     @classmethod
-    def _full_class_name(cls):
-        return 'queries.%s' % (cls.Model.__name__ if cls.Model else 'Query')
+    def _get_serialized_type_name(cls):
+        return cls.Model.__name__.lower()+'.query' if cls.Model else None
 
     def _serialize(self):
         return OrderedDict((

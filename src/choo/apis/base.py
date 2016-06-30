@@ -52,6 +52,10 @@ class API(SimpleSerializable, metaclass=MetaAPI):
         self.name = name
         _apis_by_name[name] = self
 
+    @classmethod
+    def _get_serialized_type_name(cls):
+        return 'api'
+
     def _simple_serialize(self):
         return self.name
 
@@ -176,6 +180,12 @@ class Parser(Serializable, ABC):
         if not isinstance(api, cls.API):
             raise TypeError('Wrong API for this parser. Expected %s subclass, not %s.' % (repr(cls.API), repr(api)))
         return result
+
+    @classmethod
+    def _get_serialized_type_name(cls):
+        from ..models import Model
+        if issubclass(cls, Model) and cls.API is not None:
+            return (cls.Model.__name__.lower()+'.parser.'+cls.__module__).replace('.choo.apis.', '.')+cls.__name__
 
     def _serialize(self):
         return OrderedDict((

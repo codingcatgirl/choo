@@ -127,8 +127,10 @@ class Model(Serializable, metaclass=MetaModel):
     Query = None
 
     @classmethod
-    def _full_class_name(cls):
-        return super()._full_class_name() if issubclass(cls, Parser) else ('models.%s' % cls.__name__)
+    def _get_serialized_type_name(cls):
+        if cls in (Model, ModelWithIDs):
+            return None
+        return super()._get_serialized_type_name() if issubclass(cls, Parser) else (cls.__name__.lower())
 
     def __init__(self):
         self._data = {}

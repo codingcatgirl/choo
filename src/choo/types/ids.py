@@ -164,7 +164,7 @@ class IDs(Serializable):
             self.data.setdefault(name, set()).update(set(value) if isinstance(value, (set, list, tuple)) else {value})
 
     @classmethod
-    def _full_class_name(cls):
+    def _get_serialized_type_name(cls):
         return 'ids'
 
     def _serialize(self):
@@ -203,6 +203,10 @@ class FrozenIDs(IDs):
     def _frozen_error(self, *args, **kwargs):
         raise TypeError('FrozenIDs can not be altered')
 
+    @classmethod
+    def _get_serialized_type_name(cls):
+        return 'ids.frozen'
+
     add = _frozen_error
     __delitem__ = _frozen_error
     remove = _frozen_error
@@ -225,6 +229,10 @@ class IFOPT(SimpleSerializable):
 
     def __str__(self):
         return ':'.join(self)
+
+    @classmethod
+    def _get_serialized_type_name(cls):
+        return 'ifopt.'+cls.__name__.lower() if cls != IFOPT else None
 
     def _simple_serialize(self):
         return str(self)

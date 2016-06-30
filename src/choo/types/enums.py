@@ -9,6 +9,10 @@ class EnumMixinMeta(EnumMeta, ABCMeta):
 
 
 class SerializableEnumMixin(SimpleSerializable):
+    @classmethod
+    def _get_serialized_type_name(cls):
+        return cls.__name__.lower() if issubclass(cls, Enum) else None
+
     def _simple_serialize(self):
         return self.name
 

@@ -5,22 +5,27 @@ from math import asin, cos, radians, sin, sqrt
 
 
 class Serializable(ABC):
-    @classmethod
-    def _full_class_name(cls):
-        return '%s.%s' % (cls.__module__[5:], cls.__name__)
+    subclasses = {}
 
     @classmethod
-    def _get_all_subclasses(cls):
-        subclasses = cls.__subclasses__()
-        results = {cls._full_class_name(): cls}
-        results.update({sc._full_class_name(): sc for sc in subclasses})
-        for sc in subclasses:
-            results.update(sc._get_all_subclasses())
-        return results
+    def _collect_serializables(cls):
+        cls.serialized_type_name = cls._get_serialized_type_name()
+        cls.subclasses = {cls.serialized_type_name: cls} if cls.serialized_type_name is not None else {}
+        for sc in cls.__subclasses__():
+            cls.subclasses.update(sc._collect_serializables())
+        return cls.subclasses
+
+    @classmethod
+    @abstractmethod
+    def _get_serialized_type_name(cls):
+        pass
 
     def serialize(self):
+        if self.serialized_type_name is None:
+            raise TypeError('Only subclasses of this class can be serialized.')
+
         result = OrderedDict({
-            '@type': self._full_class_name(),
+            '@type': self.serialized_type_name,
         })
         result.update(self._serialize())
         return result
@@ -28,11 +33,11 @@ class Serializable(ABC):
     @classmethod
     def unserialize(cls, data):
         type_ = data['@type']
-
-        try:
-            return cls._get_all_subclasses()[type_]._unserialize(data)
-        except KeyError:
+        print(repr(type_), cls, cls.subclasses)
+        class_ = cls.subclasses.get(type_)
+        if class_ is None:
             raise ValueError('Expected @type to be %s subclass, not %s' % (cls.__name__, type_))
+        return class_._unserialize(data)
 
     @abstractmethod
     def _serialize(self):
@@ -52,6 +57,9 @@ class SimpleSerializable(Serializable, ABC):
         return cls._simple_unserialize(data)
 
     def serialize(self, simple=True):
+        if self.serialized_type_name is None:
+            raise TypeError('Only subclasses of this class can be serialized.')
+
         return self._simple_serialize() if simple else super().serialize()
 
     def _serialize(self):
@@ -83,6 +91,10 @@ class Coordinates(SimpleSerializable, namedtuple('Coordinates', ('lat', 'lon')))
 
         lon1, lat1, lon2, lat2 = map(radians, [self.lon, self.lat, other.lon, other.lat])
         return 12742000 * asin(sqrt(sin((lat2-lat1)/2)**2+cos(lat1)*cos(lat2)*sin((lon2-lon1)/2)**2))
+
+    @classmethod
+    def _get_serialized_type_name(cls):
+        return 'coordinates'
 
     def _simple_serialize(self):
         return (self.lat, self.lon)
