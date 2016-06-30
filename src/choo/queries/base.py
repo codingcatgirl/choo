@@ -111,11 +111,11 @@ class Query(metaclass=MetaQuery):
         return result
 
     def serialize(self):
-        return {
-            'api': self.api.serialize() if self.api else None,
-            'obj': self._obj.serialize(),
-            'settings': self._settings,
-        }
+        return OrderedDict((
+            ('api', self.api.serialize() if self.api else None),
+            ('obj', self._obj.serialize()),
+            ('settings', self._settings),
+        ))
 
     @classmethod
     def unserialize(cls, data):
