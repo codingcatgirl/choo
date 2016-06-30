@@ -1,10 +1,11 @@
+from .. import EFA
 from ....models import POI, City, GeoPoint, Platform, Stop, StopArea
 from ....types import Coordinates, FrozenIDs, PlatformIFOPT, StopIFOPT
 from ...base import ParserError, XMLParser, cached_property, parser_property
 from .utils import GenAttrMapping
 
 
-class CoordInfoGeoPointList(XMLParser):
+class CoordInfoGeoPointList(EFA.Parser, XMLParser):
     """
     Parse a <coordInfoItemList> into GeoPoints
     """
@@ -12,7 +13,7 @@ class CoordInfoGeoPointList(XMLParser):
         return (CoordInfoGeoPoint.parse(self, elem) for elem in self.data.findall('./coordInfoItem'))
 
 
-class CoordInfoGeoPoint(GeoPoint.XMLParser):
+class CoordInfoGeoPoint(EFA.Parser, GeoPoint.XMLParser):
     """
     Parse <coordInfoItem> into its correct GeoPoint submodel
     """
@@ -57,7 +58,7 @@ class LocationParserMixin(GeoPointParserMixin):
         return data.attrib.get('name', '').strip() or None
 
 
-class CoordInfoLocationCity(City.XMLParser):
+class CoordInfoLocationCity(EFA.Parser, City.XMLParser):
     """
     Parse the city part of a <coordInfoItem> into a City
     """
@@ -87,7 +88,7 @@ class CoordInfoLocationCity(City.XMLParser):
         return myid and FrozenIDs({self.api.name: myid})
 
 
-class CoordInfoStop(LocationParserMixin, Stop.XMLParser):
+class CoordInfoStop(LocationParserMixin, EFA.Parser, Stop.XMLParser):
     """
     Parse a <coordInfoItem> that describes a Stop
     """
@@ -108,7 +109,7 @@ class CoordInfoStop(LocationParserMixin, Stop.XMLParser):
         return CoordInfoLocationCity(self, data, country=ifopt.country if ifopt else None)
 
 
-class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
+class CoordInfoPOI(LocationParserMixin, EFA.Parser, POI.XMLParser):
     """
     Parse a <coordInfoItem> that describes a POI
     """
@@ -122,7 +123,7 @@ class CoordInfoPOI(LocationParserMixin, POI.XMLParser):
         return self.api._parse_poitype(key)
 
 
-class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
+class CoordInfoPlatform(GeoPointParserMixin, EFA.Parser, Platform.XMLParser):
     """
     Parse a <coordInfoItem> that describes a Platform
     """
@@ -152,7 +153,7 @@ class CoordInfoPlatform(GeoPointParserMixin, Platform.XMLParser):
         return self.api._parse_platformtype(self._attrs.get('STOP_POINT_CHARACTERISTICS'))
 
 
-class CoordInfoStopArea(GeoPointParserMixin, StopArea.XMLParser):
+class CoordInfoStopArea(GeoPointParserMixin, EFA.Parser, StopArea.XMLParser):
     """
     Parse a the stop area part pf <coordInfoItem> that describes a Platform into a StopArea
     """

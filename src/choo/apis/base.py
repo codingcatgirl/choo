@@ -24,6 +24,7 @@ class MetaAPI(ABCMeta):
         if mcs.__module__ != attrs['__module__']:
             from ..queries.base import Query, BoundAPIQuery
             cls.Query = type('Query', (BoundAPIQuery, ), {'__module__': attrs['__module__'], 'API': cls})
+            cls.Parser = type('Parser', (Parser, ), {'__module__': attrs['__module__'], 'API': cls})
             base_queries = deque(q for q in Query.__subclasses__() if not issubclass(q, BoundAPIQuery))
             while base_queries:
                 base_query = base_queries.popleft()
@@ -139,16 +140,20 @@ class Parser(Serializable, ABC):
 
     Model attributes that are not implemented by your parser automatically will return None.
     """
-    def __init__(self, parent, data, **kwargs):
+    API = None
+
+    def __init__(self, parent, data, api=None, time=None, **kwargs):
         """
         Initialise the parser.
         parent has to be an object from which the api and time attributes can be taken.
         data is the parser's data.
         Any additional keyword arguments will be forwarded to all parser_property and cached_property methods.
         """
-        if parent is not None:
-            self.api = parent.api
-            self.time = parent.time
+        if self.API is None:
+            raise TypeError('Use the API.Parser mixin. Example: class MyStop(EFA.Parser, Stop.XMLParser):')
+
+        self.api = api if api else parent.api
+        self.time = time if time else parent.time
         self.data = data
         self._kwargs = kwargs
 
@@ -167,9 +172,9 @@ class Parser(Serializable, ABC):
 
     @classmethod
     def parse(cls, api, time, data, **kwargs):
-        result = cls(None, cls._parse_raw_data(data), **kwargs)
-        result.api = api
-        result.time = time
+        result = cls(None, cls._parse_raw_data(data), api=api, time=time, **kwargs)
+        if not isinstance(api, cls.API):
+            raise TypeError('Wrong API for this parser. Expected %s subclass, not %s.' % (repr(cls.API), repr(api)))
         return result
 
     def _serialize(self):

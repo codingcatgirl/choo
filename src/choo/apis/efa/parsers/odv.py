@@ -1,9 +1,10 @@
-from ....models import POI, Address, City, Location, Stop
+from .. import EFA
+from ....models import POI, Address, City, Stop
 from ....types import Coordinates, FrozenIDs, StopIFOPT
 from ...base import ParserError, XMLParser, cached_property, parser_property
 
 
-class OdvLocationList(XMLParser):
+class OdvLocationList(EFA.Parser, XMLParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.type, self.generator = self._parse_location(self.data)
@@ -82,7 +83,7 @@ class OmcParserMixin:
         return self._omc[2]
 
 
-class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
+class OdvPlaceElemCity(OmcParserMixin, EFA.Parser, City.XMLParser):
     """
     Parse an <odvPlaceElem> Element into a City
     """
@@ -96,7 +97,7 @@ class OdvPlaceElemCity(OmcParserMixin, City.XMLParser):
         return data.text
 
 
-class OdvNameElemCity(OmcParserMixin, City.XMLParser):
+class OdvNameElemCity(OmcParserMixin, EFA.Parser, City.XMLParser):
     """
     Parse the city part of an <odvNameElem> Element into a City
     """
@@ -105,7 +106,7 @@ class OdvNameElemCity(OmcParserMixin, City.XMLParser):
         return data.attrib.get('locality')
 
 
-class OdvNameElemLocation(Location.XMLParser):
+class LocationParserMixin:
     """
     Mixin class for anything that parses an <odvNameElem> Element into a Location subclass
     """
@@ -135,7 +136,7 @@ class OdvNameElemLocation(Location.XMLParser):
                            float(data.attrib['x']) / 1000000)
 
 
-class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
+class OdvNameElemAddress(EFA.Parser, Address.XMLParser, LocationParserMixin):
     """
     Parses an <odvNameElem> Element into an Address
     """
@@ -162,7 +163,7 @@ class OdvNameElemAddress(Address.XMLParser, OdvNameElemLocation):
         return '%s %s' % (self.street, self.number)
 
 
-class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
+class OdvNameElemStop(EFA.Parser, Stop.XMLParser, LocationParserMixin):
     """
     Parses an <odvNameElem> Element into a Stop
     """
@@ -176,7 +177,7 @@ class OdvNameElemStop(Stop.XMLParser, OdvNameElemLocation):
         return self._city_parse(data, city, ifopt.country if ifopt else None)
 
 
-class OdvNameElemPOI(POI.XMLParser, OdvNameElemLocation):
+class OdvNameElemPOI(EFA.Parser, POI.XMLParser, LocationParserMixin):
     """
     Parses an <odvNameElem> Element into an POI
     """
