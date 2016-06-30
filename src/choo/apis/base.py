@@ -25,13 +25,18 @@ class MetaAPI(ABCMeta):
             from ..queries.base import Query, BoundAPIQuery
             cls.Query = type('Query', (BoundAPIQuery, ), {'__module__': attrs['__module__'], 'API': cls})
             cls.Parser = type('Parser', (Parser, ), {'__module__': attrs['__module__'], 'API': cls})
+            cls._supported_queries = {}
             base_queries = deque(q for q in Query.__subclasses__() if not issubclass(q, BoundAPIQuery))
             while base_queries:
                 base_query = base_queries.popleft()
                 base_queries.extend(q for q in base_query.__subclasses__() if not issubclass(q, BoundAPIQuery))
-                setattr(cls, base_query.__name__, type(base_query.__name__, (cls.Query, base_query, ),
-                                                       {'__module__': attrs['__module__']}))
+                setattr(cls, base_query.__name__+'Base', type(base_query.__name__+'Base', (cls.Query, base_query, ),
+                                                              {'__module__': attrs['__module__']}))
         return cls
+
+    @property
+    def supported_queries(cls):
+        return frozenset(cls._supported_queries)
 
 
 class API(SimpleSerializable, metaclass=MetaAPI):
@@ -101,11 +106,12 @@ class API(SimpleSerializable, metaclass=MetaAPI):
         raise NotImplementedError('Querying trips is not supported by this API.')
 
     @classmethod
-    def register(cls, query_cls):
-        def get(self):
-            return query_cls(self)
-        setattr(cls, query_cls.Model.__name__.lower()+'s', property(get))
-        return query_cls
+    def _register_query(cls, query_cls):
+        if query_cls.Model in cls._supported_queries:
+            raise TypeError('Duplicate %sQuery on %s API.' % (query_cls.Model.__name__, query_cls.API.__name__))
+        cls._supported_queries[query_cls.Model] = query_cls
+
+        setattr(cls, query_cls.Model.__name__.lower()+'s', property(lambda self: query_cls(self)))
 
 
 class ParserError(Exception):

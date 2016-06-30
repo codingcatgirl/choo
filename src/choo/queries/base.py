@@ -265,7 +265,16 @@ class Query(Serializable, metaclass=MetaQuery):
 
 
 class MetaBoundAPIQuery(MetaQuery, ABCMeta):
-    pass
+    """
+    Metaclass for BoundAPIQuery that registers subclasses to their correct API.
+    """
+    def __new__(mcs, name, bases, attrs):
+        cls = super(MetaBoundAPIQuery, mcs).__new__(mcs, name, bases, attrs)
+
+        if cls.API is not None and BoundAPIQuery not in bases and cls.API.Query not in bases:
+            cls.API._register_query(cls)
+
+        return cls
 
 
 class BoundAPIQuery(Query, metaclass=MetaBoundAPIQuery):
