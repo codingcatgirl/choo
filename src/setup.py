@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
+import importlib
+import os
+
 from setuptools import find_packages, setup
 
-from choo import __version__
+os.environ['CHOO_NOIMPORT'] = '1'
 
 setup(
     name='choo',
     packages=find_packages(),
-    version=__version__,
+    version=importlib.import_module('choo').__version__,
     description='uniform interface for public transport APIs',
     author='Laura Klünder',
     author_email='choo@codingcatgirl.de',
     url='https://github.com/codingcatgirl/choo',
-    install_requires=['requests', 'defusedxml'],
+    install_requires=['requests', 'defusedxml', 'typing'],
     license='Apache License 2.0',
     scripts=['choo/choo-cli', 'choo/choo-server'],
     classifiers=[

@@ -3,6 +3,7 @@ import pprint
 from datetime import datetime
 
 import defusedxml.ElementTree as ET
+
 import requests
 
 from ...models import POI, Address, Location, Stop

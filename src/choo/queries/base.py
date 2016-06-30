@@ -3,6 +3,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from itertools import chain
 from types import MappingProxyType
+
 from ..types import Serializable
 
 
