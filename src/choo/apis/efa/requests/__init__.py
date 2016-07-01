@@ -15,7 +15,9 @@ class EFARequest(XMLRequest):
 
 class OdvParserMixin:
     def _parse_odv(self, data):
-        """ Parse an ODV (OriginDestinationVia) XML node """
+        """
+        Parse an ODV (OriginDestinationVia) XML node
+        """
         odvtype = data.attrib['type']
 
         # Place.city
@@ -52,7 +54,9 @@ class OdvParserMixin:
                                             key=lambda e: e.attrib.get('matchQuality', 0)))
 
     def _parse_location_name(self, data, city, cityid, odvtype):
-        """ Parses the odvNameElem of an ODV """
+        """
+        Parses the odvNameElem of an ODV
+        """
         odvtype = data.attrib.get('anyType', odvtype)
         if odvtype == 'stop':
             return 'stop', OdvNameElemStop(self, data, city=city)
