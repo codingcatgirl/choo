@@ -16,11 +16,8 @@ class Line(ModelWithIDs):
     network = Field(str)
     operator = Field(str)
 
-    def __init__(self, linetype=None, **kwargs):
-        super().__init__(linetype=(LineType() if linetype is None else linetype), **kwargs)
-
-        def __repr__(self):
-            return '<Line %s %s>' % (str(self.linetype), repr(self.name))
+    def __repr__(self):
+        return '<Line %s %s>' % (str(self.linetype), repr(self.name))
 
 
 class MetaRide(ModelWithIDs):
@@ -43,9 +40,6 @@ class RidePoint(Model):
     arrival = Field(LiveTime)
     departure = Field(LiveTime)
     passthrough = Field(bool)
-
-    def __init__(self, platform=None, arrival=None, departure=None, **kwargs):
-        super().__init__(platform=platform, arrival=arrival, departure=departure, **kwargs)
 
     def __eq__(self, other):
         if not isinstance(other, RidePoint):

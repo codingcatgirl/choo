@@ -6,10 +6,6 @@ class GeoPoint(Model):
     """
     Anything that can have a geographic position.
     """
-    def __init__(self, coords=None, **kwargs):
-        super().__init__(**kwargs)
-        self.coords = coords
-
     def distance_to(self, other):
         if not isinstance(other, GeoPoint):
             raise TypeError('distance_to expected GeoPoint object, not %s' % repr(other))
@@ -28,11 +24,6 @@ class City(ModelWithIDs):
     official_id = Field(str)
     name = Field(str)
 
-    def __init__(self, name=None, country=None, **kwargs):
-        super().__init__(**kwargs)
-        self.country = country
-        self.name = name
-
     def __repr__(self):
         return '<%s: %s, %s, %s>' % (self.__class__.__name__, self.country, self.state, self.name)
 
@@ -43,11 +34,6 @@ class Location(GeoPoint):
     """
     city = Field(City, City)
     name = Field(str)
-
-    def __init__(self, city=None, name=None, **kwargs):
-        super().__init__(**kwargs)
-        self.city = city
-        self.name = name
 
     @property
     def country(self):
@@ -78,9 +64,6 @@ class Stop(Addressable, ModelWithIDs):
     # rides = fields.Model('Ride.Results')
     # lines = fields.Model('Line.Results')
 
-    def __init__(self, city=None, name=None, **kwargs):
-        super().__init__(city=city, name=name, **kwargs)
-
     @property
     def country(self):
         return self.ifopt.country if self.ifopt else self.city__country
@@ -91,9 +74,6 @@ class POI(Addressable, ModelWithIDs):
     A Point of Interest
     """
     poitype = Field(POIType)
-
-    def __init__(self, city=None, name=None, **kwargs):
-        super().__init__(city=city, name=name, **kwargs)
 
     def __repr__(self):
         return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, self.country, self.city__name,
@@ -115,11 +95,6 @@ class Platform(GeoPoint, ModelWithIDs):
     ifopt = Field(PlatformIFOPT)
     platform_type = Field(PlatformType)
     name = Field(str)
-
-    def __init__(self, stop=None, name=None, full_name=None, **kwargs):
-        super().__init__(**kwargs)
-        self.stop = stop
-        self.name = name
 
     def __repr__(self):
         return '<%s: %s, %s, %s, %s>' % (self.__class__.__name__, repr(self.stop), self.name,

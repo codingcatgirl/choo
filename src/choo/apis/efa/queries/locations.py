@@ -59,7 +59,8 @@ class GeoPointQuery(EFA.GeoPointQueryBase):
                 continue
             distance = self.coords.distance_to(result.coords)
             if distance <= self.settings['max_distance']:
-                yield Way(waytype=WayType.walk, origin=GeoPoint(self.coords), destination=result, distance=distance)
+                yield Way(waytype=WayType.walk, origin=GeoPoint(coords=self.coords),
+                          destination=result, distance=distance)
 
 
 class PlatformQuery(GeoPointQuery, EFA.PlatformQueryBase):

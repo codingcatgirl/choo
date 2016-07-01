@@ -126,14 +126,18 @@ class MetaModel(ABCMeta):
 class Model(Serializable, metaclass=MetaModel):
     Query = None
 
+    def __init__(self, **kwargs):
+        self._data = {}
+        for name, value in kwargs.items():
+            if name not in self._fields:
+                raise AttributeError('%s model has no field %s' % (self.__class__.__name__, repr(name)))
+            setattr(self, name, value)
+
     @classmethod
     def _get_serialized_type_name(cls):
         if cls in (Model, ModelWithIDs):
             return None
         return super()._get_serialized_type_name() if issubclass(cls, Parser) else (cls.__name__.lower())
-
-    def __init__(self):
-        self._data = {}
 
     def _serialize(self):
         result = OrderedDict()

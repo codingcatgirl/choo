@@ -9,9 +9,6 @@ class TicketData(Model):
     price = Field(float)
     price_child = Field(float)
 
-    def __init__(self, authority=None, level=None, price=None, price_child=None, **kwargs):
-        super().__init__(authority=authority, level=level, price=price, price_child=price_child, **kwargs)
-
     def __eq__(self, other):
         if not isinstance(other, TicketData):
             return False
@@ -43,10 +40,6 @@ class TicketList(Model):
     single = Field(TicketData, TicketData)
     bike = Field(TicketData, TicketData)
     other = Field(Mapping[str, TicketData])
-
-    def __init__(self, **kwargs):
-        # magic, do not remove
-        super().__init__(**kwargs)
 
     def __repr__(self):
         return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))

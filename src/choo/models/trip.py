@@ -35,10 +35,6 @@ class Trip(Model):
     wayduration_via = Field(timedelta)
     wayduration_destination = Field(timedelta)
 
-    def __init__(self, **kwargs):
-        # magic, do not remove
-        super().__init__(**kwargs)
-
     @property
     def origin(self):
         return self._parts[0].origin
@@ -164,13 +160,6 @@ class Way(Model):
     duration = Field(timedelta)
     events = Field(WayEvent)
     path = Field(Iterable[Coordinates])
-
-    def __init__(self, waytype=None, origin=None, destination=None, distance=None, **kwargs):
-        super().__init__(**kwargs)
-        self.waytype = WayType.walk if waytype is None else waytype
-        self.origin = origin
-        self.destination = destination
-        self.distance = distance
 
     def __eq__(self, other):
         if not isinstance(other, Way):
