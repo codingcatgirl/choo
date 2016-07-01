@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from . import EFARequest
 from ....models import POI, Platform, Stop
 from ..parsers.coordinfo import CoordInfoGeoPoint
@@ -39,7 +41,7 @@ class CoordRequest(EFARequest):
             })
 
         xml = self._post('XML_COORD_REQUEST', post)
-        self.time = xml.attrib['now']
+        self.time = datetime.datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdCoordInfoRequest/itdCoordInfo/coordInfoItemList')
         self.results = (CoordInfoGeoPoint.parse(self, elem)

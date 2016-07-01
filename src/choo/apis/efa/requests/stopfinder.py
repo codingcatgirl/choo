@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from . import EFARequest, OdvParserMixin
 
 
@@ -28,7 +30,7 @@ class StopfinderRequest(EFARequest, OdvParserMixin):
             post.pop('place_sf')
 
         xml = self._post('XML_STOPFINDER_REQUEST', post)
-        self.time = xml.attrib['now']
+        self.time = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdStopFinderRequest')
         self.type, self.results = self._parse_odv(data.find('./itdOdv'))
