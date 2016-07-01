@@ -1,16 +1,11 @@
 from ...requests import XMLRequest
 from ..parsers.odv import OdvPlaceElemCity, OdvNameElemPOI, OdvNameElemStop, OdvNameElemAddress
 from ... import ParserError
-import requests
 
 
 class EFARequest(XMLRequest):
-    def _execute(self, endpoint, data):
-        """
-        Place a request to the given andpoint with the given POST data.
-        """
-        result = requests.post(self.api.base_url + endpoint, data=data)
-        return self._parse_result(result)
+    def _url_filter(self, endpoint):
+        return self.api.base_url + endpoint
 
 
 class OdvParserMixin:

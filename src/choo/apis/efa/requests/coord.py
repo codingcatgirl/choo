@@ -38,7 +38,7 @@ class CoordRequest(EFARequest):
                 'radius_%d' % (i+1): max_distance
             })
 
-        xml = self._execute('XML_COORD_REQUEST', post)
+        xml = self._post('XML_COORD_REQUEST', post)
         self.time = xml.attrib['now']
 
         data = xml.find('./itdCoordInfoRequest/itdCoordInfo/coordInfoItemList')

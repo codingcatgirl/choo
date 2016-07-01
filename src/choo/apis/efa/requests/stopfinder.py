@@ -27,7 +27,7 @@ class StopfinderRequest(EFARequest, OdvParserMixin):
         if not post['place_sf']:
             post.pop('place_sf')
 
-        xml = self._execute('XML_STOPFINDER_REQUEST', post)
+        xml = self._post('XML_STOPFINDER_REQUEST', post)
         self.time = xml.attrib['now']
 
         data = xml.find('./itdStopFinderRequest')
