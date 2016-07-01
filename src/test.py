@@ -6,14 +6,23 @@ from pprint import pprint  # noqa
 from choo.apis.de import vrr
 from choo.models import City, Stop
 from choo.queries import PlatformQuery  # noqa
-from choo.types import Coordinates, Serializable
+from choo.types import Coordinates, Serializable  # noqa
 
 # collection = Collection('test')
 
-bs = Stop(city=City('essen'), name='borbeck süd bf')
-results = vrr.platforms.where(coords=Coordinates(51.462983, 6.956251)).max_distance(5000).execute()
-pprint(list(results)[0].serialize())
-print(json.dumps(list(results)[0].serialize(), indent=2))
+bs = Stop(city=City(name='essen'), name='borbeck süd bf')
+query = vrr.platforms.where(coords=Coordinates(51.462983, 6.956251)).max_distance(5000)
+print(json.dumps(query.serialize(), indent=2))
+# PlatformQuery.unserialize(query.serialize())
+
+results = query.execute()
+#
+# pprint(list(results)[0].serialize())
+result = list(results)[0]
+pprint(result.mutable().serialize())
+print(json.dumps(result.mutable().serialize(), indent=2))
+# print(json.dumps(Serializable.unserialize(result.serialize()).serialize(), indent=2))
+# pprint(Serializable.subclasses)
 code.interact(local=locals())
 
 
