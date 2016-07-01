@@ -49,10 +49,10 @@ class EFA(API):
         return xml, servernow
 
     def _convert_location(self, location, wrap=''):
-        from .queries import AddressQuery, LocationQuery, POIQuery, StopQuery
         """
         Convert a Location into POST parameters for the EFA Requests
         """
+        from .queries import AddressQuery, LocationQuery, POIQuery, StopQuery
         r = None
 
         city_name = location.city.name if location.city else None
