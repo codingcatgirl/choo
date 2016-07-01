@@ -1,8 +1,8 @@
 from .. import EFA
-from ....models import POI, Address, GeoPoint, Platform, Stop, Way
+from ....models import POI, Address, GeoPoint, Stop, Way
 from ....types import WayType
-from ..parsers.coordinfo import CoordInfoGeoPointList
-from ..parsers.odv import OdvLocationList
+from ..requests.coord import CoordRequest
+from ..requests.stopfinder import StopfinderRequest
 
 
 class GeoPointQuery(EFA.GeoPointQueryBase):
@@ -10,44 +10,8 @@ class GeoPointQuery(EFA.GeoPointQueryBase):
         if not self.coords:
             raise NotImplementedError('Not enough data for Query.')
 
-        return self._coordinates_request()
-
-    def _coordinates_request(self):
-        """
-        Execute a COORDS_REQUEST (find Locations within a given distance from specific coordinates)
-        """
-        post = {
-            'language': 'de',
-            'outputFormat': 'XML',
-            'coordOutputFormat': 'WGS84',
-            'inclFilter': '1',
-            'coord': '%.6f:%.6f:WGS84' % reversed(self.coords),
-        }
-
-        if self.settings['limit']:
-            post['max'] = self.settings['limit']
-
-        types = []
-        if issubclass(Stop, self.Model):
-            types.append('STOP')
-
-        if issubclass(POI, self.Model):
-            types.append('POI_POINT')
-            types.append('POI_AREA')
-
-        if issubclass(Platform, self.Model):
-            types.append('BUS_POINT')
-
-        for i, type_ in enumerate(types):
-            post.update({
-                'type_%d' % (i+1): type_,
-                'radius_%d' % (i+1): self.settings['max_distance']
-            })
-
-        xml, self.time = self.api._request('XML_COORD_REQUEST', post)
-        data = xml.find('./itdCoordInfoRequest')
-
-        results = CoordInfoGeoPointList(self, data.find('./itdCoordInfo/coordInfoItemList'))
+        results = CoordRequest(api=self.api, coords=self.coords, model_cls=self.Model,
+                               max_distance=self.settings['max_distance'], limit=self.settings['limit']).results
         return self._wrap_distance_results(results)
 
     def _wrap_distance_results(self, results):
@@ -78,74 +42,49 @@ class PlatformQuery(GeoPointQuery, EFA.PlatformQueryBase):
             results = (r for r in self.api.platforms.where(coords=stop.coords).max_distance(400) if r.stop == stop)
             return results if not self.coords else self._wrap_distance_results(results)
         else:
-            return self._coordinates_request()
+            return super()._execute()
 
 
 class LocationQuery(GeoPointQuery, EFA.LocationQueryBase):
     def _execute(self):
         # Is this location unique by ID? If so, just query it.
         location = self._convert_unique_location()
-        if location:
-            return self._stopfinder_request(location)
 
         # If we have the name of the location or city, just query it
-        if self.city__name or self.name:
-            return self._stopfinder_request({'type': 'any', 'place': self.city__name, 'name': self.name})
+        if not location:
+            location = {'type': 'any', 'place': self.city__name, 'name': self.name}
 
         # If we have coordinates, get the address nearest to them or just query all locations nearby
-        if self.coords:
+        if not location and self.coords:
             if self.Model == Address:
-                return self._stopfinder_request({'type': 'coord', 'name': '%.6f:%.6f:WGS84' % reversed(self.coords)})
-            return self._coordinates_request()
+                location = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % reversed(self.coords)}
 
-        raise NotImplementedError('Not enough data for Query.')
+            if not location:
+                return super()._execute()
+
+        if not location:
+            raise NotImplementedError('Not enough data for Query.')
+
+        r = StopfinderRequest(api=self.api, location=location, limit=self.settings['limit'])
+
+        if r.type == 'none':
+            return ()
+        elif r.type == 'stop':
+            results = r.results if issubclass(Stop, self.Model) else ()
+        elif r.type == 'address':
+            results = r.results if issubclass(Address, self.Model) else ()
+        elif r.type == 'poi':
+            results = r.results if issubclass(POI, self.Model) else ()
+        elif r.type == 'mixed':
+            results = (r for r in r.results if isinstance(r, self.Model))
+
+        return results if not self.coords else self._wrap_distance_results(results)
 
     def _convert_unique_location(self):
         """
         Return POST data for a STOPFINDER_REQUEST if a unique location is described by id, or else None.
         """
         return None
-
-    def _stopfinder_request(self, location):
-        """
-        Executes a STOPFINDER_REQUEST (which can not only find stops)
-        """
-        post = {
-            'language': 'de',
-            'outputFormat': 'XML',
-            'coordOutputFormat': 'WGS84',
-            'locationServerActive': 1,
-            # 'regionID_sf': 1, # own region
-            'SpEncId': 0,
-            'odvSugMacro': 'true',
-            'useHouseNumberList': 'true',
-            'type_sf': location['type'],
-            'place_sf': location['place'],
-            'name_sf': location['name'],
-        }
-
-        if self.settings['limit']:
-            post['anyMaxSizeHitList'] = self.settings['limit']
-
-        if not post['place_sf']:
-            post.pop('place_sf')
-
-        xml, self.time = self.api._request('XML_STOPFINDER_REQUEST', post)
-        data = xml.find('./itdStopFinderRequest')
-
-        results = OdvLocationList(self, data.find('./itdOdv'))
-        if results.type == 'none':
-            return ()
-        elif results.type == 'stop':
-            results = results if issubclass(Stop, self.Model) else ()
-        elif results.type == 'address':
-            results = results if issubclass(Address, self.Model) else ()
-        elif results.type == 'poi':
-            results = results if issubclass(POI, self.Model) else ()
-        elif results.type == 'mixed':
-            results = (r for r in results if isinstance(r, self.Model))
-
-        return results if not self.coords else self._wrap_distance_results(results)
 
 
 class AddressQuery(LocationQuery, EFA.AddressQueryBase):

@@ -2,16 +2,7 @@ from .. import EFA
 from ... import ParserError, cached_property, parser_property
 from ....models import POI, City, GeoPoint, Platform, Stop, StopArea
 from ....types import Coordinates, FrozenIDs, PlatformIFOPT, StopIFOPT
-from ...parsers import XMLParser
 from .utils import GenAttrMapping
-
-
-class CoordInfoGeoPointList(EFA.Parser, XMLParser):
-    """
-    Parse a <coordInfoItemList> into GeoPoints
-    """
-    def __iter__(self):
-        return (CoordInfoGeoPoint.parse(self, elem) for elem in self.data.findall('./coordInfoItem'))
 
 
 class CoordInfoGeoPoint(EFA.Parser, GeoPoint.XMLParser):

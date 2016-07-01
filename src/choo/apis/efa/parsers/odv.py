@@ -1,66 +1,7 @@
 from .. import EFA
-from ... import ParserError, cached_property, parser_property
+from ... import cached_property, parser_property
 from ....models import POI, Address, City, Stop
 from ....types import Coordinates, FrozenIDs, StopIFOPT
-from ...parsers import XMLParser
-
-
-class OdvLocationList(EFA.Parser, XMLParser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.type, self.generator = self._parse_location(self.data)
-
-    def _parse_location(self, data):
-        """ Parse an ODV (OriginDestinationVia) XML node """
-        odvtype = data.attrib['type']
-
-        # Place.city
-        p = data.find('./itdOdvPlace')
-        cityid = None
-        if p.attrib['state'] == 'empty':
-            city = None
-        elif p.attrib['state'] != 'identified':
-            if p.attrib['state'] == 'list':
-                return 'cities', (OdvPlaceElemCity(self, city) for city in p.find('./odvPlaceElem'))
-            return 'none', ()
-        else:
-            city = p.find('./odvPlaceElem')
-
-        # Location.name
-        n = data.find('./itdOdvName')
-        if n.attrib['state'] == 'empty':
-            if city is not None:
-                return 'cities', (city, )
-            return 'none', ()
-
-        if n.attrib['state'] == 'identified':
-            ne = n.find('./odvNameElem')
-            # AnyTypes are used in some EFA instances instead of ODV types
-            odvtype = ne.attrib.get('anyType', odvtype)
-            odvtype, location = self._parse_location_name(ne, city, cityid, odvtype)
-            return odvtype, (location, )
-
-        if n.attrib['state'] != 'list':
-            return 'none', ()
-
-        return 'mixed', (self._parse_location_name(item, city, cityid, odvtype)[1]
-                         for item in sorted(n.findall('./odvNameElem'), reverse=True,
-                                            key=lambda e: e.attrib.get('matchQuality', 0)))
-
-    def _parse_location_name(self, data, city, cityid, odvtype):
-        """ Parses the odvNameElem of an ODV """
-        odvtype = data.attrib.get('anyType', odvtype)
-        if odvtype == 'stop':
-            return 'stop', OdvNameElemStop(self, data, city=city)
-        elif odvtype == 'poi':
-            return 'poi', OdvNameElemPOI(self, data, city=city)
-        elif odvtype in ('street', 'singlehouse', 'coord', 'address'):
-            return 'address', OdvNameElemAddress(self, data, city=city)
-        else:
-            raise ParserError(self, 'Unknown odvtype: %s' % odvtype)
-
-    def __iter__(self):
-        yield from self.generator
 
 
 class OmcParserMixin:
