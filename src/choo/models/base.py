@@ -1,9 +1,10 @@
 from abc import ABCMeta
 from collections import OrderedDict
+from datetime import datetime
 
 from typing import Optional
 
-from ..apis.base import JSONParser, Parser, XMLParser, parser_property
+from ..apis.base import API, JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
 from ..types import IDs, Serializable
 
@@ -29,7 +30,14 @@ class Field:
         return issubclass(type(value), self.types)
 
     def serialize(self, value):
-        return value.serialize() if isinstance(value, Serializable) else value
+        if isinstance(value, Serializable):
+            return value.serialize()
+        elif isinstance(value, datetime):
+            return value.isoformat()
+        else:
+            return value
+
+    # datetime.strptime(data['time'], '%Y-%m-%dT%H:%M:%S')
 
     def get_proxy_fields(self):
         if self.Model is None:
@@ -112,10 +120,11 @@ class MetaModel(ABCMeta):
         cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
         cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
 
-        if not issubclass(cls, Parser):
-            cls.XMLParser = type('XMLParser', (XMLParser, cls), {'__module__': attrs['__module__'], 'Model': cls})
-            cls.JSONParser = type('JSONParser', (JSONParser, cls), {'__module__': attrs['__module__'], 'Model': cls})
-        elif Parser not in cls.__bases__:
+        if mcs.__module__ != attrs['__module__'] and not issubclass(cls, (Parser, SourcedModelMixin)):
+            cls.Sourced = type('Sourced'+name, (SourcedModelMixin, cls), {'__module__': cls.__module__, 'Model': cls})
+            cls.XMLParser = type('XMLParser', (XMLParser, cls.Sourced), {'__module__': cls.__module__})
+            cls.JSONParser = type('JSONParser', (JSONParser, cls.Sourced), {'__module__': cls.__module__})
+        elif issubclass(cls, Parser) and Parser not in cls.__bases__:
             for name, field in cls._nonproxy_fields.items():
                 if getattr(cls, name) is field:
                     setattr(cls, name, parser_property(give_none, name))
@@ -137,7 +146,7 @@ class Model(Serializable, metaclass=MetaModel):
     def _get_serialized_type_name(cls):
         if cls in (Model, ModelWithIDs):
             return None
-        return super()._get_serialized_type_name() if issubclass(cls, Parser) else (cls.__name__.lower())
+        return cls.__name__.lower()
 
     def _serialize(self):
         result = OrderedDict()
@@ -150,6 +159,54 @@ class Model(Serializable, metaclass=MetaModel):
     @classmethod
     def _unserialize(self, data):
         raise NotImplementedError
+
+
+class SourcedModelMixin(Model):
+    source = Field(API)
+    time = Field(datetime)
+
+    def __init__(self, data, deep=True):
+        if self.__class__ is SourcedModelMixin:
+            raise TypeError('SourcedModelMixin cannot be initialized directly')
+
+        if not isinstance(data, Parser) or data.Model is not self.Model:
+            raise ValueError('%s.Sourced: data has to be a %s Parser, not %s' %
+                             (self.Model.__name__, self.Model.__name__, repr(data)))
+
+        self._data = {'source': None, 'time': None}
+
+        for name, field in self._nonproxy_fields.items():
+            value = getattr(data, name)
+            if isinstance(value, Parser) and deep:
+                value = value.sourced(deep)
+            self._data[name] = value
+
+    def mutable(self, deep=True):
+        kwargs = {}
+        for name, field in self.Model._nonproxy_fields.items():
+            value = getattr(self, name)
+            if isinstance(value, SourcedModelMixin) and deep:
+                value = value.mutable(deep)
+            kwargs[name] = value
+        return self.Model(**kwargs)
+
+    @classmethod
+    def _get_serialized_type_name(cls):
+        if cls in (Model, ModelWithIDs, SourcedModelMixin):
+            return None
+        return cls.Model._get_serialized_type_name()+'.sourced'
+
+    def __setattr__(self, name, value):
+        if name in getattr(self, '_nonproxy_fields', ()):
+            raise TypeError('Cannot set a Model.Sourced property')
+        super().__setattr__(name, value)
+
+    def __delattr__(self, name):
+        if name in getattr(self, '_nonproxy_fields', ()):
+            raise TypeError('Cannot delete a Model.Sourced property')
+        super().__delattr__(name)
+
+Model.Sourced = SourcedModelMixin
 
 
 class ModelWithIDs(Model):

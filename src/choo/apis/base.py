@@ -162,8 +162,8 @@ class Parser(Serializable, ABC):
         if self.API is None:
             raise TypeError('Use the API.Parser mixin. Example: class MyStop(EFA.Parser, Stop.XMLParser):')
 
-        self.api = api if api else parent.api
-        self.time = time if time else parent.time
+        self.__dict__['source'] = self.__dict__['api'] = api if api else parent.api
+        self.__dict__['time'] = time if time else parent.time
         self.data = data
         self._kwargs = kwargs
 
@@ -174,6 +174,9 @@ class Parser(Serializable, ABC):
         if pretty is True, the data is made easy-readable for humans (e.g. by indenting)
         """
         pass
+
+    def sourced(self, deep=True):
+        return self.Model.Sourced(self, deep)
 
     @classmethod
     @abstractmethod
@@ -280,6 +283,7 @@ class parser_property(object):
     def __get__(self, obj, cls):
         if obj is None:
             return self
+
         field = obj.Model._fields[self.name]
         try:
             value = obj.__dict__[self.name] = self.func(obj, obj.data, **obj._kwargs)
