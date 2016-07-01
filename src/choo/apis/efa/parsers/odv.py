@@ -78,7 +78,7 @@ class LocationParserMixin:
                            float(data.attrib['x']) / 1000000)
 
 
-class OdvNameElemAddress(EFA.Parser, Address.XMLParser, LocationParserMixin):
+class OdvNameElemAddress(LocationParserMixin, EFA.Parser, Address.XMLParser):
     """
     Parses an <odvNameElem> Element into an Address
     """
@@ -105,7 +105,7 @@ class OdvNameElemAddress(EFA.Parser, Address.XMLParser, LocationParserMixin):
         return '%s %s' % (self.street, self.number)
 
 
-class OdvNameElemStop(EFA.Parser, Stop.XMLParser, LocationParserMixin):
+class OdvNameElemStop(LocationParserMixin, EFA.Parser, Stop.XMLParser):
     """
     Parses an <odvNameElem> Element into a Stop
     """
@@ -119,7 +119,7 @@ class OdvNameElemStop(EFA.Parser, Stop.XMLParser, LocationParserMixin):
         return self._city_parse(data, city, ifopt.country if ifopt else None)
 
 
-class OdvNameElemPOI(EFA.Parser, POI.XMLParser, LocationParserMixin):
+class OdvNameElemPOI(LocationParserMixin, EFA.Parser, POI.XMLParser):
     """
     Parses an <odvNameElem> Element into an POI
     """
