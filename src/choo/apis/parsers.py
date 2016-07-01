@@ -98,7 +98,7 @@ class Parser(Serializable, ABC):
         result = OrderedDict((
             ('api', self.api.serialize()),
             ('time', self.time.isoformat()),
-            ('data', self.printable_data(pretty=False).decode()),
+            ('data', self.printable_data(pretty=False)),
             ('kwargs', self._kwargs),
         ))
         kwargs = {}
@@ -133,9 +133,9 @@ class XMLParser(Parser):
     data has to be a defusedxml.ElementTree.Element instance, e.g. ElementTree.fromstring(…).
     """
     def printable_data(self, pretty=True):
-        string = ET.tostring(self.data, 'utf-8')
+        string = ET.tostring(self.data, 'utf-8').decode()
         if pretty:
-            string = minidom.parseString(string).toprettyxml(indent='  ')
+            string = minidom.parseString(string).toprettyxml(indent='    ').split('\n', 1)[1]
         return string
 
     @classmethod
@@ -149,7 +149,7 @@ class JSONParser(Parser):
     data has to be json serializable, e.g. json.loads(…).
     """
     def printable_data(self, pretty=True):
-        return json.dumps(self.data, indent=2 if pretty else None)
+        return json.dumps(self.data, indent=4 if pretty else None)
 
     @classmethod
     def _parse_raw_data(cls, data):
