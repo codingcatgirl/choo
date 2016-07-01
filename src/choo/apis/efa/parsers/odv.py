@@ -10,7 +10,7 @@ class OmcParserMixin:
     """
     @cached_property
     def _omc(self, data, **kwargs):
-        self.api._parse_omc(data.attrib['omc'])
+        return self.api._parse_omc(data.attrib['omc'])
 
     @parser_property
     def country(self, data, country=None, **kwargs):
