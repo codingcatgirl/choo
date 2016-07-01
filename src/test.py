@@ -3,7 +3,7 @@ import code
 import json
 from pprint import pprint  # noqa
 
-from choo.apis.de import vrr
+from choo.apis import vrr
 from choo.models import City, Stop
 from choo.queries import PlatformQuery  # noqa
 from choo.types import Coordinates, Serializable  # noqa
