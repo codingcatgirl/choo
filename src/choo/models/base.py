@@ -222,6 +222,4 @@ class ModelWithIDs(Model):
         if model1 != model2:
             return False
 
-        print(self.ids, other.ids)
-
         return (self.ids and other.ids and self.ids & other.ids) or None
