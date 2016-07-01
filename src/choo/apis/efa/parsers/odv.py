@@ -57,18 +57,19 @@ class LocationParserMixin:
         myid = data.attrib.get('stopID') or data.attrib.get('id')
         return myid and FrozenIDs({self.api.name: myid})
 
-    def _city_parse(self, data, city, country, **kwargs):
+    def _city_parse(self, data, country, **kwargs):
+        city = data.find('./odvPlaceElem')
         if city is not None:
             return OdvPlaceElemCity(self, city, country=country)
         return OdvNameElemCity(self, data, country=country)
 
     @parser_property
-    def city(self, data, city, **kwargs):
-        return self._city_parse(data, city)
+    def city(self, data,  **kwargs):
+        return self._city_parse(data)
 
     @parser_property
     def name(self, data, **kwargs):
-        return data.attrib.get('objectName', data.text)
+        return data.attrib.get('objectName', data.attrib.get('choo-text'))
 
     @parser_property
     def coords(self, data, **kwargs):
@@ -114,9 +115,9 @@ class OdvNameElemStop(LocationParserMixin, EFA.Parser, Stop.XMLParser):
         return StopIFOPT.parse(data.attrib.get('gid') or None)
 
     @parser_property
-    def city(self, data, city, **kwargs):
+    def city(self, data, **kwargs):
         ifopt = self.ifopt
-        return self._city_parse(data, city, ifopt.country if ifopt else None)
+        return self._city_parse(data, ifopt.country if ifopt else None)
 
 
 class OdvNameElemPOI(LocationParserMixin, EFA.Parser, POI.XMLParser):
