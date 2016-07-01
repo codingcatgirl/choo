@@ -194,17 +194,26 @@ class Parser(Serializable, ABC):
             return (cls.Model.__name__.lower()+'.parser.'+cls.__module__).replace('.choo.apis.', '.')+cls.__name__
 
     def _serialize(self):
-        return OrderedDict((
+        result = OrderedDict((
             ('api', self.api.serialize()),
             ('time', self.time.isoformat()),
             ('data', self.printable_data(pretty=False).decode()),
             ('kwargs', self._kwargs),
         ))
+        kwargs = {}
+        for name, value in self._kwargs.items():
+            kwargs[name] = value.serialize() if isinstance(value, Serializable) else value
+        result['kwargs'] = kwargs
+        return result
 
     @classmethod
     def _unserialize(cls, data):
+        kwargs = data['kwargs']
+        for name, value in list(kwargs.items()):
+            if isinstance(value, dict) and '@type' in value:
+                kwargs[name] = Serializable.unserialize(value)
         return cls.parse(API.unserialize(data['api']), datetime.strptime(data['time'], '%Y-%m-%dT%H:%M:%S'),
-                         data['data'], **data['kwargs'])
+                         data['data'], **kwargs)
 
     def __setattr__(self, name, value):
         if name in getattr(self, '_nonproxy_fields', ()):
