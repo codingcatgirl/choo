@@ -115,7 +115,7 @@ class MetaModel(ABCMeta):
         if not issubclass(cls, Parser):
             cls.XMLParser = type('XMLParser', (XMLParser, cls), {'__module__': attrs['__module__'], 'Model': cls})
             cls.JSONParser = type('JSONParser', (JSONParser, cls), {'__module__': attrs['__module__'], 'Model': cls})
-        elif Parser not in sum([b.__bases__ for b in cls.__bases__], ()):
+        elif Parser not in cls.__bases__:
             for name, field in cls._nonproxy_fields.items():
                 if getattr(cls, name) is field:
                     setattr(cls, name, parser_property(give_none, name))
