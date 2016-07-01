@@ -4,7 +4,8 @@ from datetime import datetime
 
 from typing import Optional
 
-from ..apis.base import API, JSONParser, Parser, XMLParser, parser_property
+from ..apis import API
+from ..apis.parsers import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
 from ..types import IDs, Serializable
 

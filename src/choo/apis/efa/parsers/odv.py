@@ -1,7 +1,8 @@
 from .. import EFA
+from ... import ParserError, cached_property, parser_property
 from ....models import POI, Address, City, Stop
 from ....types import Coordinates, FrozenIDs, StopIFOPT
-from ...base import ParserError, XMLParser, cached_property, parser_property
+from ...parsers import XMLParser
 
 
 class OdvLocationList(EFA.Parser, XMLParser):

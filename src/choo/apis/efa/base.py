@@ -3,12 +3,11 @@ import pprint
 from datetime import datetime
 
 import defusedxml.ElementTree as ET
-
 import requests
 
+from .. import API, ParserError
 from ...models import POI, Address, Location, Stop
 from ...types import PlatformType, POIType
-from ..base import API, ParserError
 
 
 class EFA(API):
@@ -41,7 +40,9 @@ class EFA(API):
         """
         if os.environ.get('CHOO_DEBUG'):
             pprint.pprint(data)
-        result = requests.post(self.base_url + endpoint, data=data).text
+        result = requests.post(self.base_url + endpoint, data=data)
+        pprint.pprint(result.request.__dict__)
+        result = result.text
         if os.environ.get('CHOO_DEBUG'):
             open('dump.xml', 'w').write(result)
         xml = ET.fromstring(result)

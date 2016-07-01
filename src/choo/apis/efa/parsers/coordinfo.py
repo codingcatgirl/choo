@@ -1,7 +1,8 @@
 from .. import EFA
+from ... import ParserError, cached_property, parser_property
 from ....models import POI, City, GeoPoint, Platform, Stop, StopArea
 from ....types import Coordinates, FrozenIDs, PlatformIFOPT, StopIFOPT
-from ...base import ParserError, XMLParser, cached_property, parser_property
+from ...parsers import XMLParser
 from .utils import GenAttrMapping
 
 
