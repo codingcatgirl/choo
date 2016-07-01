@@ -41,7 +41,6 @@ class EFA(API):
         if os.environ.get('CHOO_DEBUG'):
             pprint.pprint(data)
         result = requests.post(self.base_url + endpoint, data=data)
-        pprint.pprint(result.request.__dict__)
         result = result.text
         if os.environ.get('CHOO_DEBUG'):
             open('dump.xml', 'w').write(result)
