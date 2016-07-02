@@ -1,8 +1,6 @@
 from datetime import timedelta
 
-from typing import Iterable
-
-from ..types import Coordinates, LineTypes, LiveTime, WayEvent, WayType
+from ..types import LineTypes, LiveTime, WayEvent, WayType
 from .base import Field, Model
 from .locations import GeoPoint, Location
 from .tickets import TicketList
@@ -11,9 +9,9 @@ RideSegment = 1
 
 
 class Trip(Model):
-    origin = Field(Location, Location)
-    via = Field(Iterable[Location])
-    destination = Field(Location, Location)
+    origin = Field(Location)
+    # via = Field(Iterable[Location])
+    destination = Field(Location)
     parts = Field(list)
     tickets = Field(TicketList)
     departure = Field(LiveTime)
@@ -154,12 +152,12 @@ class Trip(Model):
 
 class Way(Model):
     waytype = Field(WayType)
-    origin = Field(GeoPoint, GeoPoint)
-    destination = Field(GeoPoint, GeoPoint)
+    origin = Field(GeoPoint)
+    destination = Field(GeoPoint)
     distance = Field(float)
     duration = Field(timedelta)
     events = Field(WayEvent)
-    path = Field(Iterable[Coordinates])
+    # path = Field(Iterable[Coordinates])
 
     def __eq__(self, other):
         if not isinstance(other, Way):

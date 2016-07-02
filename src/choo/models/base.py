@@ -2,8 +2,6 @@ from abc import ABCMeta
 from collections import OrderedDict
 from datetime import datetime
 
-from typing import Optional
-
 from ..apis import API
 from ..apis.parsers import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
@@ -17,9 +15,8 @@ class Field:
     """
     _i = 0
 
-    def __init__(self, types, model=None):
-        self.types = Optional[types]
-        self.Model = model
+    def __init__(self, type_):
+        self.type = type_
         self.i = Field._i
         Field._i += 1
 
@@ -28,7 +25,7 @@ class Field:
         return self
 
     def validate(self, value):
-        return issubclass(type(value), self.types)
+        return value is None or isinstance(value, self.type)
 
     def serialize(self, value):
         if isinstance(value, Serializable):
@@ -41,14 +38,14 @@ class Field:
     # datetime.strptime(data['time'], '%Y-%m-%dT%H:%M:%S')
 
     def get_proxy_fields(self):
-        if self.Model is None:
+        if not issubclass(self.type, Model):
             return OrderedDict()
-        return OrderedDict(((self.name+'__'+name, ProxyField(self, name)) for name in self.Model._fields.keys()))
+        return OrderedDict(((self.name+'__'+name, ProxyField(self, name)) for name in self.type._fields.keys()))
 
     def proxy_set(self, obj, name, value):
         subobj = getattr(obj, self.name)
         if subobj is None:
-            subobj = self.Model()
+            subobj = self.type()
             setattr(obj, self.name, subobj)
 
         setattr(subobj, name, value)

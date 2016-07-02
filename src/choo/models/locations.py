@@ -32,7 +32,7 @@ class Location(GeoPoint):
     """
     A named stand-alone Location
     """
-    city = Field(City, City)
+    city = Field(City)
     name = Field(str)
 
     @property
@@ -55,7 +55,7 @@ class Address(Location):
 
 
 class Addressable(Location):
-    address = Field(Address, Address)
+    address = Field(Address)
 
 
 class Stop(Addressable, ModelWithIDs):
@@ -84,14 +84,14 @@ class StopArea(ModelWithIDs):
     """
     A collection of platforms belonging to one particular stop
     """
-    stop = Field(Stop, Stop)
+    stop = Field(Stop)
     ifopt = Field(StopAreaIFOPT)
     name = Field(str)
 
 
 class Platform(GeoPoint, ModelWithIDs):
-    stop = Field(Stop, Stop)
-    area = Field(StopArea, StopArea)
+    stop = Field(Stop)
+    area = Field(StopArea)
     ifopt = Field(PlatformIFOPT)
     platform_type = Field(PlatformType)
     name = Field(str)

@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from ..types import LineType, LiveTime
 from .base import Field, Model
 from .locations import ModelWithIDs, Platform, Stop
@@ -11,8 +9,8 @@ class Line(ModelWithIDs):
     name = Field(str)
     shortname = Field(str)
     route = Field(str)
-    first_stop = Field(Stop, Stop)
-    last_stop = Field(Stop, Stop)
+    first_stop = Field(Stop)
+    last_stop = Field(Stop)
     network = Field(str)
     operator = Field(str)
 
@@ -21,22 +19,22 @@ class Line(ModelWithIDs):
 
 
 class MetaRide(ModelWithIDs):
-    line = Field(Line, Line)
+    line = Field(Line)
     number = Field(str)
     direction = Field(str)
     bike_friendly = Field(bool)
-    annotation = Field(Iterable[str])
+    # annotation = Field(Iterable[str])
 
 
 class Ride(ModelWithIDs):
-    meta = Field(MetaRide, MetaRide)
+    meta = Field(MetaRide)
     canceled = Field(bool)
-    infotexts = Field(Iterable[str])
+    # infotexts = Field(Iterable[str])
 
 
 class RidePoint(Model):
-    platform = Field(Platform, Platform)
-    stop = Field(Stop, Stop)
+    platform = Field(Platform)
+    stop = Field(Stop)
     arrival = Field(LiveTime)
     departure = Field(LiveTime)
     passthrough = Field(bool)

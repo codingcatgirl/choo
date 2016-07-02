@@ -1,5 +1,3 @@
-from typing import Mapping
-
 from .base import Field, Model
 
 
@@ -37,9 +35,9 @@ class TicketData(Model):
 class TicketList(Model):
     currency = Field(str)
     level_name = Field(str)
-    single = Field(TicketData, TicketData)
-    bike = Field(TicketData, TicketData)
-    other = Field(Mapping[str, TicketData])
+    single = Field(TicketData)
+    bike = Field(TicketData)
+    # other = Field(Mapping[str, TicketData])
 
     def __repr__(self):
         return '<TicketList %s %s (+%d)>' % (self.currency, repr(self.single), len(self.other))
