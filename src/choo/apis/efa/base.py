@@ -1,12 +1,4 @@
-import os
-import pprint
-from datetime import datetime
-
-import defusedxml.ElementTree as ET
-import requests
-
 from .. import API, ParserError
-from ...models import POI, Address, Location, Stop
 from ...types import PlatformType, POIType
 
 
@@ -33,61 +25,6 @@ class EFA(API):
         super().__init__(name)
         self.base_url = base_url
         self.preset = preset
-
-    def _request(self, endpoint, data):
-        """
-        Place a request to the given andpoint with the given post data.
-        """
-        if os.environ.get('CHOO_DEBUG'):
-            pprint.pprint(data)
-        result = requests.post(self.base_url + endpoint, data=data)
-        result = result.text
-        if os.environ.get('CHOO_DEBUG'):
-            open('dump.xml', 'w').write(result)
-        xml = ET.fromstring(result)
-        servernow = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
-        return xml, servernow
-
-    def _convert_location(self, location, wrap=''):
-        """
-        Convert a Location into POST parameters for the EFA Requests
-        """
-        from .queries import AddressQuery, LocationQuery, POIQuery, StopQuery
-        r = None
-
-        city_name = location.city.name if location.city else None
-        if isinstance(location, Stop) or isinstance(location, StopQuery):
-            if location.ids and self.name in location.ids:
-                r = {'type': 'stop', 'place': None, 'name': str(location.ids[self.name])}
-            elif location.ifopt:
-                r = {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % location.ifopt}
-            else:
-                r = {'type': 'stop', 'place': city_name, 'name': location.name}
-        elif isinstance(location, POI) or isinstance(location, POIQuery):
-            if location.ids and self.name in location.ids:
-                r = {'type': 'poiID', 'name': str(location.ids[self.name])}
-            else:
-                r = {'type': 'poi', 'place': city_name, 'name': location.name}
-        elif isinstance(location, Address) or isinstance(location, AddressQuery):
-            r = {'type': 'address', 'place': city_name, 'name': location.name}
-
-        elif r is None and (isinstance(location, Location) or isinstance(location, LocationQuery)):
-            if location.name:
-                r = {'type': 'any', 'place': city_name, 'name': location.name}
-
-        if r is None and location.coords:
-            r = {'type': 'coord', 'name': '%.6f:%.6f:WGS84' % (location.coords.lon, location.coords.lat)}
-
-        if r is None:
-            raise NotImplementedError('#todo')
-
-        if r['place'] is None:
-            del r['place']
-
-        if wrap:
-            r = {wrap % n: v for n, v in r.items()}
-
-        return r
 
     def _parse_omc(self, omc):
         """
