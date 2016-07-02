@@ -79,10 +79,6 @@ class ProxyField:
         self.parent = parent
         self.name = name
 
-    def set_name(self, name):
-        self.name = name
-        return self
-
     def __get__(self, obj, cls):
         if obj is None:
             return self
