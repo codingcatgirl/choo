@@ -39,7 +39,7 @@ class Field:
         if issubclass(self.type, Serializable):
             return self.type.unserialize(value)
         elif issubclass(self.type, datetime):
-            return datetime.strptime(value, '%Y-%m-%dT%H:%M:%S'),
+            return datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
         else:
             return value
 
