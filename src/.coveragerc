@@ -4,3 +4,6 @@ source = choo
 [report]
 exclude_lines =
     pass
+omit =
+    choo/cli.py
+    choo/chooserver.py
