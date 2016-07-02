@@ -13,6 +13,8 @@ class TestModel:
         assert Stop(city__name='Essen').city__name == 'Essen'
         with pytest.raises(AttributeError):
             Stop(invalid_field='Essen')
+        with pytest.raises(TypeError):
+            Stop(city=27)
 
     def test_serializing(self):
         serialized = {
@@ -77,6 +79,13 @@ class TestSourcedModelMixin:
 
         with pytest.raises(TypeError):
             del self.sourced_city.name
+
+    def test_custom_properties(self):
+        self.sourced_city.choo_testing_property = 42
+        assert self.sourced_city.choo_testing_property == 42
+        del self.sourced_city.choo_testing_property
+        with pytest.raises(AttributeError):
+            self.sourced_city.choo_testing_property
 
 
 class TestModelWithIDs:
