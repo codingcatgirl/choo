@@ -107,6 +107,32 @@ class Parser(Serializable, ABC):
         result['kwargs'] = kwargs
         return result
 
+    def get_test_code(self):
+        output = 'class '+self.__class__.__name__+'Test:\n'
+        output += '    def test_'+datetime.now().strftime('%Y%m%d_%H%M%S_%f')+'(self):\n'
+        output += ('        query = Serializable.unserialize(' +
+                   self.serialize_python().replace('\n', '\n        ')+')\n')
+        output += '        assert query.sourced() == '
+        output += json.dumps(self.sourced().serialize(), indent=4, ensure_ascii=False).replace('\n', '\n        ')
+        output += '\n\n'
+        return output
+
+    def serialize_python(self):
+        output = '{\n'
+        for name, value in self.serialize().items():
+            output += '    '+repr(name)+': '
+            if name == 'data':
+                output += "'''\n        "
+                output += self.printable_data().replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\n        ')
+                output += "'''"
+            elif name == 'kwargs':
+                output += json.dumps(value, indent=4, ensure_ascii=False).replace('\n', '\n    ')
+            else:
+                output += repr(value)
+            output += ',\n'
+        output += '}'
+        return output
+
     @classmethod
     def _unserialize(cls, data):
         kwargs = data['kwargs']

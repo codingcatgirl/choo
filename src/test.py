@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import code
-import json
+import json  # noqa
 from pprint import pprint  # noqa
 
 from choo.apis import vrr
@@ -11,16 +11,18 @@ from choo.types import Coordinates, Serializable  # noqa
 # collection = Collection('test')
 
 bs = Stop(city=City(name='essen'), name='borbeck süd bf')
-query = vrr.platforms.where(coords=Coordinates(51.462983, 6.956251)).max_distance(5000)
-print(json.dumps(query.serialize(), indent=2))
+# query = vrr.platforms.where(coords=Coordinates(51.462983, 6.956251)).max_distance(5000)
+result = vrr.stops.get(bs)
+# result
+# print(json.dumps(query.serialize(), indent=2))
 # PlatformQuery.unserialize(query.serialize())
 
-results = query.execute()
+# results = query.execute()
 #
 # pprint(list(results)[0].serialize())
-result = list(results)[0]
-pprint(result.mutable().serialize())
-print(json.dumps(result.mutable().serialize(), indent=2))
+# result = list(results)[0]
+print(result.get_test_code())
+# print(json.dumps(result.mutable().serialize(), indent=2))
 # print(json.dumps(Serializable.unserialize(result.serialize()).serialize(), indent=2))
 # pprint(Serializable.subclasses)
 code.interact(local=locals())
