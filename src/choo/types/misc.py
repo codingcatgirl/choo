@@ -97,7 +97,7 @@ class Coordinates(SimpleSerializable, namedtuple('Coordinates', ('lat', 'lon')))
         return 'coordinates'
 
     def _simple_serialize(self):
-        return (self.lat, self.lon)
+        return [self.lat, self.lon]
 
     @classmethod
     def _simple_unserialize(cls, data):
