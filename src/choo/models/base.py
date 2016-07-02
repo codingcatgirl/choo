@@ -232,4 +232,4 @@ class ModelWithIDs(Model):
         if model1 != model2:
             return False
 
-        return (self.ids and other.ids and self.ids & other.ids) or None
+        return bool(self.ids and other.ids and (self.ids & other.ids)) or None
