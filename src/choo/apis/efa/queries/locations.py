@@ -51,7 +51,7 @@ class LocationQuery(GeoPointQuery, EFA.LocationQueryBase):
         location = self._convert_unique_location()
 
         # If we have the name of the location or city, just query it
-        if not location:
+        if not location and self.name:
             location = {'type': 'any', 'place': self.city__name, 'name': self.name}
 
         # If we have coordinates, get the address nearest to them or just query all locations nearby
