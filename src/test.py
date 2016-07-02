@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# flake8: noqa
 import code
 import json  # noqa
 from pprint import pprint  # noqa
