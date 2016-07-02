@@ -77,9 +77,6 @@ class ProxyField:
         self.name = name
         return self
 
-    def validate(self, value):
-        return issubclass(type(value), self.types)
-
     def __get__(self, obj, cls):
         if obj is None:
             return self
