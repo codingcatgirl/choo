@@ -41,7 +41,7 @@ class CoordRequest(EFARequest):
             })
 
         xml = self._post('XML_COORD_REQUEST', post)
-        self.time = datetime.datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
+        self.time = datetime.strptime(xml.attrib['now'], '%Y-%m-%dT%H:%M:%S')
 
         data = xml.find('./itdCoordInfoRequest/itdCoordInfo/coordInfoItemList')
         self.results = (CoordInfoGeoPoint.parse(self, elem)
