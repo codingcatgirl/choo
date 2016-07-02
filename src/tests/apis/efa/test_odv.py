@@ -3,7 +3,7 @@ from choo.types import Serializable
 
 
 class TestOdvNameElemStop:
-    def test_20160702_123350_817897(self):
+    def test_base(self):
         query = Serializable.unserialize({
             '@type': 'stop.parser.efa.parsers.odvOdvNameElemStop',
             'api': 'vrr',
