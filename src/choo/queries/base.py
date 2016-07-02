@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
 from itertools import chain
-from types import MappingProxyType
 
 from ..types import Serializable
 
@@ -43,15 +42,14 @@ class QuerySettingsProxy:
         self._settings = settings
 
     def __setattr__(self, name, value):
-        if name != '_settings' or hasattr(self, name):
+        if name != '_settings' or '_settings' in self.__dict__:
             raise TypeError('Can not set settings directly, set them using methods!')
         super().__setattr__(name, value)
 
     def __getattr__(self, name):
-        try:
+        if name in self._settings:
             return self._settings[name]
-        except KeyError:
-            raise AttributeError
+        raise AttributeError('setting %s does not exist on this query.' % repr(name))
 
     def __delattr__(self, name):
         raise TypeError
@@ -145,7 +143,7 @@ class Query(Serializable, metaclass=MetaQuery):
         Example:
         >>> query.settings.limit
         """
-        return MappingProxyType(self._settings)
+        return QuerySettingsProxy(self._settings)
 
     def get(self, obj):
         """
