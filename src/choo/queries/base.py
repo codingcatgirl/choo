@@ -123,7 +123,7 @@ class Query(Serializable, metaclass=MetaQuery):
 
     @classmethod
     def _unserialize(cls, data):
-        from ..apis.base import API
+        from ..apis import API
         api = API.unserialize(data.get('api'))
         if issubclass(cls, BoundAPIQuery) or api is None:
             result = cls(api)
