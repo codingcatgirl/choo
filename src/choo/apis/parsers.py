@@ -175,7 +175,7 @@ class JSONParser(Parser):
     data has to be json serializable, e.g. json.loads(…).
     """
     def printable_data(self, pretty=True):
-        return json.dumps(self.data, indent=4 if pretty else None)
+        return json.dumps(self.data, indent=4 if pretty else None, ensure_ascii=False)
 
     @classmethod
     def _parse_raw_data(cls, data):
