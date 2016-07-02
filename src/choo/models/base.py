@@ -35,7 +35,13 @@ class Field:
         else:
             return value
 
-    # datetime.strptime(data['time'], '%Y-%m-%dT%H:%M:%S')
+    def unserialize(self, value):
+        if issubclass(self.type, Serializable):
+            return self.type.unserialize(value)
+        elif issubclass(self.type, datetime):
+            return datetime.strptime(value, '%Y-%m-%dT%H:%M:%S'),
+        else:
+            return value
 
     def get_proxy_fields(self):
         if not issubclass(self.type, Model):
@@ -152,8 +158,14 @@ class Model(Serializable, metaclass=MetaModel):
         return result
 
     @classmethod
-    def _unserialize(self, data):
-        raise NotImplementedError
+    def _unserialize(cls, data):
+        kwargs = {}
+        for name, value in data.items():
+            field = cls._nonproxy_fields.get(name)
+            if field is None:
+                raise AttributeError('%s model has no field %s' % (cls.__name__, repr(name)))
+            kwargs[name] = field.unserialize(value)
+        return cls(**kwargs)
 
 
 class SourcedModelMixin(Model):

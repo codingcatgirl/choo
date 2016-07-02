@@ -2,7 +2,7 @@ import pytest
 
 from choo.apis import vrr
 from choo.models import Stop
-from choo.types import Coordinates
+from choo.types import Coordinates, Serializable
 
 
 class TestQuery:
@@ -45,7 +45,7 @@ class TestQuery:
             }
         }
         assert vrr.locations.where(name='Essen Rathaus').limit(10).serialize() == serialized
-        # assert Serializable.unserialize(serialized).serialize() == serialized
+        assert Serializable.unserialize(serialized).serialize() == serialized
 
     def test_iter(self):
         query = vrr.stops

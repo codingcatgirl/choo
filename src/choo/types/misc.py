@@ -32,7 +32,8 @@ class Serializable(ABC):
 
     @classmethod
     def unserialize(cls, data):
-        type_ = data['@type']
+        data = data.copy()
+        type_ = data.pop('@type')
         class_ = cls.subclasses.get(type_)
         if class_ is None:
             raise ValueError('Expected @type to be %s subclass, not %s' % (cls.__name__, type_))
