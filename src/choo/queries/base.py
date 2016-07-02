@@ -195,8 +195,14 @@ class Query(Serializable, metaclass=MetaQuery):
         If the Query was already executed, nothing happens.
         """
         if self._results_generator is None:
-            self._results_generator = self._execute()
+            self.set_results_generator(self._execute())
         return self
+
+    def set_results_generator(self, generator):
+        if self._results_generator is not None:
+            raise TypeError('query already has a results operator')
+
+        self._results_generator = generator
 
     def _full_iter(self):
         """
