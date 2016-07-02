@@ -11,7 +11,7 @@ class GeoPointQuery(EFA.GeoPointQueryBase):
             raise NotImplementedError('Not enough data for Query.')
 
         results = CoordRequest(api=self.api, coords=self.coords, model_cls=self.Model,
-                               max_distance=self.settings['max_distance'], limit=self.settings['limit']).results
+                               max_distance=self.settings.max_distance, limit=self.settings.limit).results
         return self._wrap_distance_results(results)
 
     def _wrap_distance_results(self, results):
@@ -22,7 +22,7 @@ class GeoPointQuery(EFA.GeoPointQueryBase):
             if not result.coords:
                 continue
             distance = self.coords.distance_to(result.coords)
-            if distance <= self.settings['max_distance']:
+            if distance <= self.settings.max_distance:
                 yield Way(waytype=WayType.walk, origin=GeoPoint(coords=self.coords),
                           destination=result, distance=distance)
 
@@ -65,7 +65,7 @@ class LocationQuery(GeoPointQuery, EFA.LocationQueryBase):
         if not location:
             raise NotImplementedError('Not enough data for Query.')
 
-        r = StopfinderRequest(api=self.api, location=location, limit=self.settings['limit'])
+        r = StopfinderRequest(api=self.api, location=location, limit=self.settings.limit)
 
         if r.type == 'none':
             return ()
