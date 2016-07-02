@@ -257,7 +257,7 @@ class Query(Serializable, metaclass=MetaQuery):
             raise TypeError('Can not delete fields, use .where(%s=None)' % name)
 
         if name in self._settings_defaults:
-            raise TypeError('Can not delete settings')
+            raise TypeError('Can not delete settings, set them to none using their methods')
 
         super().__delattr__(name)
 
