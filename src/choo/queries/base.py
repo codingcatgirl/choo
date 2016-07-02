@@ -43,7 +43,7 @@ class QuerySettingsProxy:
 
     def __setattr__(self, name, value):
         if name != '_settings' or '_settings' in self.__dict__:
-            raise TypeError('Can not set settings directly, set them using methods!')
+            raise TypeError('Can not set settings directly, set them using methods.')
         super().__setattr__(name, value)
 
     def __getattr__(self, name):
@@ -52,7 +52,7 @@ class QuerySettingsProxy:
         raise AttributeError('setting %s does not exist on this query.' % repr(name))
 
     def __delattr__(self, name):
-        raise TypeError
+        raise TypeError('Can not delete settings, set them to None using query methods.')
 
 
 class Query(Serializable, metaclass=MetaQuery):
