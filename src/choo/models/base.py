@@ -135,9 +135,11 @@ class Model(Serializable, metaclass=MetaModel):
     def __init__(self, **kwargs):
         self._data = {}
         for name, value in kwargs.items():
-            if name not in self._fields:
+            # We access the field directly so it also works with Model.Sourced which prevents setting attributes
+            field = self._fields.get(name)
+            if field is None:
                 raise AttributeError('%s model has no field %s' % (self.__class__.__name__, repr(name)))
-            setattr(self, name, value)
+            field.__set__(self, value)
 
     @classmethod
     def _get_serialized_type_name(cls):
@@ -168,21 +170,26 @@ class SourcedModelMixin(Model):
     source = Field(API)
     time = Field(datetime)
 
-    def __init__(self, data, deep=True):
+    def __init__(self, **kwargs):
         if self.__class__ is SourcedModelMixin:
             raise TypeError('SourcedModelMixin cannot be initialized directly')
 
-        if not isinstance(data, Parser) or data.Model is not self.Model:
-            raise ValueError('%s.Sourced: data has to be a %s Parser, not %s' %
-                             (self.Model.__name__, self.Model.__name__, repr(data)))
+        super().__init__(**kwargs)
 
-        self._data = {'source': None, 'time': None}
+    @classmethod
+    def from_parser(cls, parser, deep=True):
+        if not isinstance(parser, Parser) or parser.Model is not parser.Model:
+            raise ValueError('%s.Sourced: parser has to be a %s Parser, not %s' %
+                             (cls.Model.__name__, cls.Model.__name__, repr(parser)))
 
-        for name, field in self._nonproxy_fields.items():
-            value = getattr(data, name)
+        self = cls()
+
+        for name, field in cls._nonproxy_fields.items():
+            value = getattr(parser, name)
             if isinstance(value, Parser) and deep:
                 value = value.sourced(deep)
             self._data[name] = value
+        return self
 
     def mutable(self, deep=True):
         kwargs = {}

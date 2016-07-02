@@ -74,7 +74,7 @@ class Parser(Serializable, ABC):
         pass
 
     def sourced(self, deep=True):
-        return self.Model.Sourced(self, deep)
+        return self.Model.Sourced.from_parser(self, deep)
 
     @classmethod
     @abstractmethod
