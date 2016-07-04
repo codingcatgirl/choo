@@ -78,7 +78,7 @@ class CoordInfoLocationCity(EFA.Parser, City.XMLParser):
     def ids(self, data, **kwargs):
         if 'placeID' not in data.attrib:
             return None
-        myid = data.attrib.get('omc')+':'+data.attrib.get('placeID')
+        myid = 'placeID:'+data.attrib.get('omc')+':'+data.attrib.get('placeID')
         return myid and FrozenIDs({self.api.name: myid})
 
 
