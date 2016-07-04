@@ -77,7 +77,7 @@ class TestCoordInfoPlatform:
                     "name": "Essen",
                     "ids": {
                         "@type": "ids.frozen",
-                        "vrr": "5113000:18"
+                        "vrr": "placeID:5113000:18"
                     }
                 },
                 "name": "Borbeck Süd Bahnhof",
@@ -105,7 +105,7 @@ class TestCoordInfoPlatform:
                         "name": "Essen",
                         "ids": {
                             "@type": "ids.frozen",
-                            "vrr": "5113000:18"
+                            "vrr": "placeID:5113000:18"
                         }
                     },
                     "name": "Borbeck Süd Bahnhof",
