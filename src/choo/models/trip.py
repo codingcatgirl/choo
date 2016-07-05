@@ -180,6 +180,6 @@ class Way(Model):
         distance = ''
         if self.distance:
             distance = ' %dm' % self.distance
-        return '<Way %s %dmin%s %s %s>' % (
-            str(self.waytype), self.duration.total_seconds() / 60,
+        return '<Way %s %s %s %s %s>' % (
+            str(self.waytype), self.duration,
             distance, repr(self.origin), repr(self.destination))
