@@ -176,20 +176,22 @@ class SourcedModelMixin(Model):
 
         super().__init__(**kwargs)
 
+        if kwargs.get('source') is None:
+            raise ValueError('SourcedModel.source has to be set!')
+
     @classmethod
     def from_parser(cls, parser, deep=True):
         if not isinstance(parser, Parser) or parser.Model is not parser.Model:
             raise ValueError('%s.Sourced: parser has to be a %s Parser, not %s' %
                              (cls.Model.__name__, cls.Model.__name__, repr(parser)))
 
-        self = cls()
-
+        kwargs = {}
         for name, field in cls._nonproxy_fields.items():
             value = getattr(parser, name)
             if isinstance(value, Parser) and deep:
                 value = value.sourced(deep)
-            self._data[name] = value
-        return self
+            kwargs[name] = value
+        return cls(**kwargs)
 
     def mutable(self, deep=True):
         kwargs = {}
