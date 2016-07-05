@@ -50,6 +50,6 @@ class TestQuery:
     def test_iter(self):
         query = vrr.stops
         results = (Stop(city__name='Essen', name='Hauptbahnhof'), )
-        query.set_results_generator(results)
+        query.set_results_generator(results, nocache=True)
         assert tuple(query) == results
         assert tuple(query) == results

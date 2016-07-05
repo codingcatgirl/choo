@@ -189,20 +189,26 @@ class Query(Serializable, metaclass=MetaQuery):
         result._settings[name] = value
         return result
 
-    def execute(self):
+    def execute(self, cache=None, nocache=None):
         """
         Execute the query. Returns the query itself.
         If the Query was already executed, nothing happens.
         """
         if self._results_generator is None:
-            self.set_results_generator(self._execute())
+            self.set_results_generator(self._execute(), cache=cache, nocache=nocache)
         return self
 
-    def set_results_generator(self, generator):
+    def set_results_generator(self, generator, cache=None, nocache=None):
         if self._results_generator is not None:
             raise TypeError('query already has a results operator')
 
-        self._results_generator = generator
+        from ..caches.default import DefaultCache
+        if nocache:
+            self._results_generator = generator
+        else:
+            if cache is None:
+                cache = DefaultCache()
+            self._results_generator = cache.apply_recursive(*(obj.sourced() for obj in generator))
 
     def _full_iter(self):
         """

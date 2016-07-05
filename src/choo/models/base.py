@@ -5,7 +5,7 @@ from datetime import datetime
 from ..apis import API
 from ..apis.parsers import JSONParser, Parser, XMLParser, parser_property
 from ..exceptions import ObjectNotFound
-from ..types import IDs, Serializable
+from ..types import FrozenIDs, IDs, Serializable
 
 
 class Field:
@@ -201,6 +201,60 @@ class SourcedModelMixin(Model):
                 value = value.mutable(deep)
             kwargs[name] = value
         return self.Model(**kwargs)
+
+    def _call_recursive(self, func):
+        for name in self._nonproxy_fields:
+            value = getattr(self, name)
+            if isinstance(value, SourcedModelMixin):
+                value._call_recursive(func)
+        func(self)
+
+    def _apply_recursive(self, func):
+        kwargs = {}
+        for name in self._nonproxy_fields:
+            value = getattr(self, name)
+            if isinstance(value, SourcedModelMixin):
+                kwargs[name] = value._apply_recursive(func)
+            else:
+                kwargs[name] = value
+        return func(self.Model.Sourced(**kwargs))
+
+    def sourced(self, deep=True):
+        return self
+
+    def combine(self, *others):
+        for other in others:
+            if not isinstance(other, self.Model.Sourced):
+                raise TypeError('Can only combine with another Model.Sourced instance, got %s instead' % repr(other))
+
+        objects_by_source = {}
+        for obj in (self, )+others:
+            objects_by_source.setdefault(obj.source, []).append(obj)
+
+        if len(objects_by_source) > 1:
+            raise NotImplementedError('Combining Model.Sourced instances from different sources is not supported yet!')
+
+        # get fields to merge
+        defaults = {}
+        if isinstance(self, ModelWithIDs):
+            defaults['ids'] = FrozenIDs()
+
+        for source, objects in objects_by_source.items():
+            kwargs = defaults.copy()
+            for name in self._nonproxy_fields:
+                if name == 'ids' and isinstance(self, ModelWithIDs):
+                    kwargs['ids'] |= (getattr(self, 'ids') or FrozenIDs())
+                    continue
+
+                for obj in objects:
+                    value = getattr(self, name)
+                    if value is not None:
+                        break
+                kwargs[name] = value
+            return self.Model.Sourced(**kwargs)
+
+    def __or__(self, other):
+        return self.combine(other)
 
     @classmethod
     def _get_serialized_type_name(cls):
