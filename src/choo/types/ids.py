@@ -175,9 +175,9 @@ class IDs(Serializable):
         """
         Return new IDs object with IDs from this and the other object combined.
         """
-        result = self.copy()
+        result = IDs(self.copy())
         result.update(other)
-        return result
+        return self.__class__(result)
 
     def intersection(self, other):
         """
