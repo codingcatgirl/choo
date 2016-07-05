@@ -226,8 +226,8 @@ class ModelWithIDs(Model):
         if not isinstance(other, ModelWithIDs):
             return False
 
-        model1 = self.Model if isinstance(self, Parser) else self.__class__
-        model2 = other.Model if isinstance(other, Parser) else other.__class__
+        model1 = self.Model if isinstance(self, SourcedModelMixin) else self.__class__
+        model2 = other.Model if isinstance(other, SourcedModelMixin) else other.__class__
 
         if model1 != model2:
             return False
