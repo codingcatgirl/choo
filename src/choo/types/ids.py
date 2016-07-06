@@ -179,7 +179,6 @@ class IDs(SimpleSerializable):
         """
         result = IDs(self.copy())
         result.update(other)
-        print(self, other, result)
         return self.__class__(result)
 
     def intersection(self, other):

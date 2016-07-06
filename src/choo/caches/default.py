@@ -59,7 +59,6 @@ class ModelCache:
             return
 
         # add now model to the first collection that matches
-        print(collections, self._collection_data)
         collection = collections[0]
         self._collection_data[collection] |= obj
 
