@@ -66,13 +66,16 @@ class Query(Serializable, metaclass=MetaQuery):
     Model = None
     _settings_defaults = {'limit': None}
 
-    def __init__(self, api_with_cache):
+    def __init__(self, api_with_cache=None):
         if self.__class__ == Query:
             raise TypeError('only subclasses of Query can be initialised')
 
-        self.api_with_cache = api_with_cache
-        api = api_with_cache.api
-        self.cache = api_with_cache.cache
+        if api_with_cache is None:
+            self.api_with_cache = self.cache = api = None
+        else:
+            self.api_with_cache = api_with_cache
+            api = api_with_cache.api
+            self.cache = api_with_cache.cache
 
         if isinstance(self, BoundAPIQuery):
             if not isinstance(api, self.API):
@@ -129,11 +132,10 @@ class Query(Serializable, metaclass=MetaQuery):
     def _unserialize(cls, data):
         from ..apis import API
         api = API.unserialize(data.get('api'))
-        if issubclass(cls, BoundAPIQuery) or api is None:
-            result = cls(api)
+        if api is None:
+            result = cls(None)
         else:
             result = getattr(api, cls.Model.__name__.lower()+'s')
-        result = cls(API.unserialize(data.get('api')))
         result._obj = cls.Model.unserialize(data.get('obj', {}))
         for name, value in data.get('settings', {}).items():
             result = getattr(result, name)(value)
