@@ -40,7 +40,6 @@ class TestSourcedModelMixin:
         "state": "nrw",
         "name": "Essen",
         "ids": {
-            "@type": "ids.frozen",
             "de": "05113000",
             "vrr": "placeID:5113000:18"
         }
@@ -67,7 +66,6 @@ class TestSourcedModelMixin:
             "state": "nrw",
             "name": "Essen",
             "ids": {
-                "@type": "ids.frozen",
                 "de": "05113000",
                 "vrr": "placeID:5113000:18"
             }
@@ -95,7 +93,6 @@ class TestModelWithIDs:
         "state": "nrw",
         "name": "Essen",
         "ids": {
-            "@type": "ids.frozen",
             "de": "05113000",
             "vrr": "placeID:5113000:18"
         }
@@ -106,7 +103,6 @@ class TestModelWithIDs:
         "state": "nrw",
         "name": "Duisburg",
         "ids": {
-            "@type": "ids.frozen",
             "de": "05112000",
             "vrr": "placeID:5112000:20"
         }

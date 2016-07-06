@@ -127,8 +127,8 @@ class TestIDs:
                                     ('multiple', 2), ('multiple', 3), ('multiple', 4)}
 
     def test_serialize(self):
-        assert self.ids.serialize() in ({'@type': 'ids', 'one': '1a', 'multiple': (2, 3)},
-                                        {'@type': 'ids', 'one': '1a', 'multiple': (3, 2)})
+        assert self.ids.serialize() in ({'one': '1a', 'multiple': (2, 3)},
+                                        {'one': '1a', 'multiple': (3, 2)})
 
     def test_union(self):
         ids = IDs()

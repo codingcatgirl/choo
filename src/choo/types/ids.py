@@ -1,7 +1,7 @@
-from .misc import Serializable
+from .misc import SimpleSerializable
 
 
-class IDs(Serializable):
+class IDs(SimpleSerializable):
     """
     A Mapping of ids by id namespace (e.g. 'vrr' for the id namespace of the VRR network's API)
     Multiple ids per namespace are possible.
@@ -166,9 +166,12 @@ class IDs(Serializable):
     def _get_serialized_type_name(cls):
         return 'ids'
 
-    def _serialize(self):
+    def _simple_serialize(self):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
                 for name, values in self.data.items() if values}
+
+    def _serialize(self):
+        return self._simple_serialize()
 
     def union(self, other):
         """
@@ -189,8 +192,12 @@ class IDs(Serializable):
     __or__ = union
 
     @classmethod
-    def _unserialize(cls, data):
+    def _simple_unserialize(cls, data):
         return cls(data)
+
+    @classmethod
+    def _unserialize(cls, data):
+        return cls._simple_unserialize(data)
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self.data)

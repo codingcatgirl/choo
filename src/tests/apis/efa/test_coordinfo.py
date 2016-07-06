@@ -74,14 +74,12 @@ class TestCoordInfoPlatform:
                     "state": "nrw",
                     "name": "Essen",
                     "ids": {
-                        "@type": "ids.frozen",
                         "de": "05113000",
                         "vrr": "placeID:5113000:18"
                     }
                 },
                 "name": "Borbeck Süd Bahnhof",
                 "ids": {
-                    "@type": "ids.frozen",
                     "ifopt": "de:5113:9159",
                     "vrr": "20009159"
                 }
@@ -102,21 +100,18 @@ class TestCoordInfoPlatform:
                         "state": "nrw",
                         "name": "Essen",
                         "ids": {
-                            "@type": "ids.frozen",
                             "de": "05113000",
                             "vrr": "placeID:5113000:18"
                         }
                     },
                     "name": "Borbeck Süd Bahnhof",
                     "ids": {
-                        "@type": "ids.frozen",
                         "ifopt": "de:5113:9159",
                         "vrr": "20009159"
                     }
                 },
                 "name": "Bus",
                 "ids": {
-                    "@type": "ids.frozen",
                     "ifopt": "de:5113:9159:3",
                     "vrr": "20009159-3"
                 }
@@ -128,7 +123,6 @@ class TestCoordInfoPlatform:
                 6.954362
             ],
             "ids": {
-                "@type": "ids.frozen",
                 "ifopt": "de:5113:9159:3:1",
                 "vrr": "20009159-3-1"
             }
@@ -196,8 +190,7 @@ class TestCoordInfoPOI:
                 "state": "nrw",
                 "name": "Essen",
                 "ids": {
-                    "@type": "ids.frozen",
-                    "de": "05113000",
+                    "de": "05113000"
                 }
             },
             "name": "Matthäuskirche",

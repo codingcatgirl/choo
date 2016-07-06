@@ -28,7 +28,6 @@ class TestOdvNameElemStop:
                 "state": "nrw",
                 "name": "Essen",
                 "ids": {
-                    "@type": "ids.frozen",
                     "de": "05113000",
                     "vrr": "placeID:5113000:18"
                 }
@@ -39,7 +38,6 @@ class TestOdvNameElemStop:
                 6.954254
             ],
             "ids": {
-                "@type": "ids.frozen",
                 "ifopt": "de:5113:9159",
                 "vrr": "20009159"
             }

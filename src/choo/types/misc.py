@@ -52,7 +52,7 @@ class Serializable(ABC):
 class SimpleSerializable(Serializable, ABC):
     @classmethod
     def unserialize(cls, data):
-        if isinstance(data, (dict, OrderedDict)):
+        if isinstance(data, (dict, OrderedDict)) and '@type' in data:
             return super().unserialize(data)
         return cls._simple_unserialize(data)
 
