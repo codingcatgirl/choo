@@ -19,11 +19,9 @@ class TestOdvNameElemStop:
         assert parser.sourced().serialize() == {
             "@type": "stop.sourced",
             "source": "vrr",
-            "time": "2016-07-02T12:33:50",
             "city": {
                 "@type": "city.sourced",
                 "source": "vrr",
-                "time": "2016-07-02T12:33:50",
                 "country": "de",
                 "state": "nrw",
                 "name": "Essen",

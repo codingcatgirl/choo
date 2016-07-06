@@ -61,15 +61,12 @@ class TestCoordInfoPlatform:
         assert parser.sourced().serialize() == {
             "@type": "platform.sourced",
             "source": "vrr",
-            "time": "2016-07-02T12:49:39",
             "stop": {
                 "@type": "stop.sourced",
                 "source": "vrr",
-                "time": "2016-07-02T12:49:39",
                 "city": {
                     "@type": "city.sourced",
                     "source": "vrr",
-                    "time": "2016-07-02T12:49:39",
                     "country": "de",
                     "state": "nrw",
                     "name": "Essen",
@@ -87,15 +84,12 @@ class TestCoordInfoPlatform:
             "area": {
                 "@type": "stoparea.sourced",
                 "source": "vrr",
-                "time": "2016-07-02T12:49:39",
                 "stop": {
                     "@type": "stop.sourced",
                     "source": "vrr",
-                    "time": "2016-07-02T12:49:39",
                     "city": {
                         "@type": "city.sourced",
                         "source": "vrr",
-                        "time": "2016-07-02T12:49:39",
                         "country": "de",
                         "state": "nrw",
                         "name": "Essen",
@@ -180,12 +174,10 @@ class TestCoordInfoPOI:
         assert parser.sourced().serialize() == {
             "@type": "poi.sourced",
             "source": "vrr",
-            "time": "2016-07-02T12:57:42",
             "poitype": "place_of_worship",
             "city": {
                 "@type": "city.sourced",
                 "source": "vrr",
-                "time": "2016-07-02T12:57:42",
                 "country": "de",
                 "state": "nrw",
                 "name": "Essen",

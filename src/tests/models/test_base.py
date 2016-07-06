@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import pytest
 
 from choo.apis import vrr
@@ -35,7 +33,6 @@ class TestSourcedModelMixin:
     sourced_city = City.unserialize({
         "@type": "city.sourced",
         "source": "vrr",
-        "time": "2016-07-02T12:33:50",
         "country": "de",
         "state": "nrw",
         "name": "Essen",
@@ -50,7 +47,6 @@ class TestSourcedModelMixin:
             SourcedModelMixin()
 
         assert self.sourced_city.source == vrr
-        assert self.sourced_city.time == datetime(2016, 7, 2, 12, 33, 50)
 
     def test_from_parser(self):
         with pytest.raises(TypeError):
