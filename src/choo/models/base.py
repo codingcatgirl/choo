@@ -181,8 +181,8 @@ class SourcedModelMixin(Model):
 
     @classmethod
     def from_parser(cls, parser, deep=True):
-        if not isinstance(parser, Parser) or parser.Model is not parser.Model:
-            raise ValueError('%s.Sourced: parser has to be a %s Parser, not %s' %
+        if not isinstance(parser, cls.Model.Sourced):
+            raise ValueError('%s.Sourced: parser has to be a %s.Sourced instance, not %s' %
                              (cls.Model.__name__, cls.Model.__name__, repr(parser)))
 
         kwargs = {}
@@ -220,7 +220,7 @@ class SourcedModelMixin(Model):
         return func(self.Model.Sourced(**kwargs))
 
     def sourced(self, deep=True):
-        return self
+        return self.Model.Sourced.from_parser(self, deep)
 
     def combine(self, *others):
         for other in others:

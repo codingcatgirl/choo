@@ -73,9 +73,6 @@ class Parser(Serializable, ABC):
         """
         pass
 
-    def sourced(self, deep=True):
-        return self.Model.Sourced.from_parser(self, deep)
-
     @classmethod
     @abstractmethod
     def _parse_raw_data(cls, data):
