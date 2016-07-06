@@ -118,6 +118,7 @@ class MetaModel(ABCMeta):
         cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
 
         if mcs.__module__ != attrs['__module__'] and not issubclass(cls, (Parser, SourcedModelMixin)):
+            API._register_model(cls)
             cls.Sourced = type('Sourced'+name, (SourcedModelMixin, cls), {'__module__': cls.__module__, 'Model': cls})
             cls.XMLParser = type('XMLParser', (XMLParser, cls.Sourced), {'__module__': cls.__module__})
             cls.JSONParser = type('JSONParser', (JSONParser, cls.Sourced), {'__module__': cls.__module__})

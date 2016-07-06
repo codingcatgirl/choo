@@ -66,9 +66,13 @@ class Query(Serializable, metaclass=MetaQuery):
     Model = None
     _settings_defaults = {'limit': None}
 
-    def __init__(self, api):
+    def __init__(self, api_with_cache):
         if self.__class__ == Query:
             raise TypeError('only subclasses of Query can be initialised')
+
+        self.api_with_cache = api_with_cache
+        api = api_with_cache.api
+        self.cache = api_with_cache.cache
 
         if isinstance(self, BoundAPIQuery):
             if not isinstance(api, self.API):
@@ -88,7 +92,7 @@ class Query(Serializable, metaclass=MetaQuery):
         """
         Returns a deep copy of the query.
         """
-        result = self.__class__(self.api)
+        result = self.__class__(self.api_with_cache)
         result._obj = deepcopy(self._obj)
         result._settings = self._settings
         return result
@@ -166,7 +170,7 @@ class Query(Serializable, metaclass=MetaQuery):
             raise self.Model.NotFound
         return next(iter(r))
 
-    def _execute(self):
+    def _execute(self, api):
         """
         This is the only method that an APIs should overwrite.
         It has to return iterable (or generator) over instances of the query's model.
@@ -189,26 +193,23 @@ class Query(Serializable, metaclass=MetaQuery):
         result._settings[name] = value
         return result
 
-    def execute(self, cache=None, nocache=None):
+    def execute(self):
         """
         Execute the query. Returns the query itself.
         If the Query was already executed, nothing happens.
         """
         if self._results_generator is None:
-            self.set_results_generator(self._execute(), cache=cache, nocache=nocache)
+            self.set_results_generator(self._execute())
         return self
 
-    def set_results_generator(self, generator, cache=None, nocache=None):
+    def set_results_generator(self, generator):
         if self._results_generator is not None:
             raise TypeError('query already has a results operator')
 
-        from ..caches.default import DefaultCache
-        if nocache:
+        if self.cache is None:
             self._results_generator = generator
         else:
-            if cache is None:
-                cache = DefaultCache()
-            self._results_generator = cache.apply_recursive(*(obj.sourced() for obj in generator))
+            self._results_generator = self.cache.apply_recursive(*(obj.sourced() for obj in generator))
 
     def _full_iter(self):
         """

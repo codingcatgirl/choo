@@ -11,9 +11,13 @@ from choo.types import Coordinates, Serializable  # noqa
 
 # collection = Collection('test')
 
-bs = Stop(city=City(name='essen'), name='borbeck süd bf')
-# query = vrr.platforms.where(coords=Coordinates(51.462983, 6.956251)).max_distance(5000)
-result = vrr.stops.get(bs)
+# query = vrr.stops.where(city__name='Duisburg', name='A')
+query = vrr.platforms.where(stop__name='Essen Borbeck Süd')
+result = list(query)[0]
+for result in list(query)[:1]:
+    print(json.dumps(result.serialize(), ensure_ascii=False, indent=2))
+
+# result = vrr.stops.get(bs)
 # result
 # print(json.dumps(query.serialize(), indent=2))
 # PlatformQuery.unserialize(query.serialize())
@@ -22,7 +26,6 @@ result = vrr.stops.get(bs)
 #
 # pprint(list(results)[0].serialize())
 # result = list(results)[0]
-print(result.get_test_code())
 # print(json.dumps(result.mutable().serialize(), indent=2))
 # print(json.dumps(Serializable.unserialize(result.serialize()).serialize(), indent=2))
 # pprint(Serializable.subclasses)

@@ -16,7 +16,9 @@ class MetaAPI(ABCMeta):
         # Only create the helpers on subclasses of API
         if mcs.__module__ != attrs['__module__']:
             from ..queries.base import Query, BoundAPIQuery
+            from ..caches import DefaultCache
             from .parsers import Parser
+            cls._default_cache = DefaultCache
             cls.Query = type('Query', (BoundAPIQuery, ), {'__module__': attrs['__module__'], 'API': cls})
             cls.Parser = type('Parser', (Parser, ), {'__module__': attrs['__module__'], 'API': cls})
             cls._supported_queries = {}
@@ -55,6 +57,23 @@ class API(SimpleSerializable, metaclass=MetaAPI):
     def _get_serialized_type_name(cls):
         return 'api'
 
+    @classmethod
+    def _register_model(cls, model):
+        name = model.__name__
+        name = {'City': 'cities', 'POI': 'POIs', 'Address': 'addresses'}.get(name, name.lower()+'s')
+        error = 'Querying '+name+' is not supported by this API.'
+
+        def api_func(self):
+            return self._query(model, APIWithCache(self, self._default_cache()), error)
+        api_func.__name__ = name.lower()
+
+        def api_with_cache_func(self):
+            return self.api._query(model, self, error)
+        api_with_cache_func.__name__ = name.lower()
+
+        setattr(API, name.lower(), property(api_func))
+        setattr(APIWithCache, name.lower(), property(api_with_cache_func))
+
     def _simple_serialize(self):
         return self.name
 
@@ -67,37 +86,11 @@ class API(SimpleSerializable, metaclass=MetaAPI):
         except:
             raise ValueError('API %s does not exist!' % data)
 
-    @property
-    def geopoints(self):
-        raise NotImplementedError('Querying geopoints is not supported by this API.')
-
-    @property
-    def platforms(self):
-        raise NotImplementedError('Querying platforms is not supported by this API.')
-
-    @property
-    def locations(self):
-        raise NotImplementedError('Querying locations is not supported by this API.')
-
-    @property
-    def addresses(self):
-        raise NotImplementedError('Querying addresses is not supported by this API.')
-
-    @property
-    def addressables(self):
-        raise NotImplementedError('Querying addressables is not supported by this API.')
-
-    @property
-    def stops(self):
-        raise NotImplementedError('Querying stops is not supported by this API.')
-
-    @property
-    def pois(self):
-        raise NotImplementedError('Querying POIs is not supported by this API.')
-
-    @property
-    def trips(self):
-        raise NotImplementedError('Querying trips is not supported by this API.')
+    def _query(self, model, api_with_cache, error):
+        query = self._supported_queries.get(model)
+        if query is None:
+            raise NotImplementedError(error)
+        return query(api_with_cache)
 
     @classmethod
     def _register_query(cls, query_cls):
@@ -105,4 +98,8 @@ class API(SimpleSerializable, metaclass=MetaAPI):
             raise TypeError('Duplicate %sQuery on %s API.' % (query_cls.Model.__name__, query_cls.API.__name__))
         cls._supported_queries[query_cls.Model] = query_cls
 
-        setattr(cls, query_cls.Model.__name__.lower()+'s', property(lambda self: query_cls(self)))
+
+class APIWithCache:
+    def __init__(self, api, cache=None):
+        self.api = api
+        self.cache = cache

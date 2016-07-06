@@ -35,11 +35,12 @@ class PlatformQuery(GeoPointQuery, EFA.PlatformQueryBase):
             # For this, we need the stop id and it's coordinates.
             stop = self.stop
             if not stop.coords or self.api.name not in self.ids:
-                stop = self.api.stops.get(stop)
+                stop = self.api_with_cache.stops.get(stop)
             if not stop.coords:
                 raise NotImplementedError('Could not get stop coordinates needed to get its platforms.')
 
-            results = (r for r in self.api.platforms.where(coords=stop.coords).max_distance(400) if r.stop == stop)
+            near_platforms = self.api_with_cache.platforms.where(coords=stop.coords).max_distance(400)
+            results = (r for r in near_platforms if r.stop == stop)
             return results if not self.coords else self._wrap_distance_results(results)
         else:
             return super()._execute()
