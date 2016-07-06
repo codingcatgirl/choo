@@ -175,7 +175,6 @@ class Model(Serializable, metaclass=MetaModel):
 
 class SourcedModelMixin(Model):
     source = Field(API)
-    time = Field(datetime)
 
     def __init__(self, **kwargs):
         if self.__class__ is SourcedModelMixin:

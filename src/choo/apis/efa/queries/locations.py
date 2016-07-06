@@ -23,7 +23,7 @@ class GeoPointQuery(EFA.GeoPointQueryBase):
                 continue
             distance = self.coords.distance_to(result.coords)
             if distance <= self.settings.max_distance:
-                yield Way.Sourced(source=result.source, time=result.time, waytype=WayType.walk,
+                yield Way.Sourced(source=result.source, waytype=WayType.walk,
                                   origin=GeoPoint(coords=self.coords), destination=result, distance=distance)
 
 
