@@ -92,6 +92,9 @@ def give_none(self, *args, **kwargs):
     return None
 
 
+frozenids_field = Field(FrozenIDs).set_name('ids')
+
+
 class MetaModel(ABCMeta):
     """
     Metaclass for all choo models.
@@ -110,6 +113,9 @@ class MetaModel(ABCMeta):
 
         for base in bases:
             fields.update(getattr(base, '_fields', {}))
+
+        if 'ids' in fields and SourcedModelMixin in bases:
+            fields['ids'] = frozenids_field
 
         attrs['_fields'] = fields
         attrs['_nonproxy_fields'] = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
