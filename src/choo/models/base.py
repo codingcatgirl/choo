@@ -115,7 +115,7 @@ class MetaModel(ABCMeta):
             fields.update(getattr(base, '_fields', {}))
 
         if 'ids' in fields and SourcedModelMixin in bases:
-            fields['ids'] = frozenids_field
+            attrs['ids'] = fields['ids'] = frozenids_field
 
         attrs['_fields'] = fields
         attrs['_nonproxy_fields'] = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
