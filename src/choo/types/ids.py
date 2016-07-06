@@ -1,6 +1,4 @@
-from collections import namedtuple
-
-from .misc import Serializable, SimpleSerializable
+from .misc import Serializable
 
 
 class IDs(Serializable):
@@ -161,7 +159,8 @@ class IDs(Serializable):
         """
         items = other.items() if isinstance(other, (dict, IDs)) else other
         for name, value in items:
-            self.data.setdefault(name, set()).update(set(value) if isinstance(value, (set, list, tuple)) else {value})
+            values = set(v for v in (value if isinstance(value, (set, list, tuple)) else {value}) if v)
+            self.data.setdefault(name, set()).update(values)
 
     @classmethod
     def _get_serialized_type_name(cls):
@@ -177,6 +176,7 @@ class IDs(Serializable):
         """
         result = IDs(self.copy())
         result.update(other)
+        print(self, other, result)
         return self.__class__(result)
 
     def intersection(self, other):
@@ -213,47 +213,3 @@ class FrozenIDs(IDs):
     clear = _frozen_error
     discard = _frozen_error
     update = _frozen_error
-
-
-class IFOPT(SimpleSerializable):
-    @classmethod
-    def parse(cls, string):
-        if string is None:
-            return None
-
-        try:
-            return cls(*string.split(':'))
-        except TypeError:
-            # Wrong number of arguments
-            return None
-
-    def __str__(self):
-        return ':'.join(self)
-
-    @classmethod
-    def _get_serialized_type_name(cls):
-        return 'ifopt.'+cls.__name__.lower() if cls != IFOPT else None
-
-    def _simple_serialize(self):
-        return str(self)
-
-    @classmethod
-    def _simple_unserialize(cls, data):
-        return cls.parse(data)
-
-
-class StopIFOPT(IFOPT, namedtuple('StopIFOPT', ('country', 'area', 'stop'))):
-    pass
-
-
-class StopAreaIFOPT(IFOPT, namedtuple('StopAreaIFOPT', ('country', 'area', 'stop', 'level'))):
-    def get_stop_ifopt(self):
-        return StopIFOPT(*self[:3])
-
-
-class PlatformIFOPT(IFOPT, namedtuple('PlatformIFOPT', ('country', 'area', 'stop', 'level', 'quay'))):
-    def get_area_ifopt(self):
-        return StopAreaIFOPT(*self[:4])
-
-    def get_stop_ifopt(self):
-        return StopIFOPT(*self[:3])

@@ -20,17 +20,16 @@ class TestOdvNameElemStop:
             "@type": "stop.sourced",
             "source": "vrr",
             "time": "2016-07-02T12:33:50",
-            "ifopt": "de:5113:9159",
             "city": {
                 "@type": "city.sourced",
                 "source": "vrr",
                 "time": "2016-07-02T12:33:50",
                 "country": "de",
                 "state": "nrw",
-                "official_id": "05113000",
                 "name": "Essen",
                 "ids": {
                     "@type": "ids.frozen",
+                    "de": "05113000",
                     "vrr": "placeID:5113000:18"
                 }
             },
@@ -41,6 +40,7 @@ class TestOdvNameElemStop:
             ],
             "ids": {
                 "@type": "ids.frozen",
+                "ifopt": "de:5113:9159",
                 "vrr": "20009159"
             }
         }

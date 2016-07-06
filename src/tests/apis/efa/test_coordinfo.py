@@ -66,23 +66,23 @@ class TestCoordInfoPlatform:
                 "@type": "stop.sourced",
                 "source": "vrr",
                 "time": "2016-07-02T12:49:39",
-                "ifopt": "de:5113:9159",
                 "city": {
                     "@type": "city.sourced",
                     "source": "vrr",
                     "time": "2016-07-02T12:49:39",
                     "country": "de",
                     "state": "nrw",
-                    "official_id": "05113000",
                     "name": "Essen",
                     "ids": {
                         "@type": "ids.frozen",
+                        "de": "05113000",
                         "vrr": "placeID:5113000:18"
                     }
                 },
                 "name": "Borbeck Süd Bahnhof",
                 "ids": {
                     "@type": "ids.frozen",
+                    "ifopt": "de:5113:9159",
                     "vrr": "20009159"
                 }
             },
@@ -94,34 +94,33 @@ class TestCoordInfoPlatform:
                     "@type": "stop.sourced",
                     "source": "vrr",
                     "time": "2016-07-02T12:49:39",
-                    "ifopt": "de:5113:9159",
                     "city": {
                         "@type": "city.sourced",
                         "source": "vrr",
                         "time": "2016-07-02T12:49:39",
                         "country": "de",
                         "state": "nrw",
-                        "official_id": "05113000",
                         "name": "Essen",
                         "ids": {
                             "@type": "ids.frozen",
+                            "de": "05113000",
                             "vrr": "placeID:5113000:18"
                         }
                     },
                     "name": "Borbeck Süd Bahnhof",
                     "ids": {
                         "@type": "ids.frozen",
+                        "ifopt": "de:5113:9159",
                         "vrr": "20009159"
                     }
                 },
-                "ifopt": "de:5113:9159:3",
                 "name": "Bus",
                 "ids": {
                     "@type": "ids.frozen",
+                    "ifopt": "de:5113:9159:3",
                     "vrr": "20009159-3"
                 }
             },
-            "ifopt": "de:5113:9159:3:1",
             "platform_type": "street",
             "name": "1",
             "coords": [
@@ -130,6 +129,7 @@ class TestCoordInfoPlatform:
             ],
             "ids": {
                 "@type": "ids.frozen",
+                "ifopt": "de:5113:9159:3:1",
                 "vrr": "20009159-3-1"
             }
         }
@@ -194,8 +194,11 @@ class TestCoordInfoPOI:
                 "time": "2016-07-02T12:57:42",
                 "country": "de",
                 "state": "nrw",
-                "official_id": "05113000",
-                "name": "Essen"
+                "name": "Essen",
+                "ids": {
+                    "@type": "ids.frozen",
+                    "de": "05113000",
+                }
             },
             "name": "Matthäuskirche",
             "coords": [

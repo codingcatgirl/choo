@@ -1,7 +1,7 @@
 import pytest
 
 from choo.models import Model
-from choo.types import IFOPT, Coordinates, LineType
+from choo.types import Coordinates, LineType
 
 
 class TestCoordinates:
@@ -32,11 +32,6 @@ class TestSerializable:
 
 
 class TestSimpleSerializable:
-    def test_no_serialize_supported(self):
-        ifopt = IFOPT()
-        with pytest.raises(TypeError):
-            ifopt.serialize()
-
     def test_unsimple_serialize(self):
         assert LineType.train.serialize(simple=False) == {'@type': 'linetype', 'value': 'train'}
 

@@ -38,10 +38,10 @@ class TestSourcedModelMixin:
         "time": "2016-07-02T12:33:50",
         "country": "de",
         "state": "nrw",
-        "official_id": "05113000",
         "name": "Essen",
         "ids": {
             "@type": "ids.frozen",
+            "de": "05113000",
             "vrr": "placeID:5113000:18"
         }
     })
@@ -65,10 +65,10 @@ class TestSourcedModelMixin:
             "@type": "city",
             "country": "de",
             "state": "nrw",
-            "official_id": "05113000",
             "name": "Essen",
             "ids": {
                 "@type": "ids.frozen",
+                "de": "05113000",
                 "vrr": "placeID:5113000:18"
             }
         }
@@ -93,10 +93,10 @@ class TestModelWithIDs:
         "@type": "city",
         "country": "de",
         "state": "nrw",
-        "official_id": "05113000",
         "name": "Essen",
         "ids": {
             "@type": "ids.frozen",
+            "de": "05113000",
             "vrr": "placeID:5113000:18"
         }
     }
@@ -104,10 +104,10 @@ class TestModelWithIDs:
         "@type": "city",
         "country": "de",
         "state": "nrw",
-        "official_id": "05112000",
         "name": "Duisburg",
         "ids": {
             "@type": "ids.frozen",
+            "de": "05112000",
             "vrr": "placeID:5112000:20"
         }
     }

@@ -1,4 +1,4 @@
-from ..types import Coordinates, PlatformIFOPT, PlatformType, POIType, StopAreaIFOPT, StopIFOPT
+from ..types import Coordinates, PlatformType, POIType
 from .base import Field, Model, ModelWithIDs
 
 
@@ -21,7 +21,6 @@ class GeoPoint(Model):
 class City(ModelWithIDs):
     country = Field(str)
     state = Field(str)
-    official_id = Field(str)
     name = Field(str)
 
     def __repr__(self):
@@ -59,14 +58,10 @@ class Addressable(Location):
 
 
 class Stop(Addressable, ModelWithIDs):
-    ifopt = Field(StopIFOPT)
-    uic = Field(str)
-    # rides = fields.Model('Ride.Results')
-    # lines = fields.Model('Line.Results')
-
     @property
     def country(self):
-        return self.ifopt.country if self.ifopt else self.city__country
+        ifopt = self.ids.get('ifopt')
+        return ifopt.split(':')[0] if ifopt else self.city__country
 
 
 class POI(Addressable, ModelWithIDs):
@@ -85,14 +80,12 @@ class StopArea(ModelWithIDs):
     A collection of platforms belonging to one particular stop
     """
     stop = Field(Stop)
-    ifopt = Field(StopAreaIFOPT)
     name = Field(str)
 
 
 class Platform(GeoPoint, ModelWithIDs):
     stop = Field(Stop)
     area = Field(StopArea)
-    ifopt = Field(PlatformIFOPT)
     platform_type = Field(PlatformType)
     name = Field(str)
 

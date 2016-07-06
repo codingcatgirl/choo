@@ -48,7 +48,7 @@ class ModelCache:
 
         # find out collection(s) this obj belongs to
         object_ids = set(obj.ids.items())
-        collections = tuple(i for i in (self._id_collection.get(id_) for id_ in object_ids) if i is not None)
+        collections = tuple(set(i for i in (self._id_collection.get(id_) for id_ in object_ids) if i is not None))
 
         # if it belongs to no collection, create new collection and add it
         if not collections:
@@ -59,6 +59,7 @@ class ModelCache:
             return
 
         # add now model to the first collection that matches
+        print(collections, self._collection_data)
         collection = collections[0]
         self._collection_data[collection] |= obj
 

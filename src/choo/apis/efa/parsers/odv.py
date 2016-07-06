@@ -1,7 +1,7 @@
 from .. import EFA
 from ... import cached_property, parser_property
 from ....models import POI, Address, City, Stop
-from ....types import Coordinates, FrozenIDs, StopIFOPT
+from ....types import Coordinates, FrozenIDs
 
 
 class OmcParserMixin:
@@ -13,16 +13,16 @@ class OmcParserMixin:
         return self.api._parse_omc(data.attrib['omc'])
 
     @parser_property
+    def ids(self, data, **kwargs):
+        return FrozenIDs({self.country: self._omc[2]})
+
+    @parser_property
     def country(self, data, country=None, **kwargs):
         return country if country else self._omc[0]
 
     @parser_property
     def state(self, data, **kwargs):
         return self._omc[1]
-
-    @parser_property
-    def official_id(self, data, **kwargs):
-        return self._omc[2]
 
 
 class OdvPlaceElemCity(OmcParserMixin, EFA.Parser, City.XMLParser):
@@ -31,8 +31,7 @@ class OdvPlaceElemCity(OmcParserMixin, EFA.Parser, City.XMLParser):
     """
     @parser_property
     def ids(self, data, **kwargs):
-        myid = data.attrib.get('stateless')
-        return myid and FrozenIDs({self.api.name: myid})
+        return super().ids | FrozenIDs({self.api.name: data.attrib.get('stateless')})
 
     @parser_property
     def name(self, data, **kwargs):
@@ -111,13 +110,13 @@ class OdvNameElemStop(LocationParserMixin, EFA.Parser, Stop.XMLParser):
     Parses an <odvNameElem> Element into a Stop
     """
     @parser_property
-    def ifopt(self, data, **kwargs):
-        return StopIFOPT.parse(data.attrib.get('gid') or None)
+    def ids(self, data, **kwargs):
+        return super().ids | FrozenIDs({'ifopt': data.attrib.get('gid')})
 
     @parser_property
     def city(self, data, **kwargs):
-        ifopt = self.ifopt
-        return self._city_parse(data, ifopt.country if ifopt else None)
+        ifopt = self.ids.get('ifopt')
+        return self._city_parse(data, ifopt.split(':', 1)[0] if ifopt else None)
 
 
 class OdvNameElemPOI(LocationParserMixin, EFA.Parser, POI.XMLParser):

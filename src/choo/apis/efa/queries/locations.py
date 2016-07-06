@@ -89,12 +89,7 @@ class LocationQuery(GeoPointQuery, EFA.LocationQueryBase):
 
 
 class AddressQuery(LocationQuery, EFA.AddressQueryBase):
-    def _convert_unique_location(self):
-        if self.ids and self.api.name in self.ids:
-            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
-        if self.ifopt:
-            return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
-        return super()._convert_unique_location()
+    pass
 
 
 class AddressableQuery(LocationQuery, EFA.AddressableQueryBase):
@@ -103,10 +98,11 @@ class AddressableQuery(LocationQuery, EFA.AddressableQueryBase):
 
 class StopQuery(AddressableQuery, EFA.StopQueryBase):
     def _convert_unique_location(self):
-        if self.ids and self.api.name in self.ids:
-            return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
-        if self.ifopt:
-            return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ifopt}
+        if self.ids:
+            if self.api.name in self.ids:
+                return {'type': 'stop', 'place': None, 'name': str(self.ids[self.api.name])}
+            if 'ifopt' in self.ids:
+                return {'type': 'stop', 'place': None, 'name': '%s:%s:%s' % self.ids['ifopt']}
         return super()._convert_unique_location()
 
 

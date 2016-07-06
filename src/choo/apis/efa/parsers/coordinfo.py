@@ -1,7 +1,7 @@
 from .. import EFA
 from ... import ParserError, cached_property, parser_property
 from ....models import POI, City, GeoPoint, Platform, Stop, StopArea
-from ....types import Coordinates, FrozenIDs, PlatformIFOPT, StopIFOPT
+from ....types import Coordinates, FrozenIDs
 from .utils import GenAttrMapping
 
 
@@ -54,6 +54,14 @@ class CoordInfoLocationCity(EFA.Parser, City.XMLParser):
     """
     Parse the city part of a <coordInfoItem> into a City
     """
+    @parser_property
+    def ids(self, data, **kwargs):
+        return FrozenIDs({
+            self.api.name: ('placeID:'+data.attrib['omc']+':'+data.attrib['placeID']
+                            if 'placeID' in data.attrib else None),
+            self.country: self._omc[2]
+        })
+
     @cached_property
     def _omc(self, data, **kwargs):
         return self.api._parse_omc(data.attrib['omc'])
@@ -67,19 +75,8 @@ class CoordInfoLocationCity(EFA.Parser, City.XMLParser):
         return self._omc[1]
 
     @parser_property
-    def official_id(self, data, **kwargs):
-        return self._omc[2]
-
-    @parser_property
     def name(self, data, **kwargs):
         return data.attrib['locality']
-
-    @parser_property
-    def ids(self, data, **kwargs):
-        if 'placeID' not in data.attrib:
-            return None
-        myid = 'placeID:'+data.attrib.get('omc')+':'+data.attrib.get('placeID')
-        return myid and FrozenIDs({self.api.name: myid})
 
 
 class CoordInfoStop(LocationParserMixin, EFA.Parser, Stop.XMLParser):
@@ -88,19 +85,15 @@ class CoordInfoStop(LocationParserMixin, EFA.Parser, Stop.XMLParser):
     """
     @parser_property
     def ids(self, data, platform=None, **kwargs):
-        if platform:
-            return FrozenIDs({self.api.name: platform.ids[self.api.name].split('-')[0]})
-        myid = data.attrib.get('id')
-        return myid and FrozenIDs({self.api.name: myid})
-
-    @parser_property
-    def ifopt(self, data, **kwargs):
-        return StopIFOPT.parse(self._attrs.get('STOP_GLOBAL_ID'))
+        return FrozenIDs({
+            self.api.name: platform.ids[self.api.name].split('-')[0] if platform else data.attrib.get('id'),
+            'ifopt': self._attrs.get('STOP_GLOBAL_ID')
+        })
 
     @parser_property
     def city(self, data, **kwargs):
-        ifopt = self.ifopt
-        return CoordInfoLocationCity(self, data, country=ifopt.country if ifopt else None)
+        ifopt = self.ids.get('ifopt')
+        return CoordInfoLocationCity(self, data, country=ifopt.split(':')[0] if ifopt else None)
 
 
 class CoordInfoPOI(LocationParserMixin, EFA.Parser, POI.XMLParser):
@@ -123,12 +116,10 @@ class CoordInfoPlatform(GeoPointParserMixin, EFA.Parser, Platform.XMLParser):
     """
     @parser_property
     def ids(self, data, **kwargs):
-        myid = data.attrib.get('id')
-        return myid and FrozenIDs({self.api.name: myid})
-
-    @parser_property
-    def ifopt(self, data, **kwargs):
-        return PlatformIFOPT.parse(self._attrs.get('STOPPOINT_GLOBAL_ID'))
+        return FrozenIDs({
+            self.api.name: data.attrib.get('id'),
+            'ifopt': self._attrs.get('STOPPOINT_GLOBAL_ID')
+        })
 
     @parser_property
     def stop(self, data, **kwargs):
@@ -154,11 +145,11 @@ class CoordInfoStopArea(GeoPointParserMixin, EFA.Parser, StopArea.XMLParser):
     @parser_property
     def ids(self, data, platform):
         myid = platform.ids.get(self.api.name)
-        return myid and FrozenIDs({self.api.name: '-'.join(myid.split('-')[:2])})
-
-    @parser_property
-    def ifopt(self, data, platform):
-        return platform.ifopt.get_area_ifopt()
+        ifopt = platform.ids.get('ifopt')
+        return FrozenIDs({
+            self.api.name: '-'.join(myid.split('-')[:2]) if myid else None,
+            'ifopt': ':'.join(ifopt.split(':')[:4]) if ifopt else None
+        })
 
     @parser_property
     def stop(self, data, platform):
