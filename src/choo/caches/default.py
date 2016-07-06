@@ -52,7 +52,7 @@ class ModelCache:
 
         # if it belongs to no collection, create new collection and add it
         if not collections:
-            self._collection_data[self._i] = obj
+            self._collection_data[self._i] = obj.sourced()
             for id_ in object_ids:
                 self._id_collection[id_] = self._i
             self._i += 1
