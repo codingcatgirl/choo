@@ -4,7 +4,7 @@ from choo.types import Serializable
 
 class TestCoordInfoPlatform:
     def test_base(self):
-        query = Serializable.unserialize({
+        parser = Serializable.unserialize({
             '@type': 'platform.parser.efa.parsers.coordinfoCoordInfoPlatform',
             'api': 'vrr',
             'time': '2016-07-02T12:49:39',
@@ -58,7 +58,7 @@ class TestCoordInfoPlatform:
                 ''',
             'kwargs': {},
         })
-        assert query.sourced().serialize() == {
+        assert parser.sourced().serialize() == {
             "@type": "platform.sourced",
             "source": "vrr",
             "time": "2016-07-02T12:49:39",
@@ -137,7 +137,7 @@ class TestCoordInfoPlatform:
 
 class TestCoordInfoPOI:
     def test_base(self):
-        query = Serializable.unserialize({
+        parser = Serializable.unserialize({
             '@type': 'poi.parser.efa.parsers.coordinfoCoordInfoPOI',
             'api': 'vrr',
             'time': '2016-07-02T12:57:42',
@@ -183,7 +183,7 @@ class TestCoordInfoPOI:
                 ''',
             'kwargs': {},
         })
-        assert query.sourced().serialize() == {
+        assert parser.sourced().serialize() == {
             "@type": "poi.sourced",
             "source": "vrr",
             "time": "2016-07-02T12:57:42",

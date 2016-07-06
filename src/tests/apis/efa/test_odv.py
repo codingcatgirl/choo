@@ -4,7 +4,7 @@ from choo.types import Serializable
 
 class TestOdvNameElemStop:
     def test_base(self):
-        query = Serializable.unserialize({
+        parser = Serializable.unserialize({
             '@type': 'stop.parser.efa.parsers.odvOdvNameElemStop',
             'api': 'vrr',
             'time': '2016-07-02T12:33:50',
@@ -16,7 +16,7 @@ class TestOdvNameElemStop:
                 ''',
             'kwargs': {},
         })
-        assert query.sourced().serialize() == {
+        assert parser.sourced().serialize() == {
             "@type": "stop.sourced",
             "source": "vrr",
             "time": "2016-07-02T12:33:50",

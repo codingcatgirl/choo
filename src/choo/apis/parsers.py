@@ -107,9 +107,9 @@ class Parser(Serializable, ABC):
     def get_test_code(self):
         output = 'class Test'+self.__class__.__name__+':\n'
         output += '    def test_'+datetime.now().strftime('%Y%m%d_%H%M%S_%f')+'(self):\n'
-        output += ('        query = Serializable.unserialize(' +
+        output += ('        parser = Serializable.unserialize(' +
                    self.serialize_python().replace('\n', '\n        ')+')\n')
-        output += '        assert query.sourced().serialize() == '
+        output += '        assert parser.sourced().serialize() == '
         output += json.dumps(self.sourced().serialize(), indent=4, ensure_ascii=False).replace('\n', '\n        ')
         output += '\n\n'
         return output
