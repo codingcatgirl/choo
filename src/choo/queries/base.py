@@ -204,11 +204,11 @@ class Query(Serializable, metaclass=MetaQuery):
             self.set_results_generator(self._execute())
         return self
 
-    def set_results_generator(self, generator):
+    def set_results_generator(self, generator, nocache=False):
         if self._results_generator is not None:
             raise TypeError('query already has a results operator')
 
-        if self.cache is None:
+        if nocache or self.cache is None:
             self._results_generator = generator
         else:
             self._results_generator = self.cache.apply_recursive(*(obj.sourced() for obj in generator))
