@@ -91,16 +91,16 @@ class Parser(Serializable, ABC):
         if issubclass(cls, Model) and cls.API is not None:
             return (cls.Model.__name__.lower()+'.parser.'+cls.__module__).replace('.choo.apis.', '.')+cls.__name__
 
-    def _serialize(self):
+    def _serialize(self, **kwargs):
         result = OrderedDict((
-            ('api', self.api.serialize()),
+            ('api', self.api.serialize(**kwargs)),
             ('time', self.time.isoformat()),
             ('data', self.printable_data(pretty=False)),
             ('kwargs', self._kwargs),
         ))
         kwargs = {}
         for name, value in self._kwargs.items():
-            kwargs[name] = value.serialize() if isinstance(value, Serializable) else value
+            kwargs[name] = value.serialize(**kwargs) if isinstance(value, Serializable) else value
         result['kwargs'] = kwargs
         return result
 

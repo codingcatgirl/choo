@@ -121,10 +121,10 @@ class Query(Serializable, metaclass=MetaQuery):
     def _get_serialized_type_name(cls):
         return cls.Model.__name__.lower()+'.query' if cls.Model else None
 
-    def _serialize(self):
+    def _serialize(self, **kwargs):
         return OrderedDict((
-            ('api', self.api.serialize() if self.api else None),
-            ('obj', self._obj.serialize()),
+            ('api', self.api.serialize(**kwargs) if self.api else None),
+            ('obj', self._obj.serialize(**kwargs)),
             ('settings', self._settings),
         ))
 

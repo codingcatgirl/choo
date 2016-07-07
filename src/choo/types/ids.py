@@ -170,7 +170,7 @@ class IDs(SimpleSerializable):
         return {name: (tuple(values) if len(values)-1 else next(iter(values)))
                 for name, values in self.data.items() if values}
 
-    def _serialize(self):
+    def _serialize(self, **kwargs):
         return self._simple_serialize()
 
     def union(self, other):

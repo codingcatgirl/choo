@@ -27,9 +27,11 @@ class Field:
     def validate(self, value):
         return value is None or isinstance(value, self.type)
 
-    def serialize(self, value):
+    def serialize(self, value, _id_lookup, **kwargs):
         if isinstance(value, Serializable):
-            return value.serialize()
+            if _id_lookup is not None and isinstance(value, Model):
+                return _id_lookup(value)
+            return value.serialize(**kwargs)
         elif isinstance(value, datetime):
             return value.isoformat()
         else:
@@ -154,12 +156,14 @@ class Model(Serializable, metaclass=MetaModel):
             return None
         return cls.__name__.lower()
 
-    def _serialize(self):
+    def _serialize(self, **kwargs):
         result = OrderedDict()
+
         for name, field in self._nonproxy_fields.items():
-            value = field.serialize(getattr(self, name))
+            value = field.serialize(getattr(self, name), **kwargs)
             if value is not None:
-                result[name] = field.serialize(getattr(self, name))
+                result[name] = value
+
         return result
 
     @classmethod

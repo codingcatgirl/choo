@@ -20,14 +20,26 @@ class Serializable(ABC):
     def _get_serialized_type_name(cls):
         pass
 
-    def serialize(self):
+    def serialize(self, by_reference=False, _id_lookup=None, **kwargs):
         if self.serialized_type_name is None:
             raise TypeError('Only subclasses of this class can be serialized.')
+
+        if by_reference:
+            from ..caches import DefaultCache
+            cache = DefaultCache()
+            cache.add_recursive(self)
+            objects = cache.create_serialization_ids()
+            _id_lookup = cache.get_serialization_id
+            objects = tuple(o.serialize(_id_lookup=_id_lookup, **kwargs) for o in objects)
+            return OrderedDict((
+                ('@object', _id_lookup(self)),
+                ('@references', objects),
+            ))
 
         result = OrderedDict({
             '@type': self.serialized_type_name,
         })
-        result.update(self._serialize())
+        result.update(self._serialize(_id_lookup=_id_lookup, **kwargs))
         return result
 
     @classmethod
@@ -56,11 +68,11 @@ class SimpleSerializable(Serializable, ABC):
             return super().unserialize(data)
         return cls._simple_unserialize(data)
 
-    def serialize(self, simple=True):
+    def serialize(self, simple=True, **kwargs):
         if self.serialized_type_name is None:
             raise TypeError('Only subclasses of this class can be serialized.')
 
-        return self._simple_serialize() if simple else super().serialize()
+        return self._simple_serialize() if simple else super().serialize(**kwargs)
 
     def _serialize(self):
         return {'value': self._simple_serialize()}
