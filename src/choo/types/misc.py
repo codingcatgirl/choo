@@ -74,7 +74,7 @@ class SimpleSerializable(Serializable, ABC):
 
         return self._simple_serialize() if simple else super().serialize(**kwargs)
 
-    def _serialize(self):
+    def _serialize(self, **kwargs):
         return {'value': self._simple_serialize()}
 
     @classmethod
