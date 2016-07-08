@@ -7,7 +7,7 @@ from ..models.base import ModelWithIDs, SourcedModelMixin
 class CacheItem:
     def __init__(self, cache, obj):
         self.cache = cache
-        self.obj = obj.sourced()
+        self.obj = obj
         self.referenced_by = set()
         self.references = set()
         self.ids = set(((obj.Model, )+id_) for id_ in obj.ids.items())
