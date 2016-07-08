@@ -26,7 +26,7 @@ class CacheItem:
         # now we have to check the references
         for name in self.obj._nonproxy_fields:
             value = getattr(self.obj, name)
-            found_item = self.cache.get_item_or(value)
+            found_item = self.cache._get_item(value)
             if not found_item:
                 continue
             self.obj._data[name] = found_item.obj
@@ -77,7 +77,7 @@ class CacheItem:
                 continue
 
             # which collection describes (and described) this value?
-            value_item = self.cache.get_item_or(oldvalue)
+            value_item = self.cache._get_item(oldvalue)
 
             # merge the value
             if oldvalue is not value:
@@ -110,24 +110,59 @@ class DefaultCache:
         self._items = []
         self._items_by_id = {}
 
-    def apply(self, *objects):
-        self.add_recursive(*objects)
+    def apply(self, obj):
+        """
+        Add object to cache and get it again.
+        """
+        self.add(obj)
+        return obj._apply_recursive(self.get)
+
+    def apply_multiple(self, objects):
+        """
+        Add objects to cache and get them again.
+        """
+        objects = tuple(objects)
+        for obj in objects:
+            self.add(obj)
         return [obj._apply_recursive(self.get) for obj in objects]
 
-    def add_recursive(self, *objects):
-        for obj in objects:
-            obj._call_recursive(self.add)
+    def get(self, obj, none=False):
+        """
+        Get object from cache.
+        Returns the object you gave it is not in the cache or None if none is set to True.
+        """
+        item = self._get_item(obj)
+        return item.obj if item is not None else (None if none else obj)
 
-    def _get_same_items(self, item):
-        return set(i for i in (self._items_by_id.get(id_) for id_ in item.ids) if i is not None)
+    def add(self, obj):
+        """
+        Add obj to cache, updating it if it already exists
+        """
+        obj._call_recursive(self._add)
 
     def _newitem(self, obj):
         if not isinstance(obj, ModelWithIDs) or not obj.ids or not isinstance(obj, SourcedModelMixin):
             return None
         return CacheItem(self, obj)
 
-    def add(self, obj):
-        newitem = self._newitem(obj)
+    def _get_same_items(self, item):
+        return set(i for i in (self._items_by_id.get(id_) for id_ in item.ids) if i is not None)
+
+    def _get_item(self, obj):
+        """
+        Get object from cache.
+        Returns the object you gave it is not in the cache or None if none is set to True.
+        """
+        item = self._newitem(obj)
+        if item is None:
+            return None
+        same_items = self._get_same_items(item)
+        if not same_items:
+            return None
+        return next(iter(same_items))
+
+    def _add(self, obj):
+        newitem = self._newitem(obj.sourced())
         if newitem is None:
             return None
 
@@ -157,27 +192,6 @@ class DefaultCache:
             item.update(same_item)
 
         return item.obj
-
-    def get(self, obj):
-        return self.get_or(obj, obj)
-
-    def get_or(self, obj, default=None):
-        item = self._newitem(obj)
-        if item is None:
-            return default
-        same_items = self._get_same_items(item)
-        if not same_items:
-            return default
-        return next(iter(same_items)).obj
-
-    def get_item_or(self, obj, default=None):
-        item = self._newitem(obj)
-        if item is None:
-            return default
-        same_items = self._get_same_items(item)
-        if not same_items:
-            return default
-        return next(iter(same_items))
 
     def create_serialization_ids(self):
         self._serialization_ids = {}
