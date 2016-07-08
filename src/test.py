@@ -12,10 +12,11 @@ from choo.types import Coordinates, Serializable  # noqa
 # collection = Collection('test')
 
 # query = vrr.stops.where(city__name='Duisburg', name='A')
-query = vrr.platforms.where(stop__name='Essen Borbeck Süd')
+query = vrr.platforms.where(stop__name='Essen Borbeck Süd').limit(1)
 result = list(query)[0]
 for result in list(query)[:1]:
-    print(json.dumps(result.serialize(), ensure_ascii=False, indent=2))
+    print(json.dumps(result.serialize(by_reference=False), ensure_ascii=False, indent=2))
+print(result.stop is result.area.stop)
 
 # result = vrr.stops.get(bs)
 # result

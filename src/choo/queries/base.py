@@ -211,7 +211,7 @@ class Query(Serializable, metaclass=MetaQuery):
         if nocache or self.cache is None:
             self._results_generator = generator
         else:
-            self._results_generator = self.cache.apply_recursive(*generator)
+            self._results_generator = self.cache.apply(*generator)
 
     def _full_iter(self):
         """
