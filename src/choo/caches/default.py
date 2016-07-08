@@ -1,5 +1,4 @@
 import os
-from collections import deque
 
 from ..models.base import ModelWithIDs, SourcedModelMixin
 
@@ -193,13 +192,9 @@ class DefaultCache:
 
         return item.obj
 
-    def create_serialization_ids(self):
+    def get_serialization_objects(self):
         self._serialization_ids = {}
-        objects = deque()
-        for i, (collection, obj) in enumerate(self._collection_data.items()):
-            self._serialization_ids[collection] = i
-            objects.append(obj)
-        return tuple(objects)
+        return (item.obj for item in self._items)
 
     def get_serialization_id(self, obj):
-        return self._serialization_ids[self._id_collection[self._get_obj_ids(obj)[0]]]
+        return self._get_item(obj).i

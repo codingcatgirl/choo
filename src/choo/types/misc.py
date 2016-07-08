@@ -27,8 +27,8 @@ class Serializable(ABC):
         if by_reference:
             from ..caches import DefaultCache
             cache = DefaultCache()
-            cache.add_recursive(self)
-            objects = cache.create_serialization_ids()
+            cache.add(self)
+            objects = cache.get_serialization_objects()
             _id_lookup = cache.get_serialization_id
             objects = tuple(o.serialize(_id_lookup=_id_lookup, **kwargs) for o in objects)
             return OrderedDict((
