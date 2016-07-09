@@ -123,7 +123,7 @@ class DefaultCache:
         objects = tuple(objects)
         for obj in objects:
             self.add(obj)
-        return [obj._apply_recursive(self.get) for obj in objects]
+        return [self.get(obj) for obj in objects]
 
     def get(self, obj, none=False):
         """
