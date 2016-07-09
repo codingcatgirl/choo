@@ -1,7 +1,22 @@
 from abc import ABC, abstractmethod
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, deque, namedtuple
 from datetime import datetime, timedelta
 from math import asin, cos, radians, sin, sqrt
+
+
+class ObjectCollector:
+    def __init__(self):
+        self.objects = deque()
+        self._i_by_id = {}
+
+    def get(self, obj, **kwargs):
+        i = self._i_by_id.get(id(obj))
+        if i is None:
+            i = len(self._i_by_id)
+            self._i_by_id[id(obj)] = i
+            self.objects.append(None)
+            self.objects[i] = obj.serialize(_collector=self, **kwargs)
+        return i
 
 
 class Serializable(ABC):
@@ -20,26 +35,21 @@ class Serializable(ABC):
     def _get_serialized_type_name(cls):
         pass
 
-    def serialize(self, by_reference=False, _id_lookup=None, **kwargs):
+    def serialize(self, by_reference=False, **kwargs):
         if self.serialized_type_name is None:
             raise TypeError('Only subclasses of this class can be serialized.')
 
         if by_reference:
-            from ..caches import DefaultCache
-            cache = DefaultCache()
-            cache.add(self)
-            objects = cache.get_serialization_objects()
-            _id_lookup = cache.get_serialization_id
-            objects = tuple(o.serialize(_id_lookup=_id_lookup, **kwargs) for o in objects)
-            return OrderedDict((
-                ('@object', _id_lookup(self)),
-                ('@references', objects),
-            ))
+            collector = ObjectCollector()
+            collector.get(self, **kwargs)
+            return OrderedDict({
+                '@objects': tuple(collector.objects)
+            })
 
         result = OrderedDict({
             '@type': self.serialized_type_name,
         })
-        result.update(self._serialize(_id_lookup=_id_lookup, **kwargs))
+        result.update(self._serialize(**kwargs))
         return result
 
     @classmethod

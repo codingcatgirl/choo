@@ -27,10 +27,10 @@ class Field:
     def validate(self, value):
         return value is None or isinstance(value, self.type)
 
-    def serialize(self, value, _id_lookup, **kwargs):
+    def serialize(self, value, _collector=None, **kwargs):
         if isinstance(value, Serializable):
-            if _id_lookup is not None and isinstance(value, Model):
-                return _id_lookup(value)
+            if _collector is not None and isinstance(value, Model):
+                return _collector.get(value, **kwargs)
             return value.serialize(**kwargs)
         elif isinstance(value, datetime):
             return value.isoformat()
