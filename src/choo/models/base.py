@@ -102,28 +102,31 @@ class MetaModel(ABCMeta):
     Metaclass for all choo models.
     """
     def __new__(mcs, name, bases, attrs):
-        fields = OrderedDict()
-        fields.update(OrderedDict(sorted(
-            [(n, v.set_name(n)) for n, v in attrs.items() if isinstance(v, Field)],
-            key=lambda v: v[1].i)
-        ))
+        if not any(issubclass(b, Parser) for b in bases):
+            fields = OrderedDict()
+            fields.update(OrderedDict(sorted(
+                [(n, v.set_name(n)) for n, v in attrs.items() if isinstance(v, Field)],
+                key=lambda v: v[1].i)
+            ))
 
-        for field in tuple(fields.values()):
-            proxy_fields = field.get_proxy_fields()
-            fields.update(proxy_fields)
-            attrs.update(proxy_fields)
+            for field in tuple(fields.values()):
+                proxy_fields = field.get_proxy_fields()
+                fields.update(proxy_fields)
+                attrs.update(proxy_fields)
 
-        for base in bases:
-            fields.update(getattr(base, '_fields', {}))
+            for base in bases:
+                fields.update(getattr(base, '_fields', {}))
 
-        if 'ids' in fields and SourcedModelMixin in bases:
-            attrs['ids'] = fields['ids'] = frozenids_field
+            if 'ids' in fields and SourcedModelMixin in bases:
+                attrs['ids'] = fields['ids'] = frozenids_field
 
-        attrs['_fields'] = fields
-        attrs['_nonproxy_fields'] = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
+            attrs['_fields'] = fields
+            attrs['_nonproxy_fields'] = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
 
         cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
-        cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
+        if not issubclass(cls, Parser) and (mcs.__module__ == attrs['__module__'] or
+                                            not issubclass(cls, SourcedModelMixin)):
+            cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
 
         if mcs.__module__ != attrs['__module__'] and not issubclass(cls, (Parser, SourcedModelMixin)):
             API._register_model(cls)
