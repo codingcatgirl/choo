@@ -189,5 +189,6 @@ class TestCoordInfoPOI:
             "coords": [
                 51.465808,
                 6.95128
-            ]
+            ],
+            "ids": {}
         }

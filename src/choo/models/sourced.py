@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from operator import itemgetter
 
 from ..apis import API
@@ -88,6 +89,23 @@ class SourcedModelMixin(tuple, metaclass=SourcedModelMixinMeta):
             else:
                 kwargs[name] = value
         return func(self.Model.Sourced(**kwargs))
+
+    def _serialize(self, **kwargs):
+        data = OrderedDict({'source': self.source.serialize(**kwargs)})
+        data.update(super()._serialize(**kwargs))
+        return data
+
+    @classmethod
+    def _unserialize(cls, data):
+        data = data.copy()
+        source = API.unserialize(data.pop('source', None))
+        kwargs = {}
+        for name, value in data.items():
+            field = cls._nonproxy_fields.get(name)
+            if field is None:
+                raise AttributeError('%s model has no field %s' % (cls.__name__, repr(name)))
+            kwargs[name] = field.unserialize(value)
+        return cls(source, **kwargs)
 
     def combine(self, *others):
         for other in others:

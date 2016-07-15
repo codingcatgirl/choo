@@ -2,7 +2,7 @@ import pytest
 
 from choo.apis import vrr
 from choo.models import City, Stop
-from choo.models.base import SourcedModelMixin
+from choo.models.sourced import SourcedModelMixin
 
 
 class TestModel:
@@ -18,6 +18,7 @@ class TestModel:
         serialized = {
             '@type': 'stop',
             'name': 'Essen Hbf',
+            'ids': {}
         }
         assert Stop(name='Essen Hbf').serialize() == serialized
         assert Stop.unserialize(serialized).serialize() == serialized
@@ -52,7 +53,7 @@ class TestSourcedModelMixin:
         with pytest.raises(TypeError):
             SourcedModelMixin()
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Stop.Sourced.from_parser(City)
 
     def test_mutable(self):
