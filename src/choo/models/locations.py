@@ -1,5 +1,5 @@
 from ..types import Coordinates, PlatformType, POIType
-from .base import Field, Model, ModelWithIDs
+from .base import Field, Model, ModelWithIDs, ReverseField
 
 
 class GeoPoint(Model):
@@ -58,6 +58,8 @@ class Addressable(Location):
 
 
 class Stop(Addressable, ModelWithIDs):
+    platforms = ReverseField()
+
     @property
     def country(self):
         ifopt = self.ids.get('ifopt')
@@ -84,7 +86,7 @@ class StopArea(ModelWithIDs):
 
 
 class Platform(GeoPoint, ModelWithIDs):
-    stop = Field(Stop)
+    stop = Field(Stop, reverse='platforms')
     area = Field(StopArea)
     platform_type = Field(PlatformType)
     name = Field(str)

@@ -15,13 +15,22 @@ class Field:
     """
     _i = 0
 
-    def __init__(self, type_):
+    def __init__(self, type_, reverse=None):
         self.type = type_
         self.i = Field._i
+        self.reverse = reverse
         Field._i += 1
 
-    def set_name(self, name):
+    def set_name_and_model(self, name, model):
         self.name = name
+        self.model = model
+
+        if self.reverse is not None:
+            if not issubclass(self.type, Model):
+                raise TypeError('reverse is not None but %s is not a Model' % repr(model))
+            reverse_field = getattr(self.type, self.reverse, None)
+            if not isinstance(reverse_field, ReverseField):
+                raise TypeError('ReverseField %s missing on %s' % (repr(self.reverse), repr(self.type)))
         return self
 
     def validate(self, value):
@@ -90,11 +99,24 @@ class ProxyField:
         return self.parent.proxy_set(obj, self.name, value)
 
 
+class ReverseField(Field):
+    def __init__(self):
+        super().__init__(None)
+
+    def set_type(self, type_):
+        if self.type is not None:
+            raise TypeError('Field type is already set!')
+        self.type = type_
+
+    def get_proxy_fields(self):
+        return {}
+
+
 def give_none(self, *args, **kwargs):
     return None
 
 
-frozenids_field = Field(FrozenIDs).set_name('ids')
+frozenids_field = Field(FrozenIDs).set_name_and_model('ids', None)
 
 
 class MetaModel(ABCMeta):
@@ -102,28 +124,29 @@ class MetaModel(ABCMeta):
     Metaclass for all choo models.
     """
     def __new__(mcs, name, bases, attrs):
+        cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
         if not any(issubclass(b, Parser) for b in bases):
             fields = OrderedDict()
             fields.update(OrderedDict(sorted(
-                [(n, v.set_name(n)) for n, v in attrs.items() if isinstance(v, Field)],
+                [(n, v.set_name_and_model(n, cls)) for n, v in attrs.items() if isinstance(v, Field)],
                 key=lambda v: v[1].i)
             ))
 
             for field in tuple(fields.values()):
                 proxy_fields = field.get_proxy_fields()
                 fields.update(proxy_fields)
-                attrs.update(proxy_fields)
+                for name, field in proxy_fields.items():
+                    setattr(cls, name, field)
 
             for base in bases:
                 fields.update(getattr(base, '_fields', {}))
 
             if 'ids' in fields and SourcedModelMixin in bases:
-                attrs['ids'] = fields['ids'] = frozenids_field
+                cls.ids = fields['ids'] = frozenids_field
 
-            attrs['_fields'] = fields
-            attrs['_nonproxy_fields'] = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
+            cls._fields = fields
+            cls._nonproxy_fields = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
 
-        cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
         if not issubclass(cls, Parser) and (mcs.__module__ == attrs['__module__'] or
                                             not issubclass(cls, SourcedModelMixin)):
             cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
