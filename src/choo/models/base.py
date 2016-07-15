@@ -36,6 +36,10 @@ class Field:
     def validate(self, value):
         return value is None or isinstance(value, self.type)
 
+    def validate_raise(self, value):
+        if not self.validate(value):
+            raise TypeError('Invalid type for attribute %s.' % self.name)
+
     def serialize(self, value, _collector=None, **kwargs):
         if isinstance(value, Serializable):
             if _collector is not None and isinstance(value, Model):
@@ -71,15 +75,40 @@ class Field:
         subobj = getattr(obj, self.name)
         return None if subobj is None else getattr(subobj, name)
 
+    def getdefault(self, value=None):
+        self.validate_raise(value)
+        if self.type is IDs:
+            return value or IDs()
+        return value
+
+    def get_immutable(self, value, default_source, allow_parser=False):
+        value = self.getdefault(value)
+        if issubclass(self.type, Model):
+            if isinstance(value, Parser):
+                if not allow_parser:
+                    value = value.sourced()
+            elif isinstance(value, Model):
+                value = value._sourced(default_source)
+        elif self.type is IDs and value is not None and not isinstance(value, FrozenIDs):
+            value = FrozenIDs(value)
+        return value
+
+    def get_mutable(self, value):
+        value = self.getdefault(value)
+        if issubclass(self.type, Model):
+            if isinstance(value, (Parser, tuple)):
+                value = value.mutable()
+        elif self.type is IDs and isinstance(value, FrozenIDs):
+            value = IDs(value)
+        return value
+
     def __get__(self, obj, cls):
         if obj is None:
             return self
         return obj._data.get(self.name)
 
     def __set__(self, obj, value):
-        if not self.validate(value):
-            raise TypeError('Invalid type for attribute %s.' % self.name)
-        obj._data[self.name] = value
+        obj._data[self.name] = self.get_mutable(value)
 
 
 class ProxyField:
@@ -111,6 +140,12 @@ class ReverseField(Field):
     def get_proxy_fields(self):
         return {}
 
+    def get_immutable(self, value, default_source):
+        return value
+
+    def get_mutable(self, value):
+        return value
+
 
 def give_none(self, *args, **kwargs):
     return None
@@ -125,37 +160,36 @@ class MetaModel(ABCMeta):
     """
     def __new__(mcs, name, bases, attrs):
         cls = super(MetaModel, mcs).__new__(mcs, name, bases, attrs)
-        if not any(issubclass(b, Parser) for b in bases):
-            fields = OrderedDict()
-            fields.update(OrderedDict(sorted(
-                [(n, v.set_name_and_model(n, cls)) for n, v in attrs.items() if isinstance(v, Field)],
-                key=lambda v: v[1].i)
-            ))
+        if issubclass(cls, (Parser, tuple)):
+            return cls
 
-            for field in tuple(fields.values()):
-                proxy_fields = field.get_proxy_fields()
-                fields.update(proxy_fields)
-                for name, field in proxy_fields.items():
-                    setattr(cls, name, field)
+        fields = OrderedDict()
+        fields.update(OrderedDict(sorted(
+            [(n, v.set_name_and_model(n, cls)) for n, v in attrs.items() if isinstance(v, Field)],
+            key=lambda v: v[1].i)
+        ))
 
-            for base in bases:
-                fields.update(getattr(base, '_fields', {}))
+        for field in tuple(fields.values()):
+            proxy_fields = field.get_proxy_fields()
+            fields.update(proxy_fields)
+            for name, field in proxy_fields.items():
+                setattr(cls, name, field)
 
-            if 'ids' in fields and SourcedModelMixin in bases:
-                cls.ids = fields['ids'] = frozenids_field
+        for base in bases:
+            fields.update(getattr(base, '_fields', {}))
 
-            cls._fields = fields
-            cls._nonproxy_fields = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
+        cls._fields = fields
+        cls._nonproxy_fields = OrderedDict((n, v) for n, v in fields.items() if isinstance(v, Field))
 
-        if not issubclass(cls, Parser) and (mcs.__module__ == attrs['__module__'] or
-                                            not issubclass(cls, SourcedModelMixin)):
-            cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
+        cls.NotFound = type('NotFound', (ObjectNotFound, ), {'__module__': attrs['__module__']})
 
-        if mcs.__module__ != attrs['__module__'] and not issubclass(cls, (Parser, SourcedModelMixin)):
+        if mcs.__module__ != attrs['__module__'] and not issubclass(cls, Parser):
+            from .sourced import SourcedModelMixin
             API._register_model(cls)
-            cls.Sourced = type('Sourced'+name, (SourcedModelMixin, cls), {'__module__': cls.__module__, 'Model': cls})
-            cls.XMLParser = type('XMLParser', (XMLParser, cls.Sourced), {'__module__': cls.__module__})
-            cls.JSONParser = type('JSONParser', (JSONParser, cls.Sourced), {'__module__': cls.__module__})
+            cls.Sourced = type('Sourced'+cls.__name__, (SourcedModelMixin, cls),
+                               {'__module__': cls.__module__, 'Model': cls})
+            cls.XMLParser = type('XMLParser', (XMLParser, cls), {'__module__': cls.__module__, 'Model': cls})
+            cls.JSONParser = type('JSONParser', (JSONParser, cls), {'__module__': cls.__module__, 'Model': cls})
         elif issubclass(cls, Parser) and Parser not in cls.__bases__:
             for name, field in cls._nonproxy_fields.items():
                 if getattr(cls, name) is field:
@@ -169,12 +203,17 @@ class Model(Serializable, metaclass=MetaModel):
 
     def __init__(self, **kwargs):
         self._data = {}
+        for name, field in self._nonproxy_fields.items():
+            default = field.getdefault()
+            if default is not None:
+                self._data[name] = default
+
         for name, value in kwargs.items():
             # We access the field directly so it also works with Model.Sourced which prevents setting attributes
             field = self._fields.get(name)
             if field is None:
                 raise AttributeError('%s model has no field %s' % (self.__class__.__name__, repr(name)))
-            field.__set__(self, value)
+            setattr(self, name, value)
 
     @classmethod
     def _get_serialized_type_name(cls):
@@ -192,6 +231,9 @@ class Model(Serializable, metaclass=MetaModel):
 
         return result
 
+    def _sourced(self, source):
+        return self.Sourced(source, **self._data)
+
     @classmethod
     def _unserialize(cls, data):
         kwargs = {}
@@ -203,118 +245,11 @@ class Model(Serializable, metaclass=MetaModel):
         return cls(**kwargs)
 
 
-class SourcedModelMixin(Model):
-    source = Field(API)
-
-    def __init__(self, **kwargs):
-        if self.__class__ is SourcedModelMixin:
-            raise TypeError('SourcedModelMixin cannot be initialized directly')
-
-        super().__init__(**kwargs)
-
-        if kwargs.get('source') is None:
-            raise ValueError('SourcedModel.source has to be set!')
-
-    @classmethod
-    def from_parser(cls, parser, deep=True):
-        if not isinstance(parser, cls.Model.Sourced):
-            raise ValueError('%s.Sourced: parser has to be a %s.Sourced instance, not %s' %
-                             (cls.Model.__name__, cls.Model.__name__, repr(parser)))
-
-        kwargs = {}
-        for name, field in cls._nonproxy_fields.items():
-            value = getattr(parser, name)
-            if isinstance(value, Parser) and deep:
-                value = value.sourced(deep)
-            kwargs[name] = value
-        return cls(**kwargs)
-
-    def mutable(self, deep=True):
-        kwargs = {}
-        for name, field in self.Model._nonproxy_fields.items():
-            value = getattr(self, name)
-            if isinstance(value, SourcedModelMixin) and deep:
-                value = value.mutable(deep)
-            kwargs[name] = value
-        return self.Model(**kwargs)
-
-    def _call_recursive(self, func):
-        for name in self._nonproxy_fields:
-            value = getattr(self, name)
-            if isinstance(value, SourcedModelMixin):
-                value._call_recursive(func)
-        func(self)
-
-    def _apply_recursive(self, func):
-        kwargs = {}
-        for name in self._nonproxy_fields:
-            value = getattr(self, name)
-            if isinstance(value, SourcedModelMixin):
-                kwargs[name] = value._apply_recursive(func)
-            else:
-                kwargs[name] = value
-        return func(self.Model.Sourced(**kwargs))
-
-    def sourced(self, deep=True):
-        return self.Model.Sourced.from_parser(self, deep)
-
-    def combine(self, *others):
-        for other in others:
-            if not isinstance(other, self.Model.Sourced):
-                raise TypeError('Can only combine with another Model.Sourced instance, got %s instead' % repr(other))
-
-        objects_by_source = {}
-        for obj in (self, )+others:
-            objects_by_source.setdefault(obj.source, []).append(obj)
-
-        if len(objects_by_source) > 1:
-            raise NotImplementedError('Combining Model.Sourced instances from different sources is not supported yet!')
-
-        # get fields to merge
-        defaults = {}
-        if isinstance(self, ModelWithIDs):
-            defaults['ids'] = FrozenIDs()
-
-        for source, objects in objects_by_source.items():
-            kwargs = defaults.copy()
-            for name in self._nonproxy_fields:
-                if name == 'ids' and isinstance(self, ModelWithIDs):
-                    kwargs['ids'] |= (getattr(self, 'ids') or FrozenIDs())
-                    continue
-
-                for obj in objects:
-                    value = getattr(self, name)
-                    if value is not None:
-                        break
-                kwargs[name] = value
-            return self.Model.Sourced(**kwargs)
-
-    def __or__(self, other):
-        return self.combine(other)
-
-    @classmethod
-    def _get_serialized_type_name(cls):
-        if cls in (Model, ModelWithIDs, SourcedModelMixin):
-            return None
-        return cls.Model._get_serialized_type_name()+'.sourced'
-
-    def __setattr__(self, name, value):
-        if name in getattr(self, '_nonproxy_fields', ()):
-            raise TypeError('Cannot set a Model.Sourced property')
-        super().__setattr__(name, value)
-
-    def __delattr__(self, name):
-        if name in getattr(self, '_nonproxy_fields', ()):
-            raise TypeError('Cannot delete a Model.Sourced property')
-        super().__delattr__(name)
-
-Model.Sourced = SourcedModelMixin
-
-
 class ModelWithIDs(Model):
     ids = Field(IDs)
 
     def __eq__(self, other):
+        from .sourced import SourcedModelMixin
         if not isinstance(other, ModelWithIDs):
             return False
 

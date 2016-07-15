@@ -139,6 +139,12 @@ class Parser(Serializable, ABC):
         return cls.parse(API.unserialize(data['api']), datetime.strptime(data['time'], '%Y-%m-%dT%H:%M:%S'),
                          data['data'], **kwargs)
 
+    def sourced(self):
+        return self.Model.Sourced.from_parser(self)
+
+    def mutable(self):
+        return self.sourced().mutable()
+
     def __setattr__(self, name, value):
         if name in getattr(self, '_nonproxy_fields', ()):
             raise TypeError('Cannot set a parser property')

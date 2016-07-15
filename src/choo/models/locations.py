@@ -62,7 +62,7 @@ class Stop(Addressable, ModelWithIDs):
 
     @property
     def country(self):
-        ifopt = self.ids.get('ifopt')
+        ifopt = self.ids and self.ids.get('ifopt')
         return ifopt.split(':')[0] if ifopt else self.city__country
 
 
