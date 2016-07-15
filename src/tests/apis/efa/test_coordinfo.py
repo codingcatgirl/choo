@@ -13,46 +13,17 @@ class TestCoordInfoPlatform:
                     <itdPathCoordinates>
                         <coordEllipsoid>WGS84</coordEllipsoid>
                         <coordType>GEO_DECIMAL</coordType>
-                        <itdCoordinateBaseElemList>
-                            <itdCoordinateBaseElem>
-                                <x>6954362</x>
-                                <y>51462965</y>
-                            </itdCoordinateBaseElem>
-                        </itdCoordinateBaseElemList>
+                        <itdCoordinateBaseElemList><itdCoordinateBaseElem><x>6954362</x><y>51462965</y></itdCoordinateBaseElem></itdCoordinateBaseElemList>
                     </itdPathCoordinates>
                     <genAttrList>
-                        <genAttrElem>
-                            <name>STOP_POINT_LONGNAME</name>
-                            <value/>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>STOP_POINT_CHARACTERISTICS</name>
-                            <value>Bay</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>STOP_POINT_REFERED_NAME</name>
-                            <value/>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>STOP_POINT_REFERED_NAMEWITHPLACE</name>
-                            <value/>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>STOP_AREA_NAME</name>
-                            <value>Bus</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>STOP_GLOBAL_ID</name>
-                            <value>de:5113:9159</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>STOPPOINT_GLOBAL_ID</name>
-                            <value>de:5113:9159:3:1</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>IDENTIFIER</name>
-                            <value>1</value>
-                        </genAttrElem>
+                        <genAttrElem><name>STOP_POINT_LONGNAME</name><value/></genAttrElem>
+                        <genAttrElem><name>STOP_POINT_CHARACTERISTICS</name><value>Bay</value></genAttrElem>
+                        <genAttrElem><name>STOP_POINT_REFERED_NAME</name><value/></genAttrElem>
+                        <genAttrElem><name>STOP_POINT_REFERED_NAMEWITHPLACE</name><value/></genAttrElem>
+                        <genAttrElem><name>STOP_AREA_NAME</name><value>Bus</value></genAttrElem>
+                        <genAttrElem><name>STOP_GLOBAL_ID</name><value>de:5113:9159</value></genAttrElem>
+                        <genAttrElem><name>STOPPOINT_GLOBAL_ID</name><value>de:5113:9159:3:1</value></genAttrElem>
+                        <genAttrElem><name>IDENTIFIER</name><value>1</value></genAttrElem>
                     </genAttrList>
                 </coordInfoItem>
                 ''',
@@ -134,38 +105,15 @@ class TestCoordInfoPOI:
                     <itdPathCoordinates>
                         <coordEllipsoid>WGS84</coordEllipsoid>
                         <coordType>GEO_DECIMAL</coordType>
-                        <itdCoordinateBaseElemList>
-                            <itdCoordinateBaseElem>
-                                <x>6951280</x>
-                                <y>51465808</y>
-                            </itdCoordinateBaseElem>
-                        </itdCoordinateBaseElemList>
+                        <itdCoordinateBaseElemList><itdCoordinateBaseElem><x>6951280</x><y>51465808</y></itdCoordinateBaseElem></itdCoordinateBaseElemList>
                     </itdPathCoordinates>
                     <genAttrList>
-                        <genAttrElem>
-                            <name>POI_DRAW_CLASS_TYPE</name>
-                            <value>AREA</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>POI_DRAW_CLASS</name>
-                            <value>PoiReligion</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>POI_HIERARCHY_KEY</name>
-                            <value>JC</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>POI_HIERARCHY_1</name>
-                            <value>Anbetungsort</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>POI_HIERARCHY_KEY</name>
-                            <value>J</value>
-                        </genAttrElem>
-                        <genAttrElem>
-                            <name>POI_HIERARCHY_0</name>
-                            <value>Sehnswürdigkeiten</value>
-                        </genAttrElem>
+                        <genAttrElem><name>POI_DRAW_CLASS_TYPE</name><value>AREA</value></genAttrElem>
+                        <genAttrElem><name>POI_DRAW_CLASS</name><value>PoiReligion</value></genAttrElem>
+                        <genAttrElem><name>POI_HIERARCHY_KEY</name><value>JC</value></genAttrElem>
+                        <genAttrElem><name>POI_HIERARCHY_1</name><value>Anbetungsort</value></genAttrElem>
+                        <genAttrElem><name>POI_HIERARCHY_KEY</name><value>J</value></genAttrElem>
+                        <genAttrElem><name>POI_HIERARCHY_0</name><value>Sehnswürdigkeiten</value></genAttrElem>
                     </genAttrList>
                 </coordInfoItem>
                 ''',
