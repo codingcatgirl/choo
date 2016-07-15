@@ -1,6 +1,6 @@
 import os
 
-from ..models.base import ModelWithIDs, SourcedModelMixin
+from ..models.base import ModelWithIDs
 
 
 class CacheItem:
@@ -23,14 +23,17 @@ class CacheItem:
             self.cache._items_by_id[id_] = self
 
         # now we have to check the references
+        kwargs = {}
         for name in self.obj._nonproxy_fields:
             value = getattr(self.obj, name)
             found_item = self.cache._get_item(value)
             if not found_item:
+                kwargs[name] = value
                 continue
-            self.obj._data[name] = found_item.obj
+            kwargs[name] = found_item.obj
             self.references.add(found_item)
             found_item.referenced_by.add(self)
+        self.obj = self.obj.Model.Sourced(self.obj.source, **kwargs)
 
     def remove_from_cache(self):
         if self.i is None:
@@ -65,8 +68,8 @@ class CacheItem:
 
         # we build a new object with the merged attributes
         kwargs = {}
-        for name, value in other.obj._data.items():
-            # only handle MdoelWithIDs attributes because only they are mergeable
+        for name in self.obj._nonproxy_fields:
+            # only handle ModelWithIDs attributes because only they are mergeable
             value = getattr(other.obj, name)
             if value is None:
                 continue
@@ -88,7 +91,7 @@ class CacheItem:
             value_item.referenced_by.add(self)
             self.references.add(value_item)
 
-        self.obj = self.obj | self.obj.Model.Sourced(**kwargs)
+        self.obj = self.obj | self.obj.Model.Sourced(source=self.obj.source, **kwargs)
 
         # now we look, which collection refer to this collection. those have to be updated, to point to the new data
         for other_item in self.referenced_by:
@@ -113,6 +116,7 @@ class DefaultCache:
         """
         Add object to cache and get it again.
         """
+        obj = obj.sourced()
         self.add(obj)
         return obj._apply_recursive(self.get)
 
@@ -120,7 +124,7 @@ class DefaultCache:
         """
         Add objects to cache and get them again.
         """
-        objects = tuple(objects)
+        objects = tuple(obj.sourced() for obj in objects)
         for obj in objects:
             self.add(obj)
         return [self.get(obj) for obj in objects]
@@ -140,7 +144,7 @@ class DefaultCache:
         obj._call_recursive(self._add)
 
     def _newitem(self, obj):
-        if not isinstance(obj, ModelWithIDs) or not obj.ids or not isinstance(obj, SourcedModelMixin):
+        if not isinstance(obj, ModelWithIDs) or not obj.ids:
             return None
         return CacheItem(self, obj)
 
@@ -161,7 +165,7 @@ class DefaultCache:
         return next(iter(same_items))
 
     def _add(self, obj):
-        newitem = self._newitem(obj.sourced())
+        newitem = self._newitem(obj)
         if newitem is None:
             return None
 

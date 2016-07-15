@@ -83,13 +83,15 @@ class Field:
 
     def get_immutable(self, value, default_source, allow_parser=False):
         value = self.getdefault(value)
+        if value is None:
+            return value
         if issubclass(self.type, Model):
             if isinstance(value, Parser):
                 if not allow_parser:
                     value = value.sourced()
-            elif isinstance(value, Model):
+            elif not isinstance(value, tuple):
                 value = value._sourced(default_source)
-        elif self.type is IDs and value is not None and not isinstance(value, FrozenIDs):
+        elif self.type is IDs and not isinstance(value, FrozenIDs):
             value = FrozenIDs(value)
         return value
 

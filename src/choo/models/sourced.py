@@ -51,7 +51,7 @@ class SourcedModelMixin(tuple, metaclass=SourcedModelMixinMeta):
             raise TypeError('%s.Sourced: parser has to be a Parser instance, not %s' %
                             (cls.Model.__name__, repr(parser)))
 
-        return cls.from_model(cls, parser.api, parser)
+        return cls.from_object(parser.api, parser)
 
     @classmethod
     def from_object(cls, source, obj):
@@ -66,12 +66,18 @@ class SourcedModelMixin(tuple, metaclass=SourcedModelMixinMeta):
         kwargs = dict(zip(self._nonproxy_fields.keys(), tuple(self)[1:]))
         return self.Model(**kwargs)
 
+    def sourced(self):
+        return self
+
     def _call_recursive(self, func):
         for name in self._nonproxy_fields:
             value = getattr(self, name)
             if isinstance(value, Model):
                 value._call_recursive(func)
         func(self)
+
+    def __eq__(self, other):
+        return self.Model.__eq__(self, other)
 
     def _apply_recursive(self, func):
         kwargs = {}
@@ -112,7 +118,7 @@ class SourcedModelMixin(tuple, metaclass=SourcedModelMixinMeta):
                     if value is not None:
                         break
                 kwargs[name] = value
-            return self.Model.Sourced(**kwargs)
+            return self.Model.Sourced(source=self.source, **kwargs)
 
     def __or__(self, other):
         return self.combine(other)
