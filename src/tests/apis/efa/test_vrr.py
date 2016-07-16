@@ -49,10 +49,8 @@ class TestVrrPlatformQuery:
                 "@type": "platform",
                 "stop": {
                     "@type": "stop",
-                    "name": "Essen Hbf",
-                    "ids": {}
-                },
-                "ids": {}
+                    "name": "Essen Hbf"
+                }
             },
             "settings": {
                 "limit": None,

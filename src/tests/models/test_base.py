@@ -17,8 +17,7 @@ class TestModel:
     def test_serializing(self):
         serialized = {
             '@type': 'stop',
-            'name': 'Essen Hbf',
-            'ids': {}
+            'name': 'Essen Hbf'
         }
         assert Stop(name='Essen Hbf').serialize() == serialized
         assert Stop.unserialize(serialized).serialize() == serialized

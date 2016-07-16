@@ -42,6 +42,8 @@ class Field:
 
     def serialize(self, value, _collector=None, **kwargs):
         if isinstance(value, Serializable):
+            if self.type is IDs and not value:
+                return None
             if _collector is not None and isinstance(value, Model):
                 return _collector.get(value, **kwargs)
             return value.serialize(**kwargs)
