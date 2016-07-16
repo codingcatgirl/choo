@@ -70,22 +70,22 @@ class CacheItem:
         kwargs = {}
         for name in self.obj._nonproxy_fields:
             # only handle ModelWithIDs attributes because only they are mergeable
-            value = getattr(other.obj, name)
-            if value is None:
+            new_value = getattr(other.obj, name)
+            if new_value is None:
                 continue
-            oldvalue = getattr(self.obj, name)
-            if oldvalue is None or not isinstance(value, ModelWithIDs):
-                kwargs[name] = value
+            value = getattr(self.obj, name)
+            if value is None or not isinstance(new_value, ModelWithIDs):
+                kwargs[name] = new_value
                 continue
 
             # which collection describes (and described) this value?
-            value_item = self.cache._get_item(oldvalue)
+            value_item = self.cache._get_item(value)
 
             # merge the value
-            if oldvalue is not value:
+            if value is not new_value:
                 if os.environ.get('CHOO_CACHE_DEBUG'):
                     print('its', name, 'attribute has to be updated, too')
-                kwargs[name] = value_item.update(self.cache._newitem(value), noupdate=self).obj
+                kwargs[name] = value_item.update(self.cache._newitem(new_value), noupdate=self).obj
 
             # update the references
             value_item.referenced_by.add(self)
