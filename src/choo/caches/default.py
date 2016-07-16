@@ -91,7 +91,12 @@ class CacheItem:
             value_item.referenced_by.add(self)
             self.references.add(value_item)
 
-        self.obj = self.obj | self.obj.Model.Sourced(source=self.obj.source, **kwargs)
+        new_obj = self.obj | self.obj.Model.Sourced(source=self.obj.source, **kwargs)
+        if self.obj is new_obj:
+            if os.environ.get('CHOO_CACHE_DEBUG'):
+                print('nothing to update')
+            return self
+        self.obj = new_obj
 
         # now we look, which collection refer to this collection. those have to be updated, to point to the new data
         for other_item in self.referenced_by:
