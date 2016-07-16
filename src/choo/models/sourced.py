@@ -106,36 +106,33 @@ class SourcedModelMixin(tuple, metaclass=SourcedModelMixinMeta):
             kwargs[name] = field.unserialize(value)
         return cls(source, **kwargs)
 
-    def combine(self, *others):
-        for other in others:
-            if not isinstance(other, self.Model.Sourced):
-                raise TypeError('Can only combine with another Model.Sourced instance, got %s instead' % repr(other))
+    def combine(self, other):
+        if not isinstance(other, self.Model.Sourced):
+            raise TypeError('Can only combine with another Model.Sourced instance, got %s instead' % repr(other))
 
-        objects_by_source = {}
-        for obj in (self, )+others:
-            objects_by_source.setdefault(obj.source, []).append(obj)
-
-        if len(objects_by_source) > 1:
+        if self.source != other.source:
             raise NotImplementedError('Combining Model.Sourced instances from different sources is not supported yet!')
 
-        # get fields to merge
-        defaults = {}
-        if isinstance(self, ModelWithIDs):
-            defaults['ids'] = FrozenIDs()
-
-        for source, objects in objects_by_source.items():
-            kwargs = defaults.copy()
-            for name in self._nonproxy_fields:
-                if name == 'ids' and isinstance(self, ModelWithIDs):
-                    kwargs['ids'] |= (getattr(self, 'ids') or FrozenIDs())
-                    continue
-
-                for obj in objects:
-                    value = getattr(self, name)
-                    if value is not None:
-                        break
+        kwargs = {}
+        changed = False
+        for name, field in self._nonproxy_fields.items():
+            value = getattr(self, name)
+            other_value = getattr(other, name)
+            if other_value is None:
                 kwargs[name] = value
-            return self.Model.Sourced(source=self.source, **kwargs)
+                continue
+
+            if issubclass(field.type, Model):
+                other_value = other_value if value is not other_value else None
+            elif isinstance(self, ModelWithIDs) and name == 'ids':
+                other_value = (other_value | value) if value != other_value else None
+            else:
+                other_value = other_value if value != other_value else None
+
+            kwargs[name] = other_value if other_value is not None else value
+            changed = changed or other_value is not None
+
+        return self.Model.Sourced(source=self.source, **kwargs) if changed else self
 
     def __or__(self, other):
         return self.combine(other)
