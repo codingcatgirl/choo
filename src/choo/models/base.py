@@ -152,9 +152,6 @@ def give_none(self, *args, **kwargs):
     return None
 
 
-frozenids_field = Field(FrozenIDs).set_name_and_model('ids', None)
-
-
 class MetaModel(ABCMeta):
     """
     Metaclass for all choo models.
