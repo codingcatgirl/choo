@@ -44,6 +44,8 @@ class API(SimpleSerializable, metaclass=MetaAPI):
     >>> api.stops.where(name='Essen')
     This may raise a NotImplementedError if the API does not implement this Query.
     """
+    _model_to_query = {}
+
     def __init__(self, name):
         if self.__class__ == API:
             raise TypeError('Only API subclasses can be initialized.')
@@ -58,9 +60,14 @@ class API(SimpleSerializable, metaclass=MetaAPI):
         return 'api'
 
     @classmethod
-    def _register_model(cls, model):
+    def _model_to_plural_name(cls, model):
         name = model.__name__
-        name = {'City': 'cities', 'POI': 'POIs', 'Address': 'addresses'}.get(name, name.lower()+'s')
+        return {'City': 'cities', 'POI': 'POIs', 'Address': 'addresses'}.get(name, name.lower()+'s')
+        pass
+
+    @classmethod
+    def _register_model(cls, model):
+        name = cls._model_to_plural_name(model)
         error = 'Querying '+name+' is not supported by this API.'
 
         def api_func(self):
@@ -73,6 +80,9 @@ class API(SimpleSerializable, metaclass=MetaAPI):
 
         setattr(API, name.lower(), property(api_func))
         setattr(APIWithCache, name.lower(), property(api_with_cache_func))
+
+    def start_model_query(self, model):
+        return getattr(self, self._model_to_plural_name(model))
 
     def _simple_serialize(self):
         return self.name

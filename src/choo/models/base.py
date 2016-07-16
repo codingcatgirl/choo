@@ -31,6 +31,7 @@ class Field:
             reverse_field = getattr(self.type, self.reverse, None)
             if not isinstance(reverse_field, ReverseField):
                 raise TypeError('ReverseField %s missing on %s' % (repr(self.reverse), repr(self.type)))
+            reverse_field.set_related_field(self)
         return self
 
     def validate(self, value):
@@ -132,23 +133,19 @@ class ProxyField:
         return self.parent.proxy_set(obj, self.name, value)
 
 
-class ReverseField(Field):
+class ReverseField:
     def __init__(self):
-        super().__init__(None)
+        pass
 
-    def set_type(self, type_):
-        if self.type is not None:
-            raise TypeError('Field type is already set!')
-        self.type = type_
+    def set_related_field(self, field):
+        self.related_field = field
 
-    def get_proxy_fields(self):
-        return {}
-
-    def get_immutable(self, value, default_source):
-        return value
-
-    def get_mutable(self, value):
-        return value
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        if not isinstance(obj, tuple):
+            raise TypeError('ReverseField currently only works on Model.Sourced instances')
+        return obj.source.start_model_query(self.related_field.model).where(**{self.related_field.name: obj})
 
 
 def give_none(self, *args, **kwargs):
