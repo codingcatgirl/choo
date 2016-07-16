@@ -198,6 +198,9 @@ class IDs(SimpleSerializable):
     def _unserialize(cls, data):
         return cls._simple_unserialize(data)
 
+    def __eq__(self, other):
+        return set(self.items()) == set(other.items())
+
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self.data)
 

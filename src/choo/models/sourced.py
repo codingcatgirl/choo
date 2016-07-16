@@ -3,7 +3,6 @@ from operator import itemgetter
 
 from ..apis import API
 from ..apis.parsers import Parser
-from ..types import FrozenIDs
 from .base import MetaModel, Model, ModelWithIDs
 
 
