@@ -64,11 +64,10 @@ class Request(ABC):
             dump['result'] = result.text
             Request.requests_dump.append(dump)
 
-        return self._parse_result_to_data(result.text)
+        if os.environ.get('CHOO_DEBUG'):
+            open('dump.xml', 'w').write(result.text)
 
-    def _parse_result(self, result):
-        open('dump.xml', 'w').write(result.text)
-        return self._parse_result_to_data(result)
+        return self._parse_result_to_data(result.text)
 
     @classmethod
     @abstractmethod
