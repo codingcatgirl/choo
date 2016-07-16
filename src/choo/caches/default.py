@@ -53,7 +53,7 @@ class CacheItem:
         for item, name in self.referenced_by.items():
             item.references.pop(name, None)
 
-    def update(self, other, noupdate=None):
+    def update(self, other, noupdate=None, only_name=None):
         if self.i is None:
             raise TypeError('Item is not added to cache!')
 
@@ -66,9 +66,12 @@ class CacheItem:
         if os.environ.get('CHOO_CACHE_DEBUG'):
             print('update collection', self.obj)
 
+        # fields to update
+        field_names = self.obj._nonproxy_fields.keys() if only_name is None else [only_name]
+
         # we build a new object with the merged attributes
         kwargs = {}
-        for name in self.obj._nonproxy_fields:
+        for name in field_names:
             # only handle ModelWithIDs attributes because only they are mergeable
             new_value = getattr(other.obj, name)
             if new_value is None:
@@ -103,7 +106,7 @@ class CacheItem:
             if other_item is not noupdate:
                 if os.environ.get('CHOO_CACHE_DEBUG'):
                     print('we now have to update', other_item.obj, 'because it referred')
-                other_item.update(other_item)
+                other_item.update(other_item, only_name=name)
 
         if os.environ.get('CHOO_CACHE_DEBUG'):
             print('done updating')
