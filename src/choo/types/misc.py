@@ -40,16 +40,23 @@ class Serializable(ABC):
             raise TypeError('Only subclasses of this class can be serialized.')
 
         if by_reference:
+            from ..models import Model
             collector = ObjectCollector()
-            collector.get(self, **kwargs)
-            return OrderedDict({
-                '@objects': tuple(collector.objects)
-            })
+            if isinstance(self, Model):
+                collector.get(self, **kwargs)
+                return OrderedDict({
+                    '@objects': tuple(collector.objects)
+                })
 
         result = OrderedDict({
             '@type': self.serialized_type_name,
         })
-        result.update(self._serialize(**kwargs))
+        if by_reference:
+            result.update(self._serialize(_collector=collector, **kwargs))
+            result['@objects'] = tuple(collector.objects)
+        else:
+            result.update(self._serialize(**kwargs))
+
         return result
 
     @classmethod
