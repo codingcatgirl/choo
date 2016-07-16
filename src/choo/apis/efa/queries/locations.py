@@ -39,7 +39,7 @@ class PlatformQuery(GeoPointQuery, EFA.PlatformQueryBase):
             if not stop.coords:
                 raise NotImplementedError('Could not get stop coordinates needed to get its platforms.')
 
-            near_platforms = self.api_with_cache.platforms.where(coords=stop.coords).max_distance(400).limit(1)
+            near_platforms = self.api_with_cache.platforms.where(coords=stop.coords).max_distance(400)
             results = (r for r in near_platforms if r.stop == stop)
             return results if not self.coords else self._wrap_distance_results(results)
         else:
