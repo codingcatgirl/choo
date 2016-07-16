@@ -7,8 +7,8 @@ class CacheItem:
     def __init__(self, cache, obj):
         self.cache = cache
         self.obj = obj
-        self.referenced_by = set()
-        self.references = set()
+        self.referenced_by = {}
+        self.references = {}
         self.ids = set(((obj.Model, )+id_) for id_ in obj.ids.items())
         self.i = None
 
@@ -31,8 +31,8 @@ class CacheItem:
                 kwargs[name] = value
                 continue
             kwargs[name] = found_item.obj
-            self.references.add(found_item)
-            found_item.referenced_by.add(self)
+            self.references[name] = found_item
+            found_item.referenced_by[self] = name
         self.obj = self.obj.Model.Sourced(self.obj.source, **kwargs)
 
     def remove_from_cache(self):
@@ -48,10 +48,10 @@ class CacheItem:
             self.cache._items = []
 
         # delete all references
-        for item in self.references:
-            item.referenced_by.discard(self)
-        for item in self.referenced_by:
-            item.references.discard(self)
+        for name, item in self.references.items():
+            item.referenced_by.pop(self, None)
+        for item, name in self.referenced_by.items():
+            item.references.pop(name, None)
 
     def update(self, other, noupdate=None):
         if self.i is None:
@@ -88,8 +88,8 @@ class CacheItem:
                 kwargs[name] = value_item.update(self.cache._newitem(new_value), noupdate=self).obj
 
             # update the references
-            value_item.referenced_by.add(self)
-            self.references.add(value_item)
+            value_item.referenced_by[self] = name
+            self.references[name] = value_item
 
         new_obj = self.obj | self.obj.Model.Sourced(source=self.obj.source, **kwargs)
         if self.obj is new_obj:
@@ -99,7 +99,7 @@ class CacheItem:
         self.obj = new_obj
 
         # now we look, which collection refer to this collection. those have to be updated, to point to the new data
-        for other_item in self.referenced_by:
+        for other_item, name in self.referenced_by.items():
             if other_item is not noupdate:
                 if os.environ.get('CHOO_CACHE_DEBUG'):
                     print('we now have to update', other_item.obj, 'because it referred')
