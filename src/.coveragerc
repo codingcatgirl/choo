@@ -4,6 +4,11 @@ source = choo
 [report]
 exclude_lines =
     pass
+    def serialize_python
+    def get_test_code
+    if os.environ.get('CHOO_CACHE_DEBUG'):
+    if os.environ.get('CHOO_DEBUG'):
+    if os.environ.get('CHOO_REQUESTS_DUMP'):
 omit =
     choo/cli.py
     choo/chooserver.py
