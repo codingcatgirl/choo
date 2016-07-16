@@ -122,11 +122,14 @@ class Query(Serializable, metaclass=MetaQuery):
         return cls.Model.__name__.lower()+'.query' if cls.Model else None
 
     def _serialize(self, **kwargs):
-        return OrderedDict((
+        result = OrderedDict((
             ('api', self.api.serialize(**kwargs) if self.api else None),
             ('obj', self._obj.serialize(**kwargs)),
             ('settings', self._settings),
         ))
+        if self._results_generator is not None:
+            result['results'] = [obj.serialize() for obj in self]
+        return result
 
     @classmethod
     def _unserialize(cls, data):
